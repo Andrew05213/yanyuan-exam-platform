@@ -1,0 +1,37 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const root=new URL('../',import.meta.url);
+const bank=JSON.parse(fs.readFileSync(new URL('public/bank.json',root),'utf8'));
+const source=fs.readFileSync(new URL('public/app.js',root),'utf8');
+const context=vm.createContext({fetch:()=>new Promise(()=>{}),structuredClone,Date,JSON,Number,Math,Set,Object,Array,String,Error,localStorage:{setItem(){}},window:{scrollTo(){}},setTimeout:()=>0,clearTimeout(){}});
+vm.runInContext(source,context);
+vm.runInContext(`bank=${JSON.stringify(bank)};renderPaper=()=>{};toast=()=>{};`,context);
+const run=s=>vm.runInContext(s,context);
+for(const p of bank.papers){
+  run(`practice={schema:1,papers:{},attempts:[]};currentPaper=bank.papers.find(p=>p.id===${JSON.stringify(p.id)});`);
+  run('submit()');assert.equal(run('practice.attempts.length'),0);
+  run('for(const q of allQuestions(currentPaper))getState(currentPaper.id).answers[q.id]=q.answer;submit()');
+  assert.equal(run('practice.attempts[0].score'),100);
+  assert.equal(run('practice.attempts[0].correct'),p.count);
+  run('submit()');assert.equal(run('practice.attempts.length'),1);
+}
+run(`practice={schema:1,papers:{},attempts:[]};currentPaper=bank.papers.find(p=>p.id==='english-a');for(const q of allQuestions(currentPaper))getState(currentPaper.id).answers[q.id]=q.answer;for(const n of [1,21,36]){let q=allQuestions(currentPaper).find(q=>q.id===n);getState(currentPaper.id).answers[n]='ABCD'.split('').find(x=>x!==q.answer)}submit();`);
+assert.equal(run('practice.attempts[0].score'),94,'English must apply section weights 2+1+3');
+assert.equal(run('practice.attempts[0].correct'),47);
+run(`practice={schema:1,papers:{},attempts:[]};currentPaper=bank.papers.find(p=>p.id==='math-a');getState(currentPaper.id).answers[1]='C';submit();`);
+assert.equal(run('practice.attempts[0].score'),5);
+assert.equal(run('practice.attempts[0].answered'),1);
+run(`let roundtrip=cleanBackup(JSON.parse(JSON.stringify(practice)));`);
+assert.equal(run('roundtrip.attempts[0].score'),5);
+assert.equal(run('roundtrip.papers["math-a"].startAt'),null);
+run(`let sanitized=cleanBackup({schema:1,papers:{'math-a':{answers:{1:'Z',2:'A',999:'A'},elapsed:-100}},attempts:[]});`);
+assert.equal(run('Object.keys(sanitized.papers["math-a"].answers).length'),1);
+assert.equal(run('sanitized.papers["math-a"].elapsed'),0);
+assert.throws(()=>run('cleanBackup({schema:2,papers:{},attempts:[]})'));
+run(`let legacy=cleanBackup({schema:1,papers:{'chinese-a':{answers:{1:'C',2:'A'},elapsed:123}},attempts:[{paperId:'chinese-a',date:'2026-10-25T01:30:00Z',answers:{1:'C',2:'A'},elapsed:123}]});`);
+assert.equal(run('legacy.attempts[0].score'),4,'Earlier Chinese attempts must use their original answer bank');
+assert.equal(run('legacy.papers["chinese-a"].answers[1]'),'C');
+assert.equal(run('legacy.papers["chinese-a-pd"]'),undefined,'Revised questions must start separately from earlier responses');
+assert.equal(run('allPapers().find(p=>p.id==="chinese-a").archived'),true);
+console.log('PASS: weighted grading, backup validation, and separate revisions preserving earlier Chinese records');
