@@ -48,7 +48,7 @@ const PublicApp={
  },
  account(){
   const el=$('#account-links');if(!el)return;
-  el.innerHTML=this.session.authenticated?'<span class="account-state">已登录</span>'+(this.session.admin?'<a href="/admin">管理后台</a>':'')+'<a target="_top" href="/signout-with-chatgpt?return_to=%2Findex.html">退出</a>':this.loginLink('登录');
+  el.innerHTML=this.session.authenticated?'<span class="account-state">已登录</span>'+(this.session.admin?'<a href="/admin">管理后台</a>':'')+(this.session.authMode==='lan'?'<a href="/auth/account">修改密码</a>':'')+'<a target="_top" href="/signout-with-chatgpt?return_to=%2Findex.html">退出</a>':this.loginLink('登录');
  },
  guestStudio(){
   if(this.session.authenticated)return;
