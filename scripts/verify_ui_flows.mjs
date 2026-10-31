@@ -34,7 +34,7 @@ function setup(){
 // Anonymous grading must not depend on archive access or fabricate an essay score.
 {
  const f=setup();
- for(const kind of ['writing','translation','oral']){const html=f.AIGrading.placeholder(kind);check(html.includes('AI 批改暂未配置'),true);check(html.includes('disabled'),true);check(html.includes('待 AI 批改'),true);}
+ for(const kind of ['writing','translation','oral']){const html=f.AIGrading.placeholder(kind);check(html.includes('正在检查 AI 批改配置'),true);check(html.includes('disabled'),true);check(html.includes('data-ai-grade'),true);}
  check(f.AIGrading.placeholder('translation',{score:0,maxScore:20}).includes('历史录入分数：0 / 20'),true);
  check(f.AIGrading.placeholder('" onmouseover="bad').includes('onmouseover'),false);
  f.Hub.safeRich=s=>s;const html=f.StudyFlow.questionHTML({id:2,kind:'translation',stem:'Translate.',points:25,tag:'Translation'},true);

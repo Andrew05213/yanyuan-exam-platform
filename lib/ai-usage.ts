@@ -22,6 +22,12 @@ function dateOnly(value:string){
  if(!/^20\d{2}-\d{2}-\d{2}$/.test(value))throw new AdminInputError('日期格式不正确。');
  const n=new Date(value+'T00:00:00Z');if(!Number.isFinite(n.getTime())||n.toISOString().slice(0,10)!==value)throw new AdminInputError('日期不正确。');return value;
 }
+
+export async function finalizeAIUsage(user:Principal,provider:BillingProvider,event:UsageEvent){
+ validateUsage(event.counts);const cost=estimateCostMicros(event.counts,provider.pricing),db=adminDb();
+ const r=await db.prepare("UPDATE ai_usage_events SET status=?,input_tokens=?,cached_input_tokens=?,output_tokens=?,estimated_cost_micros=?,elapsed_ms=? WHERE provider_id=? AND request_id=? AND user_id=? AND task=? AND status='unknown' AND input_tokens IS NULL AND cached_input_tokens IS NULL AND output_tokens IS NULL").bind(event.status,event.counts.inputTokens,event.counts.cachedInputTokens,event.counts.outputTokens,cost,event.elapsedMs??null,provider.id,event.requestId,user.id,event.task).run();
+ if(!r.meta.changes){const old=await db.prepare('SELECT status,input_tokens,cached_input_tokens,output_tokens FROM ai_usage_events WHERE provider_id=? AND request_id=? AND user_id=? AND task=?').bind(provider.id,event.requestId,user.id,event.task).first<any>();if(!old||old.status!==event.status||old.input_tokens!==event.counts.inputTokens||old.cached_input_tokens!==event.counts.cachedInputTokens||old.output_tokens!==event.counts.outputTokens)throw new AdminInputError('用量状态已更新，不能覆盖。');}
+}
 export function usageQuery(params:URLSearchParams){
  const today=new Date(Date.now()+8*3600000).toISOString().slice(0,10),from=dateOnly(params.get('from')||today.slice(0,8)+'01'),to=dateOnly(params.get('to')||today);
  if(from>to)throw new AdminInputError('开始日期不能晚于结束日期。');
@@ -65,5 +71,5 @@ export async function readUsage(params:URLSearchParams){
   const result=await db.prepare('SELECT e.id,e.request_id,e.user_id,u.email,u.display_name,e.provider_name,e.model,e.task,e.status,e.currency,e.input_tokens,e.cached_input_tokens,e.output_tokens,e.estimated_cost_micros,e.elapsed_ms,e.created_at'+join+' ORDER BY e.created_at DESC,e.id DESC LIMIT ? OFFSET ?').bind(...eventValues,q.limit,q.offset).all<any>();
   rows=result.results.map(r=>({id:r.id,requestId:r.request_id,userId:r.user_id,email:r.email,displayName:r.display_name,providerName:r.provider_name,model:r.model,task:r.task,status:r.status,currency:r.currency,inputTokens:r.input_tokens,cachedInputTokens:r.cached_input_tokens,outputTokens:r.output_tokens,estimatedCostMicros:r.estimated_cost_micros,elapsedMs:r.elapsed_ms,createdAt:r.created_at}));
  }
- return {range:{from:q.from,to:q.to,timeZone:'Asia/Shanghai'},view:q.view,totals:totals.results.map(r=>({currency:r.currency,...statistics(r)})),rows,pagination:{page:q.page,limit:q.limit,total,pages:Math.max(1,Math.ceil(total/q.limit))},costBasis:'configured_price_estimate',gradingServiceStatus:'placeholder'};
+ return {range:{from:q.from,to:q.to,timeZone:'Asia/Shanghai'},view:q.view,totals:totals.results.map(r=>({currency:r.currency,...statistics(r)})),rows,pagination:{page:q.page,limit:q.limit,total,pages:Math.max(1,Math.ceil(total/q.limit))},costBasis:'configured_price_estimate',gradingServiceStatus:'integrated'};
 }

@@ -46,7 +46,7 @@ export async function selectDefaultProvider(body:any,actorId:string){
  await audit(actorId,p.id,'provider.default_selected').run();return providerMetadata(p.id);
 }
 
-// A future model adapter can use this internally. It must never serialize apiKey
+// Model execution uses this internally. It must never serialize apiKey
 // into route responses, errors, logs, client state or usage/audit records.
 export async function providerForExecution(id?:string){
  const query=adminDb().prepare(id?'SELECT * FROM ai_providers WHERE id=? AND enabled=1':'SELECT * FROM ai_providers WHERE is_default=1 AND enabled=1');

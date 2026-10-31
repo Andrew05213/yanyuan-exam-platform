@@ -61,3 +61,7 @@ export const oralAudio=sqliteTable('oral_audio',{
 export const qualityFeedback=sqliteTable('quality_feedback',{
  id:text('id').primaryKey(),ownerId:text('owner_id').notNull(),targetKey:text('target_key').notNull(),kind:text('kind').notNull(),title:text('title').notNull(),payload:text('payload').notNull(),status:text('status').notNull().default('open'),adminNote:text('admin_note').notNull().default(''),handledBy:text('handled_by'),createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull(),
 },t=>[index('quality_feedback_owner_idx').on(t.ownerId,t.updatedAt),index('quality_feedback_status_idx').on(t.status,t.updatedAt)]);
+
+export const aiGradingJobs=sqliteTable('ai_grading_jobs',{
+ id:text('id').primaryKey(),ownerId:text('owner_id').notNull(),recordId:text('record_id').notNull(),questionId:text('question_id').notNull().default(''),sourceHash:text('source_hash').notNull(),kind:text('kind').notNull(),status:text('status').notNull(),providerId:text('provider_id').notNull(),model:text('model').notNull(),result:text('result'),error:text('error'),createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull(),
+},t=>[index('ai_grading_owner_date_idx').on(t.ownerId,t.createdAt),uniqueIndex('ai_grading_one_pending_idx').on(t.ownerId).where(sql`${t.status}='pending'`)]);

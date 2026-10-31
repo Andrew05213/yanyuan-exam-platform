@@ -17,8 +17,8 @@ export async function checkPrivateReferences(kind:string,payload:any,user:Princi
  }
  if(kind==='review-attempt'&&payload.parentId)await getRecord(payload.parentId,user);
 }
-export async function updateRecord(record:any,payload:any,user:Principal){
- validateStudyPayload(record.kind,payload,record.payload);await checkPrivateReferences(record.kind,payload,user);
+export async function updateRecord(record:any,payload:any,user:Principal,allowAi=false){
+ validateStudyPayload(record.kind,payload,record.payload,allowAi);await checkPrivateReferences(record.kind,payload,user);
  const r=await getDb().update(archiveRecords).set({ownerId:user.id,payload:JSON.stringify(payload),revision:record.revision+1,updatedAt:new Date().toISOString()}).where(and(eq(archiveRecords.id,record.id),eq(archiveRecords.revision,record.revision),owned(archiveRecords.ownerId,user))).returning().get();
  if(!r)throw Error('档案刚在另一处更新，请重新读取后再写入。');return {id:r.id,revision:r.revision,updatedAt:r.updatedAt};
 }

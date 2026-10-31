@@ -31,7 +31,11 @@ export function reviseUnverifiedTranscription(previous:any,payload:any){
  }
  return payload;
 }
-export function validateStudyPayload(kind:string,payload:any,existingPayload?:any){
+export function validateStudyPayload(kind:string,payload:any,existingPayload?:any,allowAi=false){
+  if(!allowAi){
+    if(kind==='oral-attempt'&&payload.aiAssessment&&JSON.stringify(payload.aiAssessment)!==JSON.stringify(existingPayload?.aiAssessment))throw Error('AI 批改结果须由服务端写入。');
+    if(kind==='written-attempt'&&payload.aiGrades){if(typeof payload.aiGrades!=='object'||Array.isArray(payload.aiGrades)||Object.entries(payload.aiGrades).some(([k,v])=>JSON.stringify(v)!==JSON.stringify(existingPayload?.aiGrades?.[k])))throw Error('AI 批改结果须由服务端写入。');}
+  }
   if(kind==='essay'){
     if(typeof payload.originalText!=="string"||payload.originalText.length>40000||!Array.isArray(payload.images)||payload.images.length>12||payload.images.some((p:any)=>typeof p.id!=="string"||!/^asset-[a-f0-9-]{36}$/.test(p.id)))throw Error("作文原稿或图片信息不完整。");
     const oldHistory=existingPayload?.transcriptionHistory||[],history=payload.transcriptionHistory||[];

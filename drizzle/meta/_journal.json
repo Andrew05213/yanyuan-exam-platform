@@ -36,6 +36,13 @@
       "when": 1793456881146,
       "tag": "0004_pink_pyro",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1793467712272,
+      "tag": "0005_modern_valeria_richards",
+      "breakpoints": true
     }
   ]
 }

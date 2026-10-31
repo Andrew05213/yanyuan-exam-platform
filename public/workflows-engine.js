@@ -85,11 +85,12 @@
   const qs=p.blocks.flatMap(b=>b.questions||[]);if(qs.length!==p.count||qs.reduce((s,q)=>s+q.points,0)!==100||new Set(qs.map(q=>q.sourceId)).size!==qs.length)throw Error('题量、分值或题目编号重复。');
   for(const [i,q] of qs.entries()){if(q.id!==i+1||!Number.isInteger(q.points)||q.points<1||typeof q.sourceId!=='string'||typeof q.stem!=='string')throw Error('题目结构有误。');if(q.kind==='mc'&&(!Array.isArray(q.options)||q.options.length!==4||!'ABCD'.includes(q.answer)||q.answer.length!==1))throw Error('选择题选项或答案有误。');if(['fill','order'].includes(q.kind)&&(!Array.isArray(q.accepted)||!q.accepted.length))throw Error('缺少填空或排序参考形式。');if(!['mc','fill','order','writing','translation'].includes(q.kind))throw Error('不支持的题型。');}
  }
- function grade(p,answers,manual={}){
+ function grade(p,answers,manual={},ai={}){
   let objectiveScore=0,objectiveMax=0,subjectiveScore=0,subjectiveMax=0,pending=0,answered=0,correct=0;
   const details=[];
   for(const q of p.blocks.flatMap(b=>b.questions)){
     const answer=String(answers[q.id]||'');if(answer.trim())answered++;
+    if(q.kind==='writing'||q.kind==='translation'){const block=p.blocks.find(b=>b.questions.includes(q)),g=ai[q.id];if(g&&g.answer===answer&&g.questionIdentity===JSON.stringify({question:q,material:block.text||''})&&Number.isInteger(g.assessment?.score)&&g.assessment.score>=0&&g.assessment.score<=100){const score=Math.round(g.assessment.score*q.points)/100;subjectiveMax+=q.points;subjectiveScore+=score;details.push({id:q.id,status:'AI 已批改',score});continue;}}
     if(q.kind==='writing'||q.kind==='translation'){subjectiveMax+=q.points;const value=manual[q.id];if(value===''||value==null){pending++;details.push({id:q.id,status:'待批改'});}else{if(!Number.isFinite(Number(value))||Number(value)<0||Number(value)>q.points)throw Error('主观题得分超出本题范围。');subjectiveScore+=Number(value);details.push({id:q.id,status:'已人工评分',score:Number(value)});}continue;}
     objectiveMax+=q.points;const good=q.kind==='mc'?answer===q.answer:q.accepted.some(a=>normalize(a)===normalize(answer));if(good){objectiveScore+=q.points;correct++;}details.push({id:q.id,status:good?'正确':answer?'待订正':'未答',score:good?q.points:0});
   }
