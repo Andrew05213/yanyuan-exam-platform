@@ -50,6 +50,10 @@ Semantic essay critique is completed in the current ChatGPT conversation and imp
 
 Additional checks: `node scripts/verify_workflows.mjs` covers 90 school configurations, mixed grading, intact units, deduplication and strict error parsing. `node --experimental-strip-types scripts/verify_reviews.mjs` covers source fingerprints, full-sentence coverage, scoring arithmetic, incomplete reviews and first-review preservation.
 
+`node scripts/verify_ui_flows.mjs` covers anonymous grading, failed saves, delayed requests, edits during essay saves, manual-score invalidation, answer-backup restoration and school/subject templates. It runs controllers with isolated request and DOM fixtures; it does not replace browser interaction checks. JSON paper backups now include written answers, manual scores and elapsed time; older paper-only backups remain supported. Decorative captions and duplicate explanatory text have been removed, with optional difficulty and source details collapsed and essential labels made readable.
+
+OCR preparation also writes uncompressed models under `public/ocr/data/` to avoid `.gz` content-encoding handling in local previews. The UI checks model downloads before starting recognition, supports cancellation during image loading and recognition, and keeps the original transcription on failure or cancellation. Navigation becomes interactive after startup handlers are ready. Form textareas and narrow-screen assembly rows use the full available width.
+
 ## Version 3.0 independent reference bands
 
 `difficulty-engine.js` and `difficulty-ui.js` replace the global written difficulty selector with per-section rows for English, mathematics and Chinese. Rows may repeat a section at different reference bands. Each row selects exact labelled stock; the explicit mixed option is the only cross-band selection. Specific-band rows reserve material before mixed rows, preventing greedy mixed draws from consuming scarce requested bands. Insufficient stock prevents generation instead of lowering the selected band. Whole reading/cloze units and paired Chinese readings stay intact.
