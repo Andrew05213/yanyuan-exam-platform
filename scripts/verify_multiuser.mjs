@@ -55,6 +55,20 @@ try{
  const essay={id:'qa-essay',kind:'essay',schoolId:'pku',title:'A essay',payload:{originalText:'Private essay.',images:[{id:image.id}]},expectedRevision:0};
  check((await call('/api/archive','B',essay)).status,400);
  check((await call('/api/archive','A',essay)).status,201);
+ // Import a real complete critique, append a second review and preserve the first.
+ const readyEssay={...essay,expectedRevision:1,payload:{...essay.payload,textConfirmed:true,prompt:'Write about practice.'}};
+ check((await call('/api/archive','A',readyEssay)).status,200);
+ const readyRecord=await call('/api/archive?id=qa-essay','A');
+ const critique={summary:'Test critique',dimensions:[['审题与内容完成度',20],['论证与逻辑',25],['结构与衔接',15],['语法与句法',20],['词汇与表达',15],['拼写、标点与格式',5]].map(([name,max])=>({name,max,score:max,reason:'Test evidence'})),total:100,priorities:['Content','Language','Structure'],sentences:[{original:'Private essay.',languageIssue:'Test',logicIssue:'Test',minimalEdit:'Private essay.',matureExpression:'Private essay.'}],paragraphs:[],vocabulary:[],optimizedText:'Private essay.'};
+ const importBody={essayId:'qa-essay',sourceHash:readyRecord.sourceHash,review:critique};
+ check((await call('/api/essays/review','A',{...importBody,sourceHash:'stale'})).status,400);
+ check((await call('/api/essays/review','A',{...importBody,review:{...critique,total:99}})).status,400);
+ check((await call('/api/essays/review','A',importBody)).status,200);
+ const second=structuredClone(critique);second.dimensions[0].score=19;second.total=99;
+ check((await call('/api/essays/review','A',{...importBody,review:second})).status,200);
+ const reviewed=await call('/api/archive?id=qa-essay','A');
+ check(reviewed.payload.firstReview.total,100);check(reviewed.payload.latestReview.total,99);check(reviewed.payload.reviews.length,2);
+ check((await call('/api/archive','A',{...readyEssay,expectedRevision:reviewed.revision,payload:{...reviewed.payload,originalText:'Changed original.'}})).status,400);
  check((await call('/api/essays/review','B',{essayId:'qa-essay',sourceHash:'qa',review:{}})).status,404);
  check((await rpc('save_essay_transcription',{essayId:'qa-essay',text:'stolen',verification:'needs-user-check'},'B')).result.isError,true);
  const review={id:'qa-review',kind:'review-attempt',schoolId:'pku',title:'Redo',payload:{parentId:'qa-error-A',answers:{}},expectedRevision:0};

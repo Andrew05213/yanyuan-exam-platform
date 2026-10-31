@@ -1,0 +1,53 @@
+/* Keep the controls and necessary feedback readable after removing decorative copy. */
+body{font-size:15px}
+.brand{margin-bottom:24px}
+.sidebar{padding-bottom:24px}
+.sidebar nav{flex:1;min-height:0}
+.nav-item{font-size:14px}
+.btn,.text-link,.back-link,.account-links,.breadcrumb{font-size:14px}
+.search-wrap input{font-size:13px}
+.hero h1{margin-top:0}
+.hero-copy{display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.hub-school-top{justify-content:flex-end;margin-bottom:16px}
+.hub-school-card .hub-track{font-size:15px;margin-top:6px}
+.hub-region,.hub-tags span,.hub-school-footer span,.stat small{font-size:13px}
+.hub-school-footer a{font-size:14px}
+.section-top p,.page-heading p,.hub-panel p,.hub-form-note,.hub-source-note,.reading-source,.reading-note,.exam-header .meta,.exam-intro,.exam-section-desc{font-size:14px;line-height:1.8}
+.hub-source-note .text-link,.hub-muted,.hub-rubric .hub-muted{font-size:13px!important}
+.hub-form label,.hub-field,.hub-filter-bar label,.flow-answer-label,.flow-manual-score,.hub-rubric .hub-field{font-size:14px}
+.hub-form input,.hub-form select,.hub-field textarea,.hub-field select,.hub-filter-bar input,.hub-filter-bar select{font-size:15px}
+.hub-form input::placeholder,.hub-field textarea::placeholder{font-size:14px}
+.hub-form textarea{display:block;width:100%;min-width:0;max-width:100%;margin-top:7px;padding:10px 12px;border:1px solid #dce2e7;border-radius:5px;background:#fff;color:var(--ink);font:15px/1.8 ArchiveCN,"Microsoft YaHei",sans-serif;resize:vertical}
+.hub-form label.hub-check{display:flex;align-items:flex-start;gap:10px}
+.hub-form input[type="checkbox"]{display:inline-block;flex:0 0 auto;width:18px;height:18px;margin:4px 0 0;padding:0;accent-color:var(--navy)}
+.hub-kicker,.question-points,.hub-card-meta,.hub-task-bottom,.hub-record-kind,.hub-cloud-state,.hub-written-toolbar span,.record-detail p,.flow-answer-bottom,.tier-stock small{font-size:13px}
+.hub-score-row,.hub-clock-card .hub-check,.hub-clock-card p,.hub-rubric .hub-field select{font-size:14px}
+.hub-reference summary,.hub-reference-body,.analysis summary,.analysis p,.source-row p{font-size:14px}
+.hub-panel small,.record-score small,.hub-score-row small{font-size:13px}
+.help-note{margin:18px 0;color:var(--muted);font-size:14px}
+.help-note>summary,details.hub-panel>summary{cursor:pointer;padding:8px 0;font-size:14px;color:var(--ink)}
+.help-note p{font-size:14px;line-height:1.8}
+.simplified-studio,.simplified-mistakes{grid-template-columns:minmax(0,1fr);max-width:1080px}
+.tier-level-legend span,.tier-catalog-item,.tier-catalog-item small{font-size:14px}
+.hub-written-toolbar .btn{font-size:14px}
+@media(max-width:680px){
+ .sidebar nav .nav-item{font-size:13px;padding:11px}
+ .topbar{height:auto;min-height:80px;flex-wrap:wrap;gap:12px;padding-top:14px;padding-bottom:14px}
+ .breadcrumb{display:none}
+ .search-wrap{flex:1;min-width:120px;width:auto;margin-left:0}
+ .search-results{width:min(390px,calc(100vw - 32px));left:0;right:auto}
+ .account-links a,.hub-packet-tools .btn,.hub-clock-card .btn,.hub-rubric .hub-score-row{font-size:13px}
+ .hub-oral-rail{grid-template-columns:1fr}
+ .hub-form input,.hub-form select,.hub-form textarea,.hub-field textarea{font-size:16px}
+ .hub-rubric .hub-muted{font-size:13px!important}
+ .stats .stat{padding:12px}
+ .flow-config-table{overflow-x:auto}
+ .tier-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+ .tier-row>.hub-step{grid-column:1;grid-row:1;margin:0;white-space:nowrap;font-size:20px}
+ .tier-row>button{grid-column:2;grid-row:1;justify-self:end;white-space:nowrap;min-height:36px}
+ .tier-row>label:nth-child(2){grid-column:1;grid-row:2}
+ .tier-row>label:nth-child(3){grid-column:2;grid-row:2}
+ .tier-row>label:nth-child(4){grid-column:1;grid-row:3}
+ .tier-row>.tier-stock{grid-column:2;grid-row:3}
+}
+@media print{.help-note{display:none}.hub-source-note,.reading-source{font-size:10pt}}

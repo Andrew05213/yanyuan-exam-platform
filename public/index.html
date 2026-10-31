@@ -10,12 +10,12 @@
   <link rel="stylesheet" href="style.css?v=4">
   <link rel="stylesheet" href="hub.css?v=4">
   <link rel="stylesheet" href="workflows.css?v=4">
+  <link rel="stylesheet" href="simplified.css?v=5">
 </head>
 <body>
   <a class="skip-link" href="#screen">跳到主要内容</a>
-  <aside class="sidebar">
-    <a href="#schools" class="brand" aria-label="燕园备考首页"><img src="assets/mark.svg" alt=""><span>燕园备考<small>SHARED SOURCES · YOUR PROGRESS</small></span></a>
-    <div class="side-label">六校备考空间</div>
+  <aside class="sidebar" inert>
+    <a href="#schools" class="brand" aria-label="燕园备考首页"><img src="assets/mark.svg" alt=""><span>燕园备考</span></a>
     <nav aria-label="主导航">
       <button class="nav-item active" data-view="schools"><span class="nav-icon">◈</span>学校中心<span class="nav-count">06</span></button>
       <button class="nav-item" data-view="studio"><span class="nav-icon">⊞</span>组卷工作台</button>
@@ -30,31 +30,28 @@
       <button class="nav-item" data-view="blueprint"><span class="nav-icon">⊞</span>原卷题型蓝图</button>
       <button class="nav-item" data-view="records"><span class="nav-icon">◷</span>旧版本机练习</button>
     </nav>
-    <div class="sidebar-note"><span class="small-square"></span><b>读得深入，说得清楚。</b><p>把问题想明白，<br>把每一步留下来。</p><span class="edition">VOL. 004 &nbsp; / &nbsp; 2026.10</span></div>
-    <div class="private-badge"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="8" width="12" height="9" rx="2"/><path d="M7 8V5a3 3 0 0 1 6 0v3"/></svg>学习记录按账号隔离 <span>共享资料单独发布</span></div>
   </aside>
   <div class="workspace">
-    <header class="topbar">
+    <header class="topbar" inert>
       <span class="breadcrumb" id="breadcrumb">备考空间 <i>/</i> 学校中心</span>
       <div class="search-wrap"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg><input id="search" type="search" placeholder="搜索学校、口试、试卷关键词" aria-label="搜索学校与训练题目" autocomplete="off"><div id="search-results" class="search-results" hidden></div></div>
       <div id="account-links" class="account-links"></div>
     </header>
     <main id="screen" tabindex="-1"><div class="loading">正在打开资料库…</div></main>
-    <footer class="site-footer"><span>燕园备考 &nbsp; / &nbsp; 公开题库 · 个人学习档案</span><span>v4.0 &nbsp; 更新于 2026.10.29</span></footer>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <input id="import-file" type="file" accept="application/json,.json" hidden>
   <input id="hub-import-file" type="file" accept="application/json,.json" hidden>
-  <dialog id="confirm-dialog"><form method="dialog"><div class="eyebrow">重新作答</div><h2>开始一次新的练习？</h2><p>本卷当前选项与计时将清空，已提交的历史记录仍会保留。可先导出记录备份。</p><div class="dialog-actions"><button value="cancel" class="btn secondary">取消</button><button value="confirm" class="btn primary">开始新练习</button></div></form></dialog>
-  <script src="hub-engine.js?v=4" defer></script>
-  <script src="hub.js?v=4" defer></script>
-  <script src="workflows-engine.js?v=4" defer></script>
-  <script src="workflow-app.js?v=4" defer></script>
-  <script src="mistakes.js?v=4" defer></script>
-  <script src="writing.js?v=4" defer></script>
-  <script src="difficulty-engine.js?v=4" defer></script>
-  <script src="difficulty-ui.js?v=4" defer></script>
-  <script src="community.js?v=4" defer></script>
-  <script src="app.js?v=4" defer></script>
+  <dialog id="confirm-dialog"><form method="dialog"><h2>开始一次新的练习？</h2><p>本卷当前选项与计时将清空，已提交的历史记录仍会保留。可先导出记录备份。</p><div class="dialog-actions"><button value="cancel" class="btn secondary">取消</button><button value="confirm" class="btn primary">开始新练习</button></div></form></dialog>
+  <script src="hub-engine.js?v=5" defer></script>
+  <script src="hub.js?v=5" defer></script>
+  <script src="workflows-engine.js?v=5" defer></script>
+  <script src="workflow-app.js?v=5" defer></script>
+  <script src="mistakes.js?v=5" defer></script>
+  <script src="writing.js?v=5" defer></script>
+  <script src="difficulty-engine.js?v=5" defer></script>
+  <script src="difficulty-ui.js?v=5" defer></script>
+  <script src="community.js?v=5" defer></script>
+  <script src="app.js?v=5" defer></script>
 </body>
 </html>
