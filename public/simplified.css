@@ -27,6 +27,11 @@ body{font-size:15px}
 .help-note{margin:18px 0;color:var(--muted);font-size:14px}
 .help-note>summary,details.hub-panel>summary{cursor:pointer;padding:8px 0;font-size:14px;color:var(--ink)}
 .help-note p{font-size:14px;line-height:1.8}
+.ai-grading-placeholder{margin:18px 0;padding:16px;border:1px solid var(--line);border-radius:6px;background:#f8fafb}
+.ai-grading-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ai-grading-state,.ai-grading-result,.ai-grading-history{font-size:14px;line-height:1.8;margin:10px 0 0}
+.ai-grading-result{color:var(--muted)}
+.ai-grading-history{padding-top:10px;border-top:1px solid var(--line)}
 .simplified-studio,.simplified-mistakes{grid-template-columns:minmax(0,1fr);max-width:1080px}
 .tier-level-legend span,.tier-catalog-item,.tier-catalog-item small{font-size:14px}
 .hub-written-toolbar .btn{font-size:14px}

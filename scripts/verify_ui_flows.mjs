@@ -21,9 +21,9 @@ function setup(){
   window:{addEventListener(){},scrollTo(){}},setTimeout,clearTimeout,AbortController,
   escapeHTML:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
   $:s=>document.querySelector(s),toast(){},navigate(){},pauseAll(){}});
- for(const file of ['hub-engine.js','workflows-engine.js','difficulty-engine.js','hub.js','workflow-app.js','difficulty-ui.js','mistakes.js','writing.js','community.js'])vm.runInContext(read('public/'+file),ctx);
+ for(const file of ['hub-engine.js','workflows-engine.js','difficulty-engine.js','hub.js','ai-grading.js','workflow-app.js','difficulty-ui.js','mistakes.js','writing.js','community.js'])vm.runInContext(read('public/'+file),ctx);
  Object.assign(ctx,{HubEngine:ctx.window.HubEngine,WorkflowEngine:ctx.window.WorkflowEngine,DifficultyEngine:ctx.window.DifficultyEngine});
- const api=vm.runInContext('({Hub,StudyFlow,TierStudio,MistakeUI,WritingUI,PublicApp,DifficultyEngine,WorkflowEngine})',ctx);
+ const api=vm.runInContext('({Hub,AIGrading,StudyFlow,TierStudio,MistakeUI,WritingUI,PublicApp,DifficultyEngine,WorkflowEngine})',ctx);
  const {Hub,StudyFlow,TierStudio}=api;Hub.data=schools;StudyFlow.data=workflows;TierStudio.data=difficulty;
  Hub.pauseTimer=()=>{};Hub.renderPacket=()=>{};StudyFlow.renderMixed=()=>{api.renders=(api.renders||0)+1;};
  Hub.packet={id:'test',schema:2,kind:'written',schoolId:'pku',title:'Test',minutes:30,count:2,totalPoints:100,createdAt:new Date().toISOString(),blocks:[{questions:[{id:1,kind:'mc',points:50,answer:'A',options:['a','b','c','d']},{id:2,kind:'writing',points:50}]}]};
@@ -32,6 +32,16 @@ function setup(){
 }
 
 // Anonymous grading must not depend on archive access or fabricate an essay score.
+{
+ const f=setup();
+ for(const kind of ['writing','translation','oral']){const html=f.AIGrading.placeholder(kind);check(html.includes('AI 批改暂未配置'),true);check(html.includes('disabled'),true);check(html.includes('待 AI 批改'),true);}
+ check(f.AIGrading.placeholder('translation',{score:0,maxScore:20}).includes('历史录入分数：0 / 20'),true);
+ check(f.AIGrading.placeholder('" onmouseover="bad').includes('onmouseover'),false);
+ f.Hub.safeRich=s=>s;const html=f.StudyFlow.questionHTML({id:2,kind:'translation',stem:'Translate.',points:25,tag:'Translation'},true);
+ check(html.includes('data-flow-manual'),false);check(html.includes('data-ai-grade="translation"'),true);
+ f.Hub.renderTask(schools.oralItems[0],'pku');check(f.screen.innerHTML.includes('data-hub-rating'),false);check(f.screen.innerHTML.includes('data-hub-field="reviewer"'),false);check(f.Hub.draft.reviewer,'ai-pending');check(f.Hub.totalScore(f.Hub.draft.ratings),null);
+ f.WritingUI.draft=f.WritingUI.blank();f.WritingUI.renderEditor();check(f.screen.innerHTML.includes('data-ai-grade="writing"'),true);check(f.screen.innerHTML.includes('essay-review-import'),true);
+}
 {
  const {Hub,StudyFlow}=setup();let saves=0;Hub.store=async()=>{saves++;throw Error('must not save');};
  await StudyFlow.submitMixed();check(saves,0);check(StudyFlow.mixedResult.objectiveScore,50);check(StudyFlow.mixedResult.total,null);check(Hub.review,true);check(Hub.busy,false);

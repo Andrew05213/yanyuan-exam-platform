@@ -22,6 +22,10 @@ try{
  for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const statement of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();
  check((await call('/api/session')).authenticated,false);
  check((await call('/api/session','A')).userId,'A');
+ const aiResponse=await mf.dispatchFetch('https://study.test/api/ai-grading');check(aiResponse.status,200);const ai=await aiResponse.json();check(ai.status,'not_configured');check(ai.enabled,false);check(ai.score,null);
+ check((await call('/api/ai-grading',null,{kind:'writing'})).status,401);
+ const aiPost=await mf.dispatchFetch('https://study.test/api/ai-grading',{method:'POST',headers:{...actor('A'),'Content-Type':'application/json'},body:JSON.stringify({kind:'translation',answer:'An answer.'})});check(aiPost.status,503);const pendingAI=await aiPost.json();check(pendingAI.enabled,false);check(pendingAI.score,null);check(pendingAI.code,'AI_GRADING_NOT_CONFIGURED');
+ check((await call('/api/ai-grading','A',{kind:'oral'},{Origin:'https://other.test','Sec-Fetch-Site':'cross-site'})).status,403);
  const packet={blocks:[{materialId:'A-material',questions:[{id:1,sourceId:'A-only-question'}]}]};
  const record={id:'qa-A',kind:'packet',schoolId:'pku',title:'A private',payload:packet,expectedRevision:0,ownerId:'B'};
  check((await call('/api/archive','A',record)).status,201);

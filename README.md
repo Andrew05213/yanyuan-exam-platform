@@ -1,5 +1,7 @@
 # 燕园备考 · 六校模拟与口试
 
+Subjective grading now has an explicit AI placeholder for writing, translation and oral practice; default manual score inputs are removed. No AI provider or credential is configured, so these entries show “AI 批改暂未配置” and leave scores pending. Objective grading stays deterministic. Historical scores and the optional ChatGPT review import remain available. See [AI grading integration notes](docs/ai-grading.md) for the reserved interface and required future implementation.
+
 Public six-school practice and shared-materials website, with account-private learning records. Site identity is preserved; audience is opened only after owner-scoped authorization is deployed. Version 2.1 adds school-specific mixed papers, personal presets, quick error analysis, photographed essay drafts, local OCR and version-preserved critique imports. Six school tracks and oral practice remain available. No records are sent to the separate 双线·保送备考 site.
 
 ## School and source boundaries
