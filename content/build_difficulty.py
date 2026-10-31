@@ -2,7 +2,7 @@
 import json,copy,re
 from pathlib import Path
 R=Path(__file__).resolve().parents[1];P=R/'public'
-b=json.loads((P/'bank.json').read_text());h=json.loads((P/'schools.json').read_text());w=json.loads((P/'workflows.json').read_text())
+b=json.loads((P/'bank.json').read_text(encoding='utf-8'));h=json.loads((P/'schools.json').read_text(encoding='utf-8'));w=json.loads((P/'workflows.json').read_text(encoding='utf-8'))
 tiers={
  '英语':[('cet4','四级','常用词汇、单层句法与直接信息定位'),('cet6','六级','较长句、学术常用词与局部推断'),('tem4','专四','语法细分、搭配辨析与篇章关系'),('postgrad','考研','论证关系、语境义与有约束的推断'),('tem8','专八','抽象论述、隐含立场与多处证据整合'),('tem8plus','专八加','在专八参照上提高词汇、句法、论证及干扰强度，须有独立依据')],
  '数学':[('gaokao-mid','高考中档题','常规概念、基本转化与有限步骤'),('gaokao-final','高考压轴题','参数分类、多条件整合与较长推理'),('foundation','强基数学','非常规方法、知识迁移与选拔性综合'),('competition1','一试数竞','竞赛一试参照，需典型竞赛知识与技巧'),('competition2','二试数竞','竞赛二试参照，重证明与深入构造，不能用普通单选题冒充')],
@@ -55,4 +55,6 @@ for p,tier in chinese:
     q=copy.deepcopy(q);q['sourceId']=p['id']+':'+str(q['id']);qs.append(q)
   add(p['id']+':'+key,'语文',key,tier,qs,'整组按阅读与干扰要求暂定；保留基础题，跨篇比较所需的两篇材料不拆开。',title=sec['title'],text='\n\n'.join(texts),source='真实作家节选；作者、译者及删节说明沿用原卷',materialId=p['id']+':'+key)
 data=dict(version='3.0',reviewDate='2026-10-29',tiers={s:[dict(id=i,label=l,description=d) for i,l,d in ts] for s,ts in tiers.items()},sections={s:[dict(id=i,label=l,unit=u) for i,l,u in ts] for s,ts in sections.items()},items=items,notice='档位是命题能力参照，不是官方考试等值或单一线性排名；当前题目均为编辑暂定。无充足证据的高档位保持空缺。',sampleNeeds=['题目及完整配套材料','答案、逐题解析及评分标准','考试名称、年份、题型与原始来源','你或教师建议的难度及理由','可选：限时、实际得分和各选项选择情况','允许使用或分享的范围；扫描件请附可复制文字'])
-(P/'difficulty.json').write_text(json.dumps(data,ensure_ascii=False,indent=2));print('Classified',len(items),'units; no fabricated competition or graduate stock.')
+from school_tracks import apply_difficulty
+data = apply_difficulty(data)
+(P/'difficulty.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8');print('Classified',len(items),'units; no fabricated competition or graduate stock.')

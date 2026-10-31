@@ -135,7 +135,7 @@ for(const fail of [false,true]){
  check(f.Hub.answers[1],'B');check(f.Hub.packet.id!=='complete',true);check(f.Hub.packetMeta.revision,0);check(f.Hub.saveError,'');
 }
 {
- const f=setup();f.Hub.renderSchools();check((f.screen.innerHTML.match(/class="hub-school-card"/g)||[]).length,6);
+ const f=setup();f.Hub.renderSchools();check((f.screen.innerHTML.match(/class="hub-school-card"/g)||[]).length,10);
  check(f.screen.innerHTML.includes('ONE SPACE'),false);check(f.screen.innerHTML.includes('资料与招生参考'),true);
  f.TierStudio.updateStocks=()=>{};f.TierStudio.loadPresets=()=>{};
  for(const school of schools.schools)for(const subject of school.subjects){f.Hub.school=school.id;f.TierStudio.reset(subject,school.id);f.TierStudio.render();check(f.screen.innerHTML.includes('id="tier-form"'),true);check(f.screen.innerHTML.includes('data-tier-field="count"'),true);check((f.screen.innerHTML.match(/<details\b/g)||[]).length,(f.screen.innerHTML.match(/<\/details>/g)||[]).length);}

@@ -4,8 +4,8 @@ Configurations are training designs, never assertions of unpublished exam rules.
 from pathlib import Path
 import json,html
 R=Path(__file__).resolve().parents[1]
-H=json.loads((R/'public/schools.json').read_text())
-B=json.loads((R/'public/bank.json').read_text())
+H=json.loads((R/'public/schools.json').read_text(encoding='utf-8'))
+B=json.loads((R/'public/bank.json').read_text(encoding='utf-8'))
 ALL=['pku','speit','thu','ruc','bfsu','zju']
 PROFILES={
  'pku':dict(name='文学与论证精读',level='挑战',topics=['literature','argument','society'],minutes=60,readingCount=3,mcCount=20,fillCount=0,clozeCount=1,orderCount=0,translationCount=0,writingCount=0,focus='强调文本细读、语义辨析与论证推断；沿用原有预测样卷的客观题训练方向。'),
@@ -261,6 +261,9 @@ METHODS={
 }
 
 D=dict(version='2.1',topics={'literature':'文学与细读','argument':'论证与解释','science':'科学与工程','society':'社会与公共议题','education':'教育与学习','culture':'文化与翻译'},profiles=PROFILES,readings=READINGS,fills=FILLS,clozes=CLOZES,orders=ORDERS,writings=WRITINGS,translations=TRANSLATIONS,methods=METHODS,writingDimensions=[dict(name=n,max=m) for n,m in [('审题与内容完成度',20),('论证与逻辑',25),('结构与衔接',15),('语法与句法',20),('词汇与表达',15),('拼写、标点与格式',5)]],generationNote='学校默认配置、个人预设与本次调整分别保存；默认比例属于训练设计。题库数量有限，去重不足时明确提示，不自动关闭去重。',authorNote='新题与学习提示为ChatGPT命题；真实作家阅读材料另有作者与原文来源。')
+from school_tracks import apply_workflows
+D = apply_workflows(D)
+
 if __name__=='__main__':
- (R/'public/workflows.json').write_text(json.dumps(D,ensure_ascii=False,indent=2)+'\n')
+ (R/'public/workflows.json').write_text(json.dumps(D,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
  print(f'{len(READINGS)} reading units, {len(FILLS)} grammar fills, {len(CLOZES)} cloze units, {len(ORDERS)} ordering tasks, {len(WRITINGS)} writing prompts, {len(TRANSLATIONS)} translation units')

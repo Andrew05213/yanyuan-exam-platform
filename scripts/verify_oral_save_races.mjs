@@ -1,0 +1,15 @@
+import {readFile} from 'node:fs/promises';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const nodes=new Map(['hub-save-attempt','hub-save-status','hub-draft-state'].map(id=>['#'+id,{disabled:false,textContent:'',className:''}]));
+const messages=[];const removed=[];let resolveSave;
+const context={console,toast:s=>messages.push(s),$:(s)=>nodes.get(s)||null,PublicApp:{session:{authenticated:true,userId:'a'}},localStorage:{removeItem:k=>removed.push(k),setItem:()=>{}},crypto:globalThis.crypto};
+vm.createContext(context);vm.runInContext(await readFile('public/hub.js','utf8')+'\nglobalThis.Hub=Hub;',context);
+const hub=context.Hub;hub.data={rubric:[{max:100}]};hub.timer={elapsed:0};hub.pauseTimer=()=>{};
+const draft={key:'task',item:{title:'test'},schoolId:'pku',answer:'初稿',audioId:null,reflection:'',nextStep:'',ratings:[''],reviewer:'self',referenceSeen:false,dirty:true,meta:null};hub.draft=draft;
+hub.store=()=>new Promise(resolve=>{resolveSave=resolve});
+const pending=hub.saveAttempt();draft.answer='保存时的新修改';draft.ratings[0]='90';resolveSave({id:'one',revision:1});await pending;
+assert.equal(draft.dirty,true);assert.equal(removed.length,0);assert.match(nodes.get('#hub-save-status').textContent,/再次保存/);
+hub.oralUploading=true;await hub.saveAttempt();assert.match(messages.at(-1),/等待上传/);hub.oralUploading=false;
+hub.oralRecordingDraft=draft;await hub.saveAttempt();assert.match(messages.at(-1),/结束录音/);
+console.log('PASS: oral recording and upload block save; edits during save remain unsaved.');

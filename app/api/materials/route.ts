@@ -1,18 +1,22 @@
-import {and,desc,eq,sql} from 'drizzle-orm';
+import {and,desc,eq,lt,or,sql} from 'drizzle-orm';
 import {getDb} from '../../../db/index';
 import {communityMaterials,materialFiles} from '../../../db/schema';
-import {principal,sameOrigin,AccessError,fail,privateHeaders} from '../../../lib/user-access';
+import {principal,sameOrigin,readLimitedText,AccessError,fail,privateHeaders} from '../../../lib/user-access';
 import {validateMaterial,publicMaterial,materialUnits} from '../../../lib/material-contracts';
 export const dynamic='force-dynamic';
 const reply=(data:unknown,status=200)=>Response.json(data,{status,headers:privateHeaders});
 export async function GET(request:Request){try{
  const params=new URL(request.url).searchParams,mine=params.get('mine')==='1',id=params.get('id'),db=getDb(),user=mine?principal(request):null;
  if(id){const r=await db.select().from(communityMaterials).where(and(eq(communityMaterials.id,id),mine?eq(communityMaterials.ownerId,user!.id):eq(communityMaterials.active,1))).get();if(!r)return reply({error:'资料不存在。'},404);return reply({material:publicMaterial(r)});}
- const rows=await db.select().from(communityMaterials).where(mine?eq(communityMaterials.ownerId,user!.id):eq(communityMaterials.active,1)).orderBy(desc(communityMaterials.updatedAt)).limit(200);
- return reply({materials:rows.map(r=>({...publicMaterial(r),questions:undefined,text:undefined,questionCount:JSON.parse(r.payload).questions.length})),...(params.get('catalog')==='1'?{items:rows.flatMap(materialUnits)}:{}),limit:200});
+ const beforeTime=params.get('beforeTime'),beforeId=params.get('beforeId');
+ if((beforeTime&&!beforeId)||(!beforeTime&&beforeId)||(beforeTime&&!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(beforeTime))||(beforeId&&!/^material-[a-f0-9-]{36}$/.test(beforeId)))throw new AccessError('分页参数无效。',400);
+ const cursor=beforeTime&&beforeId?or(lt(communityMaterials.updatedAt,beforeTime),and(eq(communityMaterials.updatedAt,beforeTime),lt(communityMaterials.id,beforeId))):undefined;
+ const rows=await db.select().from(communityMaterials).where(and(mine?eq(communityMaterials.ownerId,user!.id):eq(communityMaterials.active,1),cursor)).orderBy(desc(communityMaterials.updatedAt),desc(communityMaterials.id)).limit(201);
+ const hasMore=rows.length>200,records=rows.slice(0,200),last=records.at(-1);
+ return reply({materials:records.map(r=>({...publicMaterial(r),questions:undefined,text:undefined,questionCount:JSON.parse(r.payload).questions.length})),...(params.get('catalog')==='1'?{items:records.flatMap(materialUnits)}:{}),limit:200,next:hasMore&&last?{time:last.updatedAt,id:last.id}:null});
  }catch(error){return fail(error,'共享资料暂时无法读取。');}}
 export async function POST(request:Request){try{
- const user=principal(request);sameOrigin(request);const raw=await request.text();if(raw.length>750000)throw new AccessError('单份资料请控制在750KB文字以内。',413);const body=JSON.parse(raw),db=getDb(),id=body.id||'material-'+crypto.randomUUID();if(!/^material-[a-f0-9-]{36}$/.test(id))throw new AccessError('资料编号无效。',400);
+ const user=principal(request);sameOrigin(request);const raw=await readLimitedText(request,750000);if(raw.length>750000)throw new AccessError('单份资料请控制在750KB文字以内。',413);const body=JSON.parse(raw),db=getDb(),id=body.id||'material-'+crypto.randomUUID();if(!/^material-[a-f0-9-]{36}$/.test(id))throw new AccessError('资料编号无效。',400);
  const existing=await db.select().from(communityMaterials).where(eq(communityMaterials.id,id)).get();if(existing&&existing.ownerId!==user.id)throw new AccessError('资料不存在。',404);
  if(existing&&body.expectedRevision!==existing.revision)throw new AccessError('资料已在另一处更新，请重新打开。',409);
  if(body.action==='withdraw'){if(!existing)throw new AccessError('资料不存在。',404);const r=await db.update(communityMaterials).set({active:0,updatedAt:new Date().toISOString(),revision:existing.revision+1}).where(and(eq(communityMaterials.id,id),eq(communityMaterials.ownerId,user.id),eq(communityMaterials.revision,existing.revision))).returning().get();if(!r)throw new AccessError('版本已变化，请刷新。',409);return reply({material:publicMaterial(r)});}

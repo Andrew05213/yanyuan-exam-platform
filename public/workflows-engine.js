@@ -58,7 +58,7 @@
   remainders.sort((a,b)=>b.fraction-a.fraction);for(let i=0;i<100-assigned;i++)remainders[i].q.points++;
  }
  function makePacket(args){
-  const {bank,hub,data,config:c,rng=Math.random}=args;validateConfig(c);const s=hub.schools.find(s=>s.id===c.schoolId);if(!s)throw Error('学校不存在。');const p=pools(args);let blocks=[];
+  const {bank,hub,data,config:c,rng=Math.random}=args;validateConfig(c);const s=hub.schools.find(s=>s.id===c.schoolId);if(!s)throw Error('学校不存在。');if(s.outlineOnly)throw Error('该学校暂不生成样卷。');const p=pools(args);let blocks=[];
   const ranked=a=>{const shuffled=shuffle(a,rng);return c.level==='挑战'?shuffled.sort((a,b)=>(ranks[b.level]||2)-(ranks[a.level]||2)):shuffled;};
   // Whole reading/cloze units are selected intact. No shortfall is hidden.
   if(p.reading.length<c.readingCount)choose(p.reading,c.readingCount,'阅读篇章',rng);
@@ -77,7 +77,7 @@
     if(b.text&&(b.kind==='cloze'||!b.paragraphs?.length))b.paragraphs=b.text.split(/\n\s*\n/);
   }
   distributePoints(blocks);
-  const packet={schema:2,kind:'written',subject:'英语',schoolId:c.schoolId,schoolName:s.name+' · '+s.track,title:s.short+' · '+(c.name||data.profiles[c.schoolId].name),createdAt:new Date().toISOString(),minutes:c.minutes,count:number,totalPoints:100,config:clone(c),blocks,note:'学校专项训练配置；具体题型比例、分值、时长和层级为本站训练设置。真实作家材料与原创训练分别署名。主观题单列待批改，不自动推算语义分。'};
+  const packet={schema:2,kind:'written',subject:'英语',schoolId:c.schoolId,schoolName:s.name+' · '+s.track,title:s.short+' · '+(c.name||data.profiles[c.schoolId].name),createdAt:new Date().toISOString(),minutes:c.minutes,count:number,totalPoints:100,config:clone(c),blocks,note:(s.examStandardStatus==='pending'?'考试标准待补充；当前为通用练习，不代表该校正式考试。':'')+'学校专项训练配置；具体题型比例、分值、时长和层级为本站训练设置。真实作家材料与原创训练分别署名。主观题单列待批改，不自动推算语义分。'};
   validatePacket(packet);return packet;
  }
  function validatePacket(p){

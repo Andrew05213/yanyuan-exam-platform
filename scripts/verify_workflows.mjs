@@ -7,7 +7,7 @@ const bank=JSON.parse(read('public/bank.json')),hub=JSON.parse(read('public/scho
 const ctx=vm.createContext({Math,Date,JSON,Number,Set,Map,Error,String,Array,Object});
 vm.runInContext(read('public/hub-engine.js'),ctx);vm.runInContext(read('public/workflows-engine.js'),ctx);const E=ctx.WorkflowEngine;
 let seed=137;const rng=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/2**32;};
-for(const profile of Object.values(data.profiles))for(let trial=0;trial<15;trial++){
+for(const profile of Object.values(data.profiles).filter(p=>!hub.schools.find(s=>s.id===p.schoolId).outlineOnly))for(let trial=0;trial<15;trial++){
  const packet=E.makePacket({bank,hub,data,config:profile,state:{},rng});
  const qs=packet.blocks.flatMap(b=>b.questions);assert.equal(qs.length,packet.count);assert.equal(qs.reduce((n,q)=>n+q.points,0),100);assert.equal(new Set(qs.map(q=>q.sourceId)).size,qs.length);
  const answers=Object.fromEntries(qs.filter(q=>!['writing','translation'].includes(q.kind)).map(q=>[q.id,q.kind==='mc'?q.answer:q.accepted[0]]));

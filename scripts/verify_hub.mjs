@@ -8,7 +8,7 @@ const hub=JSON.parse(fs.readFileSync(new URL('public/schools.json',root),'utf8')
 const context=vm.createContext({Math,Date,JSON,Number,Set,Map,Error,String,Array,Object});
 vm.runInContext(fs.readFileSync(new URL('public/hub-engine.js',root),'utf8'),context);
 const E=context.HubEngine;
-assert.equal(hub.schools.length,6);
+assert.equal(hub.schools.length,10);
 assert.equal(new Set(hub.oralItems.map(x=>x.id)).size,hub.oralItems.length);
 assert.equal(hub.oralItems.filter(q=>q.type==='reading').length,5);
 for(const q of hub.oralItems){
@@ -17,12 +17,12 @@ for(const q of hub.oralItems){
   if(q.type==='reading')assert(q.source.url&&q.source.kind==='真实作家原文');
 }
 let seed=17;const rng=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
-for(let n=0;n<40;n++)for(const school of hub.schools){
+for(let n=0;n<40;n++)for(const school of hub.schools.filter(s=>!s.outlineOnly&&s.examStandardStatus!=='pending')){
   const p=E.makeOral({hub,schoolId:school.id,rng});
   assert.equal(p.items.length,school.oralRecipe.length);
   assert.equal(new Set(p.items.map(x=>x.id)).size,p.items.length);
   assert.deepEqual(Array.from(p.items,q=>q.type),school.oralRecipe);
-  assert(p.items.every(q=>q.schoolIds.includes(school.id)));
+  assert(p.items.every(q=>E.oralPool(hub,school.id,school.defaultLanguageId).some(x=>x.id===q.id)));
   if(school.id==='speit')assert.notEqual(p.items.find(q=>q.type==='zh-en').id.slice(6),p.items.find(q=>q.type==='en-zh').id.slice(6),'Opposite translations must not use the same passage in one session');
   for(const subject of school.subjects){
     const p=E.makeWritten({bank,hub,schoolId:school.id,subject,count:subject==='语文'?25:20,rng});

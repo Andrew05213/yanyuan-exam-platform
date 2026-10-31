@@ -1,4 +1,4 @@
-import {principal,fail} from '../../../lib/user-access';
+import {principal,fail,sameOrigin} from '../../../lib/user-access';
 import {env} from "cloudflare:workers";
 import {getDb} from "../../../db/index";
 import {attachments} from "../../../db/schema";
@@ -12,8 +12,7 @@ export async function GET(request:Request){
 }
 export async function POST(request:Request){
   let user;try{user=principal(request);}catch(error){return fail(error);}
-  const origin=request.headers.get('Origin'),url=new URL(request.url),host=request.headers.get('Host')||url.host;
-  try{if(request.headers.get('Sec-Fetch-Site')==='cross-site'||(origin&&new URL(origin).host!==host&&new URL(origin).host!==url.host))return reply({error:'请从本站页面上传'},403);}catch{return reply({error:'无效的请求来源'},403);}
+  try{sameOrigin(request);}catch(error){return fail(error);}
   if(!env.BUCKET)return reply({error:'图片存储暂未就绪，请保留原图稍后重试。'},503);
   const declared=Number(request.headers.get('Content-Length'));if(declared>MAX)return reply({error:'单张图片请控制在8 MB以内。'},413);
   try{

@@ -1,6 +1,8 @@
-# 燕园备考 · 六校模拟与口试
+# 燕园备考 · 十校专项训练与口试
 
-Subjective grading now has an explicit AI placeholder for writing, translation and oral practice; default manual score inputs are removed. No AI provider or credential is configured, so these entries show “AI 批改暂未配置” and leave scores pending. Objective grading stays deterministic. Historical scores and the optional ChatGPT review import remain available. See [AI grading integration notes](docs/ai-grading.md) for the reserved interface and required future implementation.
+Subjective grading has an explicit AI placeholder for writing, translation and oral practice; default manual score inputs are removed. The model execution adapter is intentionally not implemented, so these entries show “AI 批改暂未配置” and leave scores pending even when Provider settings are saved. Objective grading stays deterministic. Historical scores and the optional ChatGPT review import remain available. See [AI grading integration notes](docs/ai-grading.md) for the reserved interface and required future implementation.
+
+The administrator console at `/admin` supports multiple Providers, write-only encrypted API keys, model pricing and per-user token/cost reports. Server-side allowlists protect every admin endpoint. No real usage is generated until a future server-side model adapter calls the internal usage ledger. See [administrator setup and accounting](docs/admin.md) for required deployment secrets, migration and integration details.
 
 Public six-school practice and shared-materials website, with account-private learning records. Site identity is preserved; audience is opened only after owner-scoped authorization is deployed. Version 2.1 adds school-specific mixed papers, personal presets, quick error analysis, photographed essay drafts, local OCR and version-preserved critique imports. Six school tracks and oral practice remain available. No records are sent to the separate 双线·保送备考 site.
 
@@ -22,9 +24,21 @@ The uploaded PKU-labelled scans identify themselves as 2026 外语类保送笔�
 
 This is now a Vinext Worker with D1 binding `DB`; native Sites provisions the database and applies the committed schema migration. Static material is authored under `public/`. `dist/` is generated build output. The source manifest keeps the existing `project_id` and removes the former static-only declaration.
 
-`/api/archive` stores immutable generated packet snapshots, oral answers/reflections/manual rubric scores, written attempts, and optional legacy-backup copies. It uses revision-based conditional updates to prevent concurrent overwrites. Every archive query and attachment read requires a trusted Sites visitor identity and filters by owner_id. Site service access alone does not supply a user identity or authorize private records. API writes reject cross-site origins, malformed fields and oversized bodies.
+`/api/archive` stores immutable generated packet snapshots, oral answers/reflections and historical rubric scores, written attempts, and optional legacy-backup copies. It uses revision-based conditional updates to prevent concurrent overwrites. Every archive query and attachment read requires a trusted Sites visitor identity and filters by owner_id. Site service access alone does not supply a user identity or authorize private records. API writes reject cross-site origins, malformed fields and oversized bodies.
 
-New packets and explicit saved attempts are cloud-backed. Unsubmitted drafts live only in page memory, labelled unsaved. Export/import provides portable packet backups. Browser practice state uses a separate local key per Site visitor ID; the legacy key is migrated only for the verified original owner; its explicit backup action writes a separate D1 copy. Voice recognition/recording and automatic AI speech assessment are not implemented or advertised; users paste transcripts or write notes and use a clearly labelled self/teacher rubric.
+New packets and explicit saved attempts are cloud-backed. Signed-in written and oral practice keeps unsubmitted drafts on the current device, scoped by visitor ID; drafts remain labelled unsaved until submitted. Export/import provides portable packet backups. The legacy key is migrated only for the verified original owner; its explicit backup action writes a separate D1 copy. Oral practice supports microphone recording, upload and playback. Speech transcription and automatic AI assessment are not implemented; subjective scores stay pending AI integration.
+
+## Merged reconstruction features
+
+The existing interface, Provider console and AI grading placeholders remain the baseline. WHU, SISU, NJU and Fudan join the original six schools. `content/school-tracks.json` supplies language choices, school policies and training profiles to the reproducible content builders. Target-language selection filters country-study questions and is retained in oral snapshots. Missing country stock stops whole-session generation explicitly; common skills remain shared training rather than a claim of school-specific exam equivalence.
+
+`public/exam-standards.json` records the user-provided Tsinghua 50/40/30 structure. Its year, duration and point totals remain unknown; generic stock does not count as calibrated full-paper stock. All other school standards remain pending real samples.
+
+Signed-in users can record or upload WebM, M4A, MP3, WAV or Ogg audio (20 MB each, 30 uploads/day). Audio and original images stay owner-only, including when the caller is an administrator. `/api/admin` private-record browsing from the supplied reconstruction package is deliberately excluded. The existing `/admin` console adds a quality-feedback tab: users actively submit a paper rating or question snapshot, administrators reply with a status and note, and concurrent handling uses a version check. Submitted feedback is visible to its owner and administrators, not to other students.
+
+The learning report aggregates the current user's saved multiple-choice answers, reported mistakes and latest redo attempts without AI. It does not invent subjective grades or ability estimates. It analyses at most 2000 records / 8 MB and discloses truncation. Archive and shared-material APIs use cursor pagination; archive filters run on the server. Unverified OCR text with a provisional review can be corrected while retaining the previous text and critique in immutable history; confirmed first reviews remain locked.
+
+Apply the append-only `drizzle/0004_pink_pyro.sql` migration after existing migrations. It adds oral audio metadata, feedback and feedback audit tables only. Rebuild and run `node scripts/verify_merge_features.mjs`, `node scripts/verify_school_tracks.mjs`, `node scripts/verify_exam_standards.mjs`, `node scripts/verify_learning_report.mjs` and the existing privacy/admin suites. The merge tests use isolated synthetic identities and never write to production.
 
 ## Build and checks
 

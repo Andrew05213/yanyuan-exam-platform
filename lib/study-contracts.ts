@@ -23,13 +23,30 @@ export function validateReview(review:any,originalText:string){
   if(partial?review.total!==null:review.total!==sum)throw Error("总分须等于六项实际得分之和；信息不足时须标为暂评或不计完整总分。");
   if(!Array.isArray(review.priorities)||review.priorities.length!==3||!Array.isArray(review.vocabulary)||!Array.isArray(review.paragraphs)||typeof review.optimizedText!=="string"||typeof review.summary!=="string")throw Error("批改还须包含最需改的三项、段落论证、词块和优化全文。");
 }
+export function reviseUnverifiedTranscription(previous:any,payload:any){
+ if(previous?.firstReview&&previous.firstReview.total===null&&!previous.textConfirmed&&payload.originalText!==previous.originalText){
+  const snapshot={originalText:previous.originalText,firstReview:previous.firstReview,latestReview:previous.latestReview||null,reviews:previous.reviews||[],images:previous.images};
+  const next={...payload,transcriptionHistory:[...(previous.transcriptionHistory||[]),snapshot],reviews:[],textConfirmed:false,verification:'等待核对',status:'transcription-check'};
+  delete next.firstReview;delete next.latestReview;return next;
+ }
+ return payload;
+}
 export function validateStudyPayload(kind:string,payload:any,existingPayload?:any){
   if(kind==='essay'){
     if(typeof payload.originalText!=="string"||payload.originalText.length>40000||!Array.isArray(payload.images)||payload.images.length>12||payload.images.some((p:any)=>typeof p.id!=="string"||!/^asset-[a-f0-9-]{36}$/.test(p.id)))throw Error("作文原稿或图片信息不完整。");
-    if(existingPayload?.firstReview&&payload.originalText!==existingPayload.originalText)throw Error("这份原稿已有首次评分。请把修改稿另存为新练习，保留首次原稿与成绩。");
+    const oldHistory=existingPayload?.transcriptionHistory||[],history=payload.transcriptionHistory||[];
+    if(!Array.isArray(history)||history.length>30)throw Error("原稿校对历史格式不完整。 ");
+    const changed=!!existingPayload&&payload.originalText!==existingPayload.originalText;
+    const provisional=!!existingPayload?.firstReview&&existingPayload.firstReview.total===null&&!existingPayload.textConfirmed;
+    const snapshot=provisional&&changed?{originalText:existingPayload.originalText,firstReview:existingPayload.firstReview,latestReview:existingPayload.latestReview||null,reviews:existingPayload.reviews||[],images:existingPayload.images}:null;
+    const expected=snapshot?[...oldHistory,snapshot]:oldHistory;
+    if(JSON.stringify(history)!==JSON.stringify(expected))throw Error("原稿校对历史须保留，不能改写。");
+    if(existingPayload?.firstReview&&changed&&!provisional)throw Error("这份原稿已有首次评分。请把修改稿另存为新练习，保留首次原稿与成绩。");
+    if(snapshot&&(payload.firstReview||payload.latestReview||(payload.reviews||[]).length||payload.textConfirmed))throw Error("修改未核对原稿后，旧批改须归档，并重新核对后再评分。");
     if(payload.firstReview)validateReview(payload.firstReview,payload.originalText);
     if(payload.latestReview)validateReview(payload.latestReview,payload.originalText);
-    if(existingPayload?.firstReview&&JSON.stringify(payload.firstReview)!==JSON.stringify(existingPayload.firstReview))throw Error("首次批改记录须保留；后续复评写入新的复评记录。");
+    if(!payload.textConfirmed&&[payload.firstReview,payload.latestReview,...(payload.reviews||[])].some((r:any)=>r&&r.total!==null))throw Error("原稿尚未核对，不得保存完整总分。");
+    if(existingPayload?.firstReview&&!snapshot&&JSON.stringify(payload.firstReview)!==JSON.stringify(existingPayload.firstReview))throw Error("首次批改记录须保留；后续复评写入新的复评记录。");
   }
   if(kind==='preset'&&(!payload.config||typeof payload.name!=="string"))throw Error("预设名称或配置不完整。");
   if(kind==='error-set'&&(!Array.isArray(payload.entries)||payload.entries.length<1||payload.entries.length>200||!payload.packet))throw Error("错题档案内容不完整。");

@@ -1,0 +1,198 @@
+{
+  "schema": 1,
+  "schools": {
+    "thu": {
+      "schoolId": "thu",
+      "schoolName": "清华大学",
+      "revision": 2,
+      "updated": "2026-10-29",
+      "evidence": {
+        "kind": "user-reported",
+        "label": "用户提供的考试内容",
+        "examYear": null,
+        "officiallyVerified": false
+      },
+      "difficulty": {
+        "referenceSchool": "pku",
+        "label": "难度与北大相同（用户说明）",
+        "referencePaperId": null
+      },
+      "corrections": [
+        "史论由6道单选更正为5道；语文总计50题。"
+      ],
+      "subjects": {
+        "语文": {
+          "totalQuestions": 50,
+          "minutes": null,
+          "totalPoints": null,
+          "sections": [
+            {
+              "id": "language-basics",
+              "title": "语基",
+              "count": 10,
+              "questionKind": "mc",
+              "optionCount": null,
+              "passageType": null
+            },
+            {
+              "id": "japanese-literature",
+              "title": "日本文常",
+              "count": 5,
+              "questionKind": "choice-unspecified",
+              "optionCount": null,
+              "passageType": null
+            },
+            {
+              "id": "expository",
+              "title": "说明文",
+              "count": 5,
+              "questionKind": "mc",
+              "optionCount": null,
+              "passageType": "说明文",
+              "passageCount": 1
+            },
+            {
+              "id": "modern-prose",
+              "title": "现代文",
+              "count": 5,
+              "questionKind": "mc",
+              "optionCount": null,
+              "passageType": "现代文",
+              "passageCount": 1
+            },
+            {
+              "id": "vernacular-fiction",
+              "title": "古代白话小说",
+              "count": 5,
+              "questionKind": "mixed",
+              "optionCount": null,
+              "passageType": "古代白话小说",
+              "passageCount": 1,
+              "composition": [
+                {
+                  "kind": "mc",
+                  "count": 4
+                },
+                {
+                  "kind": "multiple",
+                  "count": 1
+                }
+              ]
+            },
+            {
+              "id": "modern-poetry",
+              "title": "现代诗歌",
+              "count": 4,
+              "questionKind": "choice-unspecified",
+              "optionCount": null,
+              "passageType": "现代诗歌",
+              "passageCount": 1
+            },
+            {
+              "id": "literary-knowledge",
+              "title": "文常",
+              "count": 5,
+              "questionKind": "choice-unspecified",
+              "optionCount": null,
+              "passageType": null
+            },
+            {
+              "id": "classical-biography",
+              "title": "文言史传",
+              "count": 6,
+              "questionKind": "mc",
+              "optionCount": null,
+              "passageType": "文言史传",
+              "passageCount": 1
+            },
+            {
+              "id": "classical-argument",
+              "title": "文言史论",
+              "count": 5,
+              "questionKind": "mc",
+              "optionCount": null,
+              "passageType": "文言史论",
+              "passageCount": 1
+            }
+          ],
+          "pending": [
+            "日本文常、文常和现代诗歌的单选/多选形式尚未明确。",
+            "语文选项数、各题分值和考试时长未提供。"
+          ]
+        },
+        "英语": {
+          "totalQuestions": 40,
+          "minutes": null,
+          "totalPoints": null,
+          "sections": [
+            {
+              "id": "vocabulary-grammar",
+              "title": "语法与词汇",
+              "count": 10,
+              "questionKind": "mc",
+              "optionCount": 4,
+              "passageType": null
+            },
+            {
+              "id": "cloze",
+              "title": "完形填空",
+              "count": 10,
+              "questionKind": "mc",
+              "optionCount": 4,
+              "passageType": "完形填空",
+              "passageCount": 1,
+              "blanks": 10
+            },
+            {
+              "id": "reading",
+              "title": "阅读理解",
+              "count": 20,
+              "questionKind": "mc",
+              "optionCount": 4,
+              "passageType": "英语阅读",
+              "passageCount": 4,
+              "questionsPerPassage": 5
+            }
+          ],
+          "pending": [
+            "文章长度、词汇范围、各题分值和考试时长未提供。"
+          ]
+        },
+        "数学": {
+          "totalQuestions": 30,
+          "minutes": null,
+          "totalPoints": null,
+          "difficulty": {
+            "bands": [
+              "gaokao-final",
+              "foundation"
+            ],
+            "label": "高考压轴至强基"
+          },
+          "sections": [
+            {
+              "id": "single-choice",
+              "title": "单项选择",
+              "count": 10,
+              "questionKind": "mc",
+              "optionCount": 4,
+              "passageType": null
+            },
+            {
+              "id": "indefinite-choice",
+              "title": "不定项选择",
+              "count": 20,
+              "questionKind": "indefinite",
+              "optionCount": 4,
+              "passageType": null
+            }
+          ],
+          "pending": [
+            "不定项的少选、错选计分规则未提供。",
+            "知识点比例、各题分值和考试时长未提供。"
+          ]
+        }
+      }
+    }
+  }
+}

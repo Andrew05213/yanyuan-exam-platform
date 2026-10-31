@@ -1,4 +1,5 @@
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {sql} from 'drizzle-orm';
 // Owner-scoped records. NULL is reserved for pre-publication legacy records.
 export const archiveRecords = sqliteTable("archive_records", {
   id: text("id").primaryKey(),
@@ -28,3 +29,35 @@ export const communityMaterials = sqliteTable("community_materials", {
 export const materialFiles=sqliteTable("material_files",{
  id:text("id").primaryKey(),ownerId:text("owner_id").notNull(),materialId:text("material_id"),objectKey:text("object_key").notNull(),filename:text("filename").notNull(),mime:text("mime").notNull(),size:integer("size").notNull(),createdAt:text("created_at").notNull(),
 });
+
+export const siteUsers=sqliteTable('site_users',{
+ id:text('id').primaryKey(),email:text('email'),displayName:text('display_name'),lastSeenAt:text('last_seen_at').notNull(),
+});
+
+export const aiProviders=sqliteTable('ai_providers',{
+ id:text('id').primaryKey(),name:text('name').notNull(),protocol:text('protocol').notNull(),baseUrl:text('base_url').notNull(),model:text('model').notNull(),currency:text('currency').notNull(),
+ enabled:integer('enabled').notNull().default(1),isDefault:integer('is_default').notNull().default(0),revision:integer('revision').notNull().default(1),
+ encryptedKey:text('encrypted_key'),keyUpdatedAt:text('key_updated_at'),inputPriceMicros:integer('input_price_micros'),cachedInputPriceMicros:integer('cached_input_price_micros'),outputPriceMicros:integer('output_price_micros'),
+ createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull(),
+},t=>[uniqueIndex('ai_providers_one_default_idx').on(t.isDefault).where(sql`${t.isDefault}=1`)]);
+
+export const aiUsageEvents=sqliteTable('ai_usage_events',{
+ id:text('id').primaryKey(),requestId:text('request_id').notNull(),userId:text('user_id').notNull(),providerId:text('provider_id').notNull(),providerName:text('provider_name').notNull(),model:text('model').notNull(),task:text('task').notNull(),status:text('status').notNull(),currency:text('currency').notNull(),
+ inputTokens:integer('input_tokens'),cachedInputTokens:integer('cached_input_tokens'),outputTokens:integer('output_tokens'),estimatedCostMicros:text('estimated_cost_micros'),pricingSnapshot:text('pricing_snapshot').notNull(),elapsedMs:integer('elapsed_ms'),createdAt:text('created_at').notNull(),
+},t=>[uniqueIndex('ai_usage_request_idx').on(t.providerId,t.requestId),index('ai_usage_user_date_idx').on(t.userId,t.createdAt),index('ai_usage_provider_date_idx').on(t.providerId,t.createdAt),index('ai_usage_date_idx').on(t.createdAt)]);
+
+export const adminAuditEvents=sqliteTable('admin_audit_events',{
+ id:text('id').primaryKey(),actorId:text('actor_id').notNull(),action:text('action').notNull(),providerId:text('provider_id').notNull(),createdAt:text('created_at').notNull(),
+},t=>[index('admin_audit_date_idx').on(t.createdAt)]);
+
+export const adminAccessLog=sqliteTable('admin_access_log',{
+ id:text('id').primaryKey(),actorId:text('actor_id').notNull(),action:text('action').notNull(),targetId:text('target_id'),createdAt:text('created_at').notNull(),
+},t=>[index('admin_access_log_created_idx').on(t.createdAt)]);
+
+export const oralAudio=sqliteTable('oral_audio',{
+ id:text('id').primaryKey(),ownerId:text('owner_id').notNull(),objectKey:text('object_key').notNull(),mime:text('mime').notNull(),size:integer('size').notNull(),createdAt:text('created_at').notNull(),
+},t=>[index('oral_audio_owner_created_idx').on(t.ownerId,t.createdAt)]);
+
+export const qualityFeedback=sqliteTable('quality_feedback',{
+ id:text('id').primaryKey(),ownerId:text('owner_id').notNull(),targetKey:text('target_key').notNull(),kind:text('kind').notNull(),title:text('title').notNull(),payload:text('payload').notNull(),status:text('status').notNull().default('open'),adminNote:text('admin_note').notNull().default(''),handledBy:text('handled_by'),createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull(),
+},t=>[index('quality_feedback_owner_idx').on(t.ownerId,t.updatedAt),index('quality_feedback_status_idx').on(t.status,t.updatedAt)]);

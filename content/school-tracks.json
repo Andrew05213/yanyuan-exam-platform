@@ -1,0 +1,1155 @@
+{
+  "version": "3.0",
+  "updated": "2026-10-30",
+  "policyNote": "以2026招生简章为历史参考，面向2027备考；2027专业与资格条件待当年简章确认。相同通用训练可以复用，但实际校测可能因考试语种、零/高起点和项目不同而变化。",
+  "languages": {
+    "ja": {
+      "id": "ja",
+      "label": "日语",
+      "countryType": "japan",
+      "scope": "日本"
+    },
+    "fr": {
+      "id": "fr",
+      "label": "法语",
+      "countryType": "france",
+      "scope": "法国与法语地区"
+    },
+    "de": {
+      "id": "de",
+      "label": "德语",
+      "countryType": "germany",
+      "scope": "德国与德语地区"
+    },
+    "ru": {
+      "id": "ru",
+      "label": "俄语",
+      "countryType": "country-ru",
+      "scope": "俄语相关国家与地区"
+    },
+    "es": {
+      "id": "es",
+      "label": "西班牙语",
+      "countryType": "country-es",
+      "scope": "西班牙与西语地区"
+    },
+    "pt": {
+      "id": "pt",
+      "label": "葡萄牙语",
+      "countryType": "country-pt",
+      "scope": "葡萄牙与葡语地区"
+    },
+    "ar": {
+      "id": "ar",
+      "label": "阿拉伯语",
+      "countryType": "country-ar",
+      "scope": "阿拉伯语国家与地区"
+    },
+    "ko": {
+      "id": "ko",
+      "label": "朝鲜语",
+      "countryType": "country-ko",
+      "scope": "朝鲜半岛"
+    },
+    "th": {
+      "id": "th",
+      "label": "泰语",
+      "countryType": "country-th",
+      "scope": "泰语相关国家与地区"
+    },
+    "id": {
+      "id": "id",
+      "label": "印尼语",
+      "countryType": "country-id",
+      "scope": "印尼语相关国家与地区"
+    },
+    "ur": {
+      "id": "ur",
+      "label": "乌尔都语",
+      "countryType": "country-ur",
+      "scope": "乌尔都语相关国家与地区"
+    },
+    "en": {
+      "id": "en",
+      "label": "英语",
+      "countryType": "country-en",
+      "scope": "英语国家与地区"
+    },
+    "it": {
+      "id": "it",
+      "label": "意大利语",
+      "countryType": "country-it",
+      "scope": "意大利语相关国家与地区"
+    },
+    "sw": {
+      "id": "sw",
+      "label": "斯瓦希里语",
+      "countryType": "country-sw",
+      "scope": "斯瓦希里语相关国家与地区"
+    },
+    "cs": {
+      "id": "cs",
+      "label": "捷克语",
+      "countryType": "country-cs",
+      "scope": "捷克语相关国家与地区"
+    },
+    "ro": {
+      "id": "ro",
+      "label": "罗马尼亚语",
+      "countryType": "country-ro",
+      "scope": "罗马尼亚语相关国家与地区"
+    },
+    "uk": {
+      "id": "uk",
+      "label": "乌克兰语",
+      "countryType": "country-uk",
+      "scope": "乌克兰语相关国家与地区"
+    },
+    "sq": {
+      "id": "sq",
+      "label": "阿尔巴尼亚语",
+      "countryType": "country-sq",
+      "scope": "阿尔巴尼亚语相关国家与地区"
+    },
+    "pl": {
+      "id": "pl",
+      "label": "波兰语",
+      "countryType": "country-pl",
+      "scope": "波兰语相关国家与地区"
+    },
+    "sk": {
+      "id": "sk",
+      "label": "斯洛伐克语",
+      "countryType": "country-sk",
+      "scope": "斯洛伐克语相关国家与地区"
+    },
+    "sl": {
+      "id": "sl",
+      "label": "斯洛文尼亚语",
+      "countryType": "country-sl",
+      "scope": "斯洛文尼亚语相关国家与地区"
+    },
+    "et": {
+      "id": "et",
+      "label": "爱沙尼亚语",
+      "countryType": "country-et",
+      "scope": "爱沙尼亚语相关国家与地区"
+    },
+    "la": {
+      "id": "la",
+      "label": "拉丁语",
+      "countryType": "country-la",
+      "scope": "拉丁语相关国家与地区"
+    },
+    "fa": {
+      "id": "fa",
+      "label": "波斯语",
+      "countryType": "country-fa",
+      "scope": "波斯语相关国家与地区"
+    },
+    "hi": {
+      "id": "hi",
+      "label": "印地语",
+      "countryType": "country-hi",
+      "scope": "印地语相关国家与地区"
+    },
+    "km": {
+      "id": "km",
+      "label": "柬埔寨语",
+      "countryType": "country-km",
+      "scope": "柬埔寨语相关国家与地区"
+    },
+    "ms": {
+      "id": "ms",
+      "label": "马来语",
+      "countryType": "country-ms",
+      "scope": "马来语相关国家与地区"
+    },
+    "he": {
+      "id": "he",
+      "label": "希伯来语",
+      "countryType": "country-he",
+      "scope": "希伯来语相关国家与地区"
+    },
+    "vi": {
+      "id": "vi",
+      "label": "越南语",
+      "countryType": "country-vi",
+      "scope": "越南语相关国家与地区"
+    },
+    "tr": {
+      "id": "tr",
+      "label": "土耳其语",
+      "countryType": "country-tr",
+      "scope": "土耳其语相关国家与地区"
+    },
+    "ta": {
+      "id": "ta",
+      "label": "泰米尔语",
+      "countryType": "country-ta",
+      "scope": "泰米尔语相关国家与地区"
+    },
+    "ps": {
+      "id": "ps",
+      "label": "普什图语",
+      "countryType": "country-ps",
+      "scope": "普什图语相关国家与地区"
+    },
+    "bn": {
+      "id": "bn",
+      "label": "孟加拉语",
+      "countryType": "country-bn",
+      "scope": "孟加拉语相关国家与地区"
+    },
+    "ku": {
+      "id": "ku",
+      "label": "库尔德语",
+      "countryType": "country-ku",
+      "scope": "库尔德语相关国家与地区"
+    },
+    "zu": {
+      "id": "zu",
+      "label": "祖鲁语",
+      "countryType": "country-zu",
+      "scope": "祖鲁语相关国家与地区"
+    },
+    "linguistics": {
+      "id": "linguistics",
+      "label": "语言学（专业方向）",
+      "countryType": "country-linguistics",
+      "scope": "语言学（专业方向）相关国家与地区"
+    }
+  },
+  "schools": [
+    {
+      "id": "pku",
+      "name": "北京大学",
+      "track": "多语种",
+      "short": "北大",
+      "region": "多语种",
+      "color": "#9c3f4d",
+      "subjects": [
+        "语文",
+        "数学",
+        "英语"
+      ],
+      "tagline": "读懂文本，也说清自己的判断。",
+      "focus": [
+        "通用笔试与口试",
+        "语种国别拓展",
+        "个人学习档案"
+      ],
+      "writtenNote": "语数英科目据2026简章；原有模拟卷A据你上传的预测样卷编制。",
+      "oralOfficial": "2026简章列明英语朗读、理解、表达，综合素质考察及专业外语模拟发音等。",
+      "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
+      "sourceUrl": "https://bkzs.pku.edu.cn/tzgg/d24d1f3ac99d4263bd2ab51442a7a7a8.htm",
+      "sourceLabel": "北大2026官方招生简章",
+      "writtenMinutes": {
+        "语文": 60,
+        "数学": 60,
+        "英语": 60
+      },
+      "oralRecipe": [
+        "reading",
+        "japan",
+        "personal"
+      ],
+      "profileFocus": "文学、思想与跨文化解释",
+      "userFormat": "原有专项配置保留为历史训练；目标语种与招生分组条件见下方说明。",
+      "languageIds": [
+        "ar",
+        "ko",
+        "de",
+        "ru",
+        "fr",
+        "pt",
+        "ja",
+        "th",
+        "es",
+        "id",
+        "ur"
+      ],
+      "defaultLanguageId": "ja",
+      "languagePolicy": {
+        "year": 2026,
+        "checkedAt": "2026-10-30",
+        "note": "2026暂定招11个语种；部分专业限第一志愿。语种选择用于训练分类，不代替志愿资格审核。",
+        "sourceUrl": "https://bkzs.pku.edu.cn/tzgg/d24d1f3ac99d4263bd2ab51442a7a7a8.htm"
+      }
+    },
+    {
+      "id": "speit",
+      "name": "上海交通大学",
+      "track": "多语种",
+      "short": "上交",
+      "region": "多语种",
+      "color": "#435f78",
+      "subjects": [
+        "数学",
+        "英语"
+      ],
+      "tagline": "在两种语言之间，把意思准确交付。",
+      "focus": [
+        "通用笔试与口试",
+        "语种国别拓展",
+        "个人学习档案"
+      ],
+      "writtenNote": "数外笔试参照2026招生简章公开转载；本专区按英语选考方向训练。具体题型仍需样卷校准。",
+      "oralOfficial": "2026公开招生信息列外语能力测试与综合面试；英语选考方向的外语能力测试使用英语。",
+      "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
+      "sourceUrl": "https://admissions.sjtu.edu.cn/newDetails?contentsID=3810000004162",
+      "secondaryUrl": "https://gaokao.eol.cn/shang_hai/dongtai/202601/t20260108_2714825.shtml",
+      "sourceLabel": "交大2026官方简章入口（正文动态加载）",
+      "writtenMinutes": {
+        "数学": 60,
+        "英语": 60
+      },
+      "oralRecipe": [
+        "zh-en",
+        "en-zh",
+        "speech",
+        "france",
+        "personal"
+      ],
+      "profileFocus": "通用能力与跨文化表达",
+      "userFormat": "原有专项配置保留为历史训练；目标语种与招生分组条件见下方说明。",
+      "languageIds": [
+        "ja",
+        "de",
+        "fr"
+      ],
+      "defaultLanguageId": "fr",
+      "languagePolicy": {
+        "year": 2026,
+        "checkedAt": "2026-10-30",
+        "note": "2026专业为日语、德语和法语（中外合作办学）。选考外语不同，笔试和面试的英语/选考语种比例也不同。原巴院训练仅是历史专项配置，不代表上交所有专业。",
+        "sourceUrl": "https://admissions.sjtu.edu.cn/newDetails?contentsID=3810000004162"
+      }
+    },
+    {
+      "id": "thu",
+      "name": "清华大学",
+      "track": "日语",
+      "short": "清华",
+      "region": "日本",
+      "color": "#70618d",
+      "subjects": [
+        "语文",
+        "数学",
+        "英语"
+      ],
+      "tagline": "用证据思考，让表达经得起追问。",
+      "focus": [
+        "通用笔试与口试",
+        "语种国别拓展",
+        "个人学习档案"
+      ],
+      "writtenNote": "2026简章确认初试语数英；当前组卷为通用能力训练，尚无清华样卷细节校准。",
+      "oralOfficial": "2026简章列综合面试和英语口语测试，未公开全部题型及国别题占比。",
+      "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
+      "sourceUrl": "https://www.join-tsinghua.edu.cn/info/1006/2129.htm",
+      "sourceLabel": "清华2026官方招生简章",
+      "writtenMinutes": {
+        "语文": 60,
+        "数学": 60,
+        "英语": 60
+      },
+      "oralRecipe": [
+        "reading",
+        "speech",
+        "japan",
+        "personal"
+      ],
+      "profileFocus": "文理交叉、方法意识与技术社会",
+      "userFormat": "原有专项配置保留为历史训练；目标语种与招生分组条件见下方说明。",
+      "languageIds": [
+        "ja"
+      ],
+      "defaultLanguageId": "ja",
+      "languagePolicy": {
+        "year": 2026,
+        "checkedAt": "2026-10-30",
+        "note": "2026外语类保送仅招日语；2027专业与规则待当年简章公布。",
+        "sourceUrl": "https://www.join-tsinghua.edu.cn/info/1006/2129.htm"
+      }
+    },
+    {
+      "id": "ruc",
+      "name": "中国人民大学",
+      "track": "多语种",
+      "short": "人大",
+      "region": "多语种",
+      "color": "#8c604b",
+      "subjects": [
+        "语文",
+        "数学",
+        "英语"
+      ],
+      "tagline": "把文化问题放回社会与制度之中。",
+      "focus": [
+        "通用笔试与口试",
+        "语种国别拓展",
+        "个人学习档案"
+      ],
+      "writtenNote": "2026简章Ⅰ组为语数英；当前按英语考生申请日语的训练方向设置。",
+      "oralOfficial": "2026简章Ⅰ组面试使用英语，包括外语朗读、理解、表达及综合素质考察等。",
+      "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
+      "sourceUrl": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=f9wk8206dn2ycg65",
+      "secondaryUrl": "https://10002.gaokao.haedu.cn/policy/brochure/2025/1230/78623.html",
+      "sourceLabel": "人大2026简章（阳光高考发布）",
+      "writtenMinutes": {
+        "语文": 60,
+        "数学": 60,
+        "英语": 60
+      },
+      "oralRecipe": [
+        "reading",
+        "japan",
+        "speech",
+        "personal"
+      ],
+      "profileFocus": "社会科学、公共议题与规则意识",
+      "userFormat": "原有专项配置保留为历史训练；目标语种与招生分组条件见下方说明。",
+      "languageIds": [
+        "ja",
+        "ru",
+        "de",
+        "fr",
+        "es"
+      ],
+      "defaultLanguageId": "ja",
+      "languagePolicy": {
+        "year": 2026,
+        "checkedAt": "2026-10-30",
+        "note": "2026有日、俄、德、法、西五个语种，分组规则和涉外法治项目条件不同，不同组别不可兼报。",
+        "sourceUrl": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=f9wk8206dn2ycg65"
+      }
+    },
+    {
+      "id": "bfsu",
+      "name": "北京外国语大学",
+      "track": "多语种",
+      "short": "北外",
+      "region": "多语种",
+      "color": "#4e7c75",
+      "subjects": [
+        "语文",
+        "英语"
+      ],
+      "tagline": "准确理解语言，也准确理解他人。",
+      "focus": [
+        "通用笔试与口试",
+        "语种国别拓展",
+        "个人学习档案"
+      ],
+      "writtenNote": "2026简章列语文、英语各200分、150分钟；本版短卷分值与限时是训练设置，不等同全真校考。",
+      "oralOfficial": "2026简章列口试面试约10分钟/人、满分20分；细目未在该简章充分展开。",
+      "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
+      "sourceUrl": "https://10030.gaokao.haedu.cn/policy/brochure/2025/1225/78617.html",
+      "sourceLabel": "北外2026简章（河南省阳光高考平台转载）",
+      "writtenMinutes": {
+        "语文": 150,
+        "英语": 150
+      },
+      "oralRecipe": [
+        "reading",
+        "japan",
+        "personal"
+      ],
+      "profileFocus": "语言细读、翻译选择与国际传播",
+      "userFormat": "原有专项配置保留为历史训练；目标语种与招生分组条件见下方说明。",
+      "languageIds": [
+        "en",
+        "ja",
+        "ru",
+        "de",
+        "fr",
+        "es",
+        "pt",
+        "ar",
+        "sq",
+        "pl",
+        "sk",
+        "ro",
+        "it",
+        "sl",
+        "et",
+        "la",
+        "fa",
+        "ko",
+        "hi",
+        "km",
+        "ms",
+        "he",
+        "vi",
+        "tr",
+        "ta",
+        "ps",
+        "bn",
+        "ku",
+        "sw",
+        "zu"
+      ],
+      "defaultLanguageId": "ja",
+      "languagePolicy": {
+        "year": 2026,
+        "checkedAt": "2026-10-30",
+        "note": "按2026简章合并同语种的专业方向，英语含翻译方向。A/B段和高起点资格以当年规则为准；不是将学校所有已开设语种都视为当年招生语种。",
+        "sourceUrl": "https://10030.gaokao.haedu.cn/policy/brochure/2025/1225/78617.html"
+      }
+    },
+    {
+      "id": "zju",
+      "name": "浙江大学",
+      "track": "多语种",
+      "short": "浙大",
+      "region": "多语种",
+      "color": "#3e708c",
+      "subjects": [
+        "数学",
+        "英语"
+      ],
+      "tagline": "从语言进入德国，从比较理解问题。",
+      "focus": [
+        "通用笔试与口试",
+        "语种国别拓展",
+        "个人学习档案"
+      ],
+      "writtenNote": "2026简章笔试数学100分、英语100分，两科合计120分钟；本版单科短卷为专项训练。",
+      "oralOfficial": "2026简章列外语能力考查与综合能力考查，未公布所有面试题型。",
+      "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
+      "sourceUrl": "https://zdzsc.zju.edu.cn/2025/1212/c87242a3118365/page.htm",
+      "sourceLabel": "浙大2026官方招生简章",
+      "writtenMinutes": {
+        "数学": 60,
+        "英语": 60
+      },
+      "oralRecipe": [
+        "reading",
+        "germany",
+        "speech",
+        "personal"
+      ],
+      "profileFocus": "德国研究、教育比较与科技合作",
+      "userFormat": "原有专项配置保留为历史训练；目标语种与招生分组条件见下方说明。",
+      "languageIds": [
+        "de",
+        "fr",
+        "ru",
+        "ja",
+        "es"
+      ],
+      "defaultLanguageId": "de",
+      "languagePolicy": {
+        "year": 2026,
+        "checkedAt": "2026-10-30",
+        "note": "2026零起点按外国语言文学类（小语种）招生，高起点列德、法、俄、日、西；本页按已列语种展示，零起点具体分流及报考限制需核对简章。",
+        "sourceUrl": "https://zdzsc.zju.edu.cn/2025/1212/c87242a3118365/page.htm"
+      }
+    },
+    {
+      "id": "whu",
+      "name": "武汉大学",
+      "short": "武大",
+      "track": "多语种",
+      "region": "多语种",
+      "color": "#417c71",
+      "subjects": [
+        "语文",
+        "数学",
+        "英语"
+      ],
+      "tagline": "先了解报考要求，再安排自己的训练。",
+      "focus": [
+        "报考语种",
+        "通用能力",
+        "国别与区域"
+      ],
+      "writtenNote": "数学和外语笔试、面试；具体语种规则见2026简章。",
+      "oralOfficial": "以2026简章为参考；2027考核安排待公布。",
+      "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
+      "sourceUrl": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=2wub9s179b9ix5qe",
+      "sourceLabel": "2026招生简章（高校或阳光高考平台）",
+      "writtenMinutes": {
+        "语文": 60,
+        "数学": 60,
+        "英语": 30
+      },
+      "oralRecipe": [
+        "reading",
+        "speech",
+        "country"
+      ],
+      "profileFocus": "通用专项训练 · 考试标准待补充",
+      "userFormat": "已开放通用笔试与口试抽题。可选科目为本站训练选项，不代表学校正式考试科目。",
+      "outlineOnly": false,
+      "languageIds": [
+        "ru",
+        "de",
+        "fr",
+        "ja",
+        "es"
+      ],
+      "defaultLanguageId": "ru",
+      "languagePolicy": {
+        "year": 2026,
+        "checkedAt": "2026-10-30",
+        "note": "2026英语考生可报五个专业；高起点只能报与中学所学和测试语种一致的一个专业。",
+        "sourceUrl": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=2wub9s179b9ix5qe"
+      },
+      "examStandardStatus": "pending"
+    },
+    {
+      "id": "sisu",
+      "name": "上海外国语大学",
+      "short": "上外",
+      "track": "多语种",
+      "region": "多语种",
+      "color": "#3e668b",
+      "subjects": [
+        "语文",
+        "数学",
+        "英语"
+      ],
+      "tagline": "先了解报考要求，再安排自己的训练。",
+      "focus": [
+        "报考语种",
+        "通用能力",
+        "国别与区域"
+      ],
+      "writtenNote": "语文、外语笔试（含听力）及外语口试；各专业志愿有考试语种限制。",
+      "oralOfficial": "以2026简章为参考；2027考核安排待公布。",
+      "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
+      "sourceUrl": "https://admissions.shisu.edu.cn/1a/69/c632a203369/page.htm",
+      "sourceLabel": "2026招生简章（高校或阳光高考平台）",
+      "writtenMinutes": {
+        "语文": 60,
+        "数学": 60,
+        "英语": 30
+      },
+      "oralRecipe": [
+        "reading",
+        "speech",
+        "country"
+      ],
+      "profileFocus": "通用专项训练 · 考试标准待补充",
+      "userFormat": "已开放通用笔试与口试抽题。可选科目为本站训练选项，不代表学校正式考试科目。",
+      "outlineOnly": false,
+      "languageIds": [
+        "en",
+        "ru",
+        "de",
+        "fr",
+        "es",
+        "ar",
+        "ja",
+        "pt",
+        "it",
+        "ko",
+        "sw",
+        "cs",
+        "ro",
+        "uk",
+        "linguistics"
+      ],
+      "defaultLanguageId": "en",
+      "languagePolicy": {
+        "year": 2026,
+        "checkedAt": "2026-10-30",
+        "note": "按2026简章归并同语种方向；英语含翻译、商务英语，语言学单列为专业方向。非英语考试语种的志愿有对应限制，卓越学院另有条件。",
+        "sourceUrl": "https://admissions.shisu.edu.cn/1a/69/c632a203369/page.htm"
+      },
+      "examStandardStatus": "pending"
+    },
+    {
+      "id": "nju",
+      "name": "南京大学",
+      "short": "南大",
+      "track": "多语种",
+      "region": "多语种",
+      "color": "#785784",
+      "subjects": [
+        "语文",
+        "数学",
+        "英语"
+      ],
+      "tagline": "先了解报考要求，再安排自己的训练。",
+      "focus": [
+        "报考语种",
+        "通用能力",
+        "国别与区域"
+      ],
+      "writtenNote": "已建立学校与语种入口；各科结构、题量与评分规则待逐项录入。",
+      "oralOfficial": "以2026简章为参考；2027考核安排待公布。",
+      "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
+      "sourceUrl": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=wl755l2lrt96gt8r",
+      "sourceLabel": "2026招生简章（高校或阳光高考平台）",
+      "writtenMinutes": {
+        "语文": 60,
+        "数学": 60,
+        "英语": 30
+      },
+      "oralRecipe": [
+        "reading",
+        "speech",
+        "country"
+      ],
+      "profileFocus": "通用专项训练 · 考试标准待补充",
+      "userFormat": "已开放通用笔试与口试抽题。可选科目为本站训练选项，不代表学校正式考试科目。",
+      "outlineOnly": false,
+      "languageIds": [
+        "fr",
+        "de",
+        "es",
+        "ja",
+        "ru",
+        "ko"
+      ],
+      "defaultLanguageId": "fr",
+      "languagePolicy": {
+        "year": 2026,
+        "checkedAt": "2026-10-30",
+        "note": "2026列法、德、西、日、俄、朝六个语种；报考资格、测试语种及项目限制以简章为准。",
+        "sourceUrl": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=wl755l2lrt96gt8r"
+      },
+      "examStandardStatus": "pending"
+    },
+    {
+      "id": "fudan",
+      "name": "复旦大学",
+      "short": "复旦",
+      "track": "多语种",
+      "region": "多语种",
+      "color": "#3e6588",
+      "subjects": [
+        "语文",
+        "数学",
+        "英语"
+      ],
+      "tagline": "先了解报考要求，再安排自己的训练。",
+      "focus": [
+        "报考语种",
+        "通用能力",
+        "国别与区域"
+      ],
+      "writtenNote": "零起点考核英语能力、数理特长；高起点考核对应小语种、数学与数理特长，面试另有区别。",
+      "oralOfficial": "以2026简章为参考；2027考核安排待公布。",
+      "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
+      "sourceUrl": "https://ao.fudan.edu.cn/aa/b5/c36330a764597/page.htm",
+      "sourceLabel": "2026招生简章（高校或阳光高考平台）",
+      "writtenMinutes": {
+        "语文": 60,
+        "数学": 60,
+        "英语": 30
+      },
+      "oralRecipe": [
+        "reading",
+        "speech",
+        "country"
+      ],
+      "profileFocus": "通用专项训练 · 考试标准待补充",
+      "userFormat": "已开放通用笔试与口试抽题。可选科目为本站训练选项，不代表学校正式考试科目。",
+      "outlineOnly": false,
+      "languageIds": [
+        "ru",
+        "de",
+        "fr",
+        "es",
+        "ja",
+        "ko"
+      ],
+      "defaultLanguageId": "ru",
+      "languagePolicy": {
+        "year": 2026,
+        "checkedAt": "2026-10-30",
+        "note": "2026列俄、德、法、西、日、朝六个语种；零起点与高起点的笔试、面试内容有差异，高起点不可兼报其他语种。",
+        "sourceUrl": "https://ao.fudan.edu.cn/aa/b5/c36330a764597/page.htm"
+      },
+      "examStandardStatus": "pending"
+    }
+  ],
+  "oralMetadata": {
+    "jp-mono": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-bushido": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-borrow": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-group": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-narrative": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-garden": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-modern": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-animation": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-aging": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-dialect": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-zen": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-haiku": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-museums": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-tea": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-translation": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "jp-research": {
+      "countryLanguageId": "ja",
+      "schoolSpecific": false
+    },
+    "fr-language": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "fr-food": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "fr-secular": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "fr-museum": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "fr-nuclear": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "fr-cinema": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "fr-engineering": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "fr-heritage": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "fr-philosophy": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "fr-learning": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": true
+    },
+    "fr-technology": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "fr-education": {
+      "countryLanguageId": "fr",
+      "schoolSpecific": false
+    },
+    "de-dual": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-language": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-goethe": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-memory": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-energy": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-industry": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-translation": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-federal": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-music": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-environment": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-research": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    },
+    "de-rules": {
+      "countryLanguageId": "de",
+      "schoolSpecific": false
+    }
+  },
+  "profiles": {
+    "pku": {
+      "name": "文学与论证精读",
+      "level": "挑战",
+      "topics": [
+        "literature",
+        "argument",
+        "society"
+      ],
+      "minutes": 60,
+      "readingCount": 3,
+      "mcCount": 20,
+      "fillCount": 0,
+      "clozeCount": 1,
+      "orderCount": 0,
+      "translationCount": 0,
+      "writingCount": 0,
+      "focus": "强调文本细读、语义辨析与论证推断；沿用原有预测样卷的客观题训练方向。",
+      "schoolId": "pku",
+      "excludeAttempted": true,
+      "excludeGenerated": false,
+      "excludeMaterials": false
+    },
+    "speit": {
+      "name": "上交通用英语专项",
+      "level": "进阶",
+      "topics": [
+        "science",
+        "culture",
+        "education"
+      ],
+      "minutes": 90,
+      "readingCount": 4,
+      "mcCount": 0,
+      "fillCount": 20,
+      "clozeCount": 1,
+      "orderCount": 1,
+      "translationCount": 0,
+      "writingCount": 1,
+      "focus": "四篇阅读、语篇排序、完形、20个语法填空及作文，依据你提供的备考题型设置。",
+      "schoolId": "speit",
+      "excludeAttempted": true,
+      "excludeGenerated": false,
+      "excludeMaterials": false
+    },
+    "thu": {
+      "name": "科学与论证交叉",
+      "level": "挑战",
+      "topics": [
+        "science",
+        "argument",
+        "literature"
+      ],
+      "minutes": 75,
+      "readingCount": 3,
+      "mcCount": 20,
+      "fillCount": 0,
+      "clozeCount": 0,
+      "orderCount": 1,
+      "translationCount": 0,
+      "writingCount": 1,
+      "focus": "增加科学推理、论证结构与复杂句控制。具体题型比例为本站训练设计。",
+      "schoolId": "thu",
+      "excludeAttempted": true,
+      "excludeGenerated": false,
+      "excludeMaterials": false
+    },
+    "ruc": {
+      "name": "社会议题与规则",
+      "level": "挑战",
+      "topics": [
+        "society",
+        "argument",
+        "education"
+      ],
+      "minutes": 75,
+      "readingCount": 3,
+      "mcCount": 20,
+      "fillCount": 0,
+      "clozeCount": 0,
+      "orderCount": 0,
+      "translationCount": 1,
+      "writingCount": 1,
+      "focus": "社会研究、公共议题、限定与证据；翻译和写作为拓展训练。",
+      "schoolId": "ruc",
+      "excludeAttempted": true,
+      "excludeGenerated": false,
+      "excludeMaterials": false
+    },
+    "bfsu": {
+      "name": "语言细读与翻译",
+      "level": "进阶",
+      "topics": [
+        "culture",
+        "literature",
+        "argument"
+      ],
+      "minutes": 90,
+      "readingCount": 3,
+      "mcCount": 20,
+      "fillCount": 0,
+      "clozeCount": 0,
+      "orderCount": 0,
+      "translationCount": 2,
+      "writingCount": 1,
+      "focus": "突出词义、文化解释、译者选择和表达。此为短版训练配置，不等同150分钟官方全卷。",
+      "schoolId": "bfsu",
+      "excludeAttempted": true,
+      "excludeGenerated": false,
+      "excludeMaterials": false
+    },
+    "zju": {
+      "name": "教育与科技比较",
+      "level": "进阶",
+      "topics": [
+        "education",
+        "science",
+        "society"
+      ],
+      "minutes": 60,
+      "readingCount": 2,
+      "mcCount": 10,
+      "fillCount": 20,
+      "clozeCount": 0,
+      "orderCount": 0,
+      "translationCount": 0,
+      "writingCount": 1,
+      "focus": "教育、技术和比较视角；具体题型比例为本站训练设计。",
+      "schoolId": "zju",
+      "excludeAttempted": true,
+      "excludeGenerated": false,
+      "excludeMaterials": false
+    },
+    "whu": {
+      "name": "通用英语专项（考试标准待补充）",
+      "level": "进阶",
+      "topics": [
+        "literature",
+        "argument",
+        "society"
+      ],
+      "minutes": 30,
+      "readingCount": 1,
+      "mcCount": 10,
+      "fillCount": 0,
+      "clozeCount": 0,
+      "orderCount": 0,
+      "translationCount": 0,
+      "writingCount": 0,
+      "focus": "共用题库练习，题型比例与限时由用户设置，不代表该校校测标准。",
+      "schoolId": "whu",
+      "excludeAttempted": true,
+      "excludeGenerated": false,
+      "excludeMaterials": false
+    },
+    "sisu": {
+      "name": "通用英语专项（考试标准待补充）",
+      "level": "进阶",
+      "topics": [
+        "literature",
+        "argument",
+        "society"
+      ],
+      "minutes": 30,
+      "readingCount": 1,
+      "mcCount": 10,
+      "fillCount": 0,
+      "clozeCount": 0,
+      "orderCount": 0,
+      "translationCount": 0,
+      "writingCount": 0,
+      "focus": "共用题库练习，题型比例与限时由用户设置，不代表该校校测标准。",
+      "schoolId": "sisu",
+      "excludeAttempted": true,
+      "excludeGenerated": false,
+      "excludeMaterials": false
+    },
+    "nju": {
+      "name": "通用英语专项（考试标准待补充）",
+      "level": "进阶",
+      "topics": [
+        "literature",
+        "argument",
+        "society"
+      ],
+      "minutes": 30,
+      "readingCount": 1,
+      "mcCount": 10,
+      "fillCount": 0,
+      "clozeCount": 0,
+      "orderCount": 0,
+      "translationCount": 0,
+      "writingCount": 0,
+      "focus": "共用题库练习，题型比例与限时由用户设置，不代表该校校测标准。",
+      "schoolId": "nju",
+      "excludeAttempted": true,
+      "excludeGenerated": false,
+      "excludeMaterials": false
+    },
+    "fudan": {
+      "name": "通用英语专项（考试标准待补充）",
+      "level": "进阶",
+      "topics": [
+        "literature",
+        "argument",
+        "society"
+      ],
+      "minutes": 30,
+      "readingCount": 1,
+      "mcCount": 10,
+      "fillCount": 0,
+      "clozeCount": 0,
+      "orderCount": 0,
+      "translationCount": 0,
+      "writingCount": 0,
+      "focus": "共用题库练习，题型比例与限时由用户设置，不代表该校校测标准。",
+      "schoolId": "fudan",
+      "excludeAttempted": true,
+      "excludeGenerated": false,
+      "excludeMaterials": false
+    }
+  }
+}

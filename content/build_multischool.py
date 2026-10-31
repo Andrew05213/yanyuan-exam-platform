@@ -277,7 +277,11 @@ DATA=dict(version='2.0',updated='2026-10-25',policyYear=2026,targetYear=2027,
           oralItems=ORAL,writtenExtra=EXTRA,
           rubric=[{'name':'内容与任务完成','max':30,'hint':'准确回应问题，关键信息完整，有证据或具体例子。'},{'name':'语言准确与自然','max':25,'hint':'词义、语法、术语准确；表达符合语境。'},{'name':'组织与论证','max':20,'hint':'结构清楚，衔接自然，能说明条件和反例。'},{'name':'流利度与语音','max':15,'hint':'节奏稳定、意群清晰、发音可理解；须依据实际口头表现评分。'},{'name':'互动与反思','max':10,'hint':'能理解追问、承认不确定性并作出修正。'}])
 
+from school_tracks import apply_schools
+DATA = apply_schools(DATA)
+SCHOOLS = DATA['schools']
+
 if __name__=='__main__':
     path=ROOT/'public'/'schools.json'
-    path.write_text(json.dumps(DATA,ensure_ascii=False,indent=2)+'\n')
+    path.write_text(json.dumps(DATA,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(f'{len(SCHOOLS)} schools, {len(ORAL)} oral tasks, {len(EXTRA)} supplementary written questions → {path}')

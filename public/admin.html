@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="robots" content="noindex,nofollow">
+ <meta name="theme-color" content="#f4f0e7">
+ <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'">
+ <title>管理后台 · 燕园备考</title>
+ <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+ <link rel="stylesheet" href="/admin.css?v=4">
+ <script src="/admin.js?v=4" defer></script>
+</head>
+<body>
+ <header class="admin-top">
+  <a class="brand" href="/index.html"><img src="/assets/mark.svg" alt=""><span class="brand-copy"><strong>燕园备考</strong></span></a>
+  <span class="admin-divider" aria-hidden="true"></span>
+  <span class="admin-context">管理后台</span>
+  <div class="account"><span class="account-name" id="admin-account"></span><a href="/index.html">返回备考空间</a></div>
+ </header>
+
+ <main class="admin-main">
+  <section id="admin-access" class="access-state" aria-live="polite">
+   <div class="access-card">
+    <span class="access-mark" aria-hidden="true">
+     <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></svg>
+    </span>
+
+    <h1 id="access-title">正在验证管理权限…</h1>
+    <p id="access-message"></p>
+    <div class="access-actions">
+     <a id="admin-login" class="button primary" href="/signin-with-chatgpt?return_to=%2Fadmin" target="_top" hidden>登录</a>
+     <button id="admin-retry" class="button" hidden>重新加载</button>
+    </div>
+   </div>
+  </section>
+
+  <div id="admin-app" hidden>
+   <header class="admin-heading">
+    <div>
+
+     <h1>管理后台</h1>
+    </div>
+    <p id="service-state" class="status-line"><span class="status-dot" aria-hidden="true"></span>AI 批改待接入 · 保存配置不会发起模型调用</p>
+   </header>
+
+   <nav class="tabs" aria-label="后台导航" role="tablist">
+    <button id="tab-providers" class="active" role="tab" aria-selected="true" aria-controls="providers-view" tabindex="0">Provider 与密钥</button>
+    <button id="tab-usage" role="tab" aria-selected="false" aria-controls="usage-view" tabindex="-1">用户用量与费用</button>
+    <button id="tab-feedback" role="tab" aria-selected="false" aria-controls="feedback-view" tabindex="-1">质量反馈</button>
+   </nav>
+
+   <section id="providers-view" class="admin-view" role="tabpanel" aria-labelledby="tab-providers">
+    <p id="encryption-notice" class="notice" hidden>服务器密钥存储尚未初始化，暂不能写入密钥；其他配置可以保存。</p>
+    <div class="provider-layout">
+     <section class="panel provider-list-panel">
+      <div class="panel-heading">
+       <div><h2>Provider 列表</h2></div>
+       <div class="actions"><button id="new-provider" class="button">新增</button><button id="refresh-providers" class="button">刷新</button></div>
+      </div>
+      <div id="providers-list" aria-live="polite"></div>
+     </section>
+
+     <section class="panel editor-panel">
+      <div class="panel-heading">
+       <div><h2 id="provider-form-title">新增 Provider</h2></div>
+      </div>
+      <form id="provider-form" autocomplete="off">
+       <div class="form-section">
+        <label>名称<input id="provider-name" maxlength="80" required></label>
+        <div class="form-grid">
+         <label>接口协议<select id="provider-protocol"><option value="openai-compatible">OpenAI 兼容</option><option value="anthropic">Anthropic</option><option value="gemini">Gemini</option><option value="custom">自定义</option></select></label>
+         <label>模型<input id="provider-model" maxlength="150" required placeholder="填写模型标识"></label>
+        </div>
+        <label>接口地址<input id="provider-url" type="url" maxlength="1500" required placeholder="https://…"></label>
+       </div>
+
+       <div class="form-section">
+        <div class="form-section-head"><h3>访问密钥</h3><span id="key-state" class="field-note" aria-live="polite">未设置密钥</span></div>
+        <label>API Key<input id="provider-key" type="password" maxlength="4096" autocomplete="new-password" spellcheck="false" placeholder="写入新密钥；留空保留现有密钥"></label>
+        <p class="field-note">密钥保存后不回显，页面与本地存储均不保留。</p>
+        <label id="clear-key-label" class="check" hidden><input id="provider-clear-key" type="checkbox">清除已保存的密钥</label>
+       </div>
+
+       <div class="form-section">
+        <div class="form-section-head"><h3>模型单价</h3><label class="currency">币种<select id="provider-currency"><option>USD</option><option>CNY</option><option>EUR</option></select></label></div>
+        <p class="field-note">每百万 Token 的价格。留空表示未知，0 表示免费。</p>
+        <div class="form-grid prices"><label>输入<input id="price-input" inputmode="decimal" placeholder="未设置"></label><label>缓存输入<input id="price-cached" inputmode="decimal" placeholder="未设置"></label><label>输出<input id="price-output" inputmode="decimal" placeholder="未设置"></label></div>
+       </div>
+
+       <div class="form-section form-section--compact">
+        <label class="check"><input id="provider-enabled" type="checkbox" checked>启用该 Provider</label>
+       </div>
+
+       <div class="form-footer">
+        <button id="save-provider" class="button primary" type="submit">保存配置</button>
+        <button id="reset-provider" class="button" type="button">重置表单</button>
+        <p id="provider-message" class="message" role="status"></p>
+       </div>
+      </form>
+     </section>
+    </div>
+   </section>
+
+   <section id="usage-view" class="admin-view" role="tabpanel" aria-labelledby="tab-usage" hidden>
+    <form id="usage-filter" class="panel filters">
+     <div class="panel-heading"><div><h2>查询范围</h2></div></div>
+     <div class="filter-grid">
+      <label>开始日期<input id="usage-from" type="date" required></label>
+      <label>结束日期<input id="usage-to" type="date" required></label>
+      <label>Provider<select id="usage-provider"><option value="">全部 Provider</option></select></label>
+      <label>用户<input id="usage-query" type="search" maxlength="200" placeholder="邮箱、名称或用户编号"></label>
+      <label>请求状态<select id="usage-status"><option value="">全部状态</option><option value="success">成功</option><option value="error">失败</option><option value="unknown">未知</option></select></label>
+      <button class="button primary usage-submit" id="usage-submit">查询</button>
+     </div>
+     <p class="field-note">日期按北京时间统计。输入 Token 包含缓存部分，总 Token 不重复计算缓存。费用为配置单价下的估算值。</p>
+    </form>
+
+    <div id="usage-summary" class="summary-grid" aria-live="polite"></div>
+    <p id="usage-note" class="notice" hidden></p>
+
+    <section class="panel usage-panel">
+     <div class="panel-heading usage-heading">
+      <div><h2 id="usage-title">按用户统计</h2></div>
+      <div class="actions"><button id="usage-users" class="button active" aria-pressed="true">按用户</button><button id="usage-events" class="button" aria-pressed="false">调用明细</button><button id="usage-clear-user" class="button" hidden>取消用户筛选</button></div>
+     </div>
+     <div id="usage-table" class="table-scroll" aria-live="polite"></div>
+     <div class="pagination"><button id="usage-prev" class="button" disabled>上一页</button><span id="usage-page"></span><button id="usage-next" class="button" disabled>下一页</button></div>
+     <p id="usage-message" class="message" role="status"></p>
+    </section>
+   </section>
+   <section id="feedback-view" class="admin-view" role="tabpanel" aria-labelledby="tab-feedback" hidden>
+    <div class="panel"><div class="panel-heading"><h2>用户提交的质量反馈</h2><label>状态<select id="feedback-status"><option value="">全部</option><option value="open">待处理</option><option value="resolved">已处理</option><option value="declined">暂不采纳</option></select></label></div><p>这里仅展示用户主动提交的意见与题目快照。</p><div id="feedback-list"></div><button id="feedback-more" class="button" hidden>加载更多</button><p id="feedback-message" class="message" role="status"></p></div>
+   </section>
+  </div>
+ </main>
+</body>
+</html>

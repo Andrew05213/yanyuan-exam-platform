@@ -11,6 +11,15 @@ export function principal(request:Request):Principal{
 }
 export function owned(column:any,user:Principal){return or(eq(column,user.id),and(isNull(column),sql`${user.legacyOwner?1:0}=1`))!;}
 export function owns(ownerId:string|null|undefined,user:Principal){return ownerId===user.id||(ownerId==null&&user.legacyOwner);}
-export function sameOrigin(request:Request){const origin=request.headers.get('Origin'),url=new URL(request.url);try{if(request.headers.get('Sec-Fetch-Site')==='cross-site'||(origin&&new URL(origin).host!==url.host&&new URL(origin).host!==request.headers.get('Host')))throw Error();}catch{throw new AccessError('请从本站页面提交。',403);}}
+export function sameOrigin(request:Request){const origin=request.headers.get('Origin'),url=new URL(request.url);try{if(request.headers.get('Sec-Fetch-Site')==='cross-site'||(origin&&new URL(origin).origin!==url.origin))throw Error();}catch{throw new AccessError('请从本站页面提交。',403);}}
+export async function readLimitedText(request:Request,max:number){
+ if(Number(request.headers.get('Content-Length'))>max)throw new AccessError('请求内容超过大小限制。',413);
+ const reader=request.body?.getReader();if(!reader)return '';
+ const chunks:Uint8Array[]=[];let size=0;
+ try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>max){await reader.cancel();throw new AccessError('请求内容超过大小限制。',413);}chunks.push(value);}}finally{reader.releaseLock();}
+ const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+ try{return new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{throw new AccessError('请求文字编码无效。',400);}
+}
+
 export const privateHeaders={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'};
 export function fail(error:unknown,fallback='操作未完成，请重试。'){return Response.json({error:error instanceof AccessError?error.message:fallback},{status:error instanceof AccessError?error.status:503,headers:privateHeaders});}

@@ -22,6 +22,20 @@
       "when": 1793246514776,
       "tag": "0002_nifty_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793448673151,
+      "tag": "0003_wandering_salo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793456881146,
+      "tag": "0004_pink_pyro",
+      "breakpoints": true
     }
   ]
 }

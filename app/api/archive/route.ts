@@ -1,13 +1,14 @@
-import {principal,owned,owns,AccessError,fail} from '../../../lib/user-access';
+import schoolsData from '../../../public/schools.json';
+import {principal,owned,owns,AccessError,fail,sameOrigin,readLimitedText} from '../../../lib/user-access';
 import {checkPrivateReferences} from '../../../lib/study-store';
-import { and, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, desc, eq, like, lt, or, sql } from "drizzle-orm";
 import { getDb } from "../../../db/index";
 import { archiveRecords } from "../../../db/schema";
 import {textHash,validateStudyPayload} from "../../../lib/study-contracts";
 
 export const dynamic = "force-dynamic";
 const kinds = new Set(["packet", "oral-attempt", "written-attempt", "legacy-backup", "preset", "error-set", "review-attempt", "essay"]);
-const schools = new Set(["pku", "speit", "thu", "ruc", "bfsu", "zju", "legacy"]);
+const schools = new Set([...schoolsData.schools.map(s=>s.id),"legacy"]);
 const headers = {"Cache-Control":"private, no-store", "X-Content-Type-Options":"nosniff"};
 const reply = (data: unknown, status = 200) => Response.json(data, {status, headers});
 const metadata = (r: typeof archiveRecords.$inferSelect) => {
@@ -31,8 +32,12 @@ export async function GET(request: Request) {
     if(kind){if(!kinds.has(kind))return reply({error:'无效的档案类型'},400);conditions.push(eq(archiveRecords.kind,kind));}
     if(schoolId){if(!schools.has(schoolId))return reply({error:'无效的学校'},400);conditions.push(eq(archiveRecords.schoolId,schoolId));}
     if(query)conditions.push(or(like(archiveRecords.title,'%'+query+'%'),like(archiveRecords.payload,'%'+query+'%'))!);
-    const records = await db.select({id:archiveRecords.id,kind:archiveRecords.kind,schoolId:archiveRecords.schoolId,title:archiveRecords.title,revision:archiveRecords.revision,createdAt:archiveRecords.createdAt,updatedAt:archiveRecords.updatedAt,subtype:sql<string>`json_extract(${archiveRecords.payload}, '$.kind')`}).from(archiveRecords).where(and(...conditions)).orderBy(desc(archiveRecords.updatedAt)).limit(500);
-    return reply({records,limit:500});
+    const beforeTime=params.get('beforeTime'),beforeId=params.get('beforeId');
+    if((beforeTime&&!beforeId)||(!beforeTime&&beforeId)||(beforeTime&&!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(beforeTime))||(beforeId&&!/^[a-zA-Z0-9_-]{1,90}$/.test(beforeId)))return reply({error:'分页参数无效'},400);
+    if(beforeTime&&beforeId)conditions.push(or(lt(archiveRecords.updatedAt,beforeTime),and(eq(archiveRecords.updatedAt,beforeTime),lt(archiveRecords.id,beforeId)))!);
+
+    const records = await db.select({id:archiveRecords.id,kind:archiveRecords.kind,schoolId:archiveRecords.schoolId,title:archiveRecords.title,revision:archiveRecords.revision,createdAt:archiveRecords.createdAt,updatedAt:archiveRecords.updatedAt,subtype:sql<string>`json_extract(${archiveRecords.payload}, '$.kind')`}).from(archiveRecords).where(and(...conditions)).orderBy(desc(archiveRecords.updatedAt),desc(archiveRecords.id)).limit(501);
+    const hasMore=records.length>500,items=records.slice(0,500),last=items.at(-1);return reply({records:items,limit:500,next:hasMore&&last?{time:last.updatedAt,id:last.id}:null});
   } catch(error) {
     return fail(error,"云端档案暂时无法读取，请稍后重试。");
   }
@@ -40,16 +45,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   let user;try{user=principal(request);}catch(error){return fail(error);}
-  const origin = request.headers.get("Origin");
-  const url = new URL(request.url);
-  const host = request.headers.get("Host") || url.host;
-  try {
-    if (request.headers.get("Sec-Fetch-Site") === "cross-site" || (origin && new URL(origin).host !== host && new URL(origin).host !== url.host)) return reply({error:"请从本站页面保存档案"},403);
-  } catch {return reply({error:"无效的请求来源"},403);}
+  try{sameOrigin(request);}catch(error){return fail(error);}
   if (!request.headers.get("Content-Type")?.includes("application/json")) return reply({error:"请使用 JSON 格式"},415);
   try {
     if (Number(request.headers.get("Content-Length")) > 1_000_000) return reply({error:"档案超过 1 MB，请分开保存"},413);
-    const raw = await request.text();
+    const raw = await readLimitedText(request,1_000_000);
     if (new TextEncoder().encode(raw).length > 1_000_000) return reply({error:"档案超过 1 MB，请分开保存"},413);
     let body;
     try {body = JSON.parse(raw);} catch {return reply({error:"档案格式不完整"},400);}
@@ -70,7 +70,8 @@ export async function POST(request: Request) {
     if (expectedRevision !== 0) return reply({error:"档案版本已变化，请另存新档案"},409);
     const record = await db.insert(archiveRecords).values({id,ownerId:user.id,kind,schoolId,title:title.trim(),payload:JSON.stringify(payload),createdAt:now,updatedAt:now,revision:1}).returning().get();
     return reply({record:metadata(record!)},201);
-  } catch {
+  } catch(error) {
+    if(error instanceof AccessError)return fail(error);
     return reply({error:"保存未完成，请重试或导出当前内容备份。"},503);
   }
 }
