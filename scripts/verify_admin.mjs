@@ -65,6 +65,12 @@ try{
  eq((await call('/api/admin/providers',{...publicConfig,admin:true})).status,400);
  const created=await call('/api/admin/providers',{...publicConfig,apiKey:fakeKey});eq(created.status,200);
  let p=created.data.provider;eq(p.hasKey,true);eq('apiKey' in p,false);eq('encrypted_key' in p,false);
+ eq((await call('/api/admin/models',{id:p.id,expectedRevision:p.revision},{})).status,401);
+ eq((await call('/api/admin/models',{id:p.id,expectedRevision:p.revision},ordinary)).status,403);
+ eq((await call('/api/admin/models',{id:p.id,expectedRevision:p.revision},admin,{headers:{Origin:'https://other.test'}})).status,403);
+ eq((await call('/api/admin/models',{id:p.id,expectedRevision:0})).status,409);
+ eq((await call('/api/admin/models',{id:p.id,expectedRevision:p.revision,apiKey:fakeKey})).status,400);
+ eq((await call('/api/admin/models',{id:p.id,expectedRevision:p.revision})).status,400);
  ok(created.headers.get('Cache-Control').includes('no-store'));
  const cipher=(await db.prepare('SELECT encrypted_key FROM ai_providers WHERE id=?').bind(p.id).first()).encrypted_key;
  ok(cipher&&!cipher.includes(fakeKey));

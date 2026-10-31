@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),wr=createRequire(require.resolve('wrangler')),{buildSync}=require(wr.resolve('esbuild'));
+const source=buildSync({entryPoints:['lib/provider-models.ts'],bundle:true,format:'esm',write:false}).outputFiles[0].text;
+const {modelListUrl,modelMetadata,fetchModelList}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+assert.equal(modelListUrl('https://api.deepseek.com/v1/'),'https://api.deepseek.com/v1/models');
+for(const url of ['https://127.0.0.1','https://local.internal','http://api.deepseek.com','https://api.deepseek.com.evil.test','https://api.example.test'])assert.throws(()=>modelListUrl(url));
+assert.equal(modelListUrl('https://api.example.test/v1','api.example.test'),'https://api.example.test/v1/models');
+const key='fake-models-test-key',p={protocol:'openai-compatible',baseUrl:'https://api.deepseek.com',apiKey:key};
+const payload={data:[{id:'deepseek-flash',name:'DeepSeek Flash',context_window:1000000,max_output_tokens:1000,input_modalities:['text','image'],effort:{supported_levels:['high','max']}},{id:'deepseek-flash'},{id:key},{id:'safe',name:key,private:key}]};
+const models=await fetchModelList(p,'',async(url,options)=>{assert.equal(url,'https://api.deepseek.com/models');assert.equal(options.headers.Authorization,'Bearer '+key);assert.equal(options.redirect,'error');return Response.json(payload);});assert.equal(models.length,2);assert.equal(models[0].contextWindow,1000000);assert.equal(JSON.stringify(models).includes(key),false);
+assert.throws(()=>modelMetadata({data:{}},key));
+for(const status of [401,403,429,500])await assert.rejects(()=>fetchModelList(p,'',async()=>new Response(key,{status})),e=>!e.message.includes(key));
+await assert.rejects(()=>fetchModelList(p,'',async()=>{throw Error(key);}));
+await assert.rejects(()=>fetchModelList(p,'',async()=>new Response('x'.repeat(512001))));
+await assert.rejects(()=>fetchModelList({...p,protocol:'anthropic'},'',async()=>{throw Error('must not request');}));
+console.log('PASS: upstream host restrictions, exact model URL, saved-secret header, bounded metadata, duplicate removal, secret redaction and safe failure handling.');

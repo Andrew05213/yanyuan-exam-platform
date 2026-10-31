@@ -9,7 +9,7 @@
  <title>管理后台 · 燕园备考</title>
  <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
  <link rel="stylesheet" href="/admin.css?v=4">
- <script src="/admin.js?v=4" defer></script>
+ <script src="/admin.js?v=5" defer></script>
 </head>
 <body>
  <header class="admin-top">
@@ -67,12 +67,16 @@
       </div>
       <form id="provider-form" autocomplete="off">
        <div class="form-section">
+        <label>Provider 预设<select id="provider-preset"><option value="deepseek">DeepSeek</option><option value="custom">自定义</option></select></label>
         <label>名称<input id="provider-name" maxlength="80" required></label>
         <div class="form-grid">
          <label>接口协议<select id="provider-protocol"><option value="openai-compatible">OpenAI 兼容</option><option value="anthropic">Anthropic</option><option value="gemini">Gemini</option><option value="custom">自定义</option></select></label>
-         <label>模型<input id="provider-model" maxlength="150" required placeholder="填写模型标识"></label>
+         <label>模型<input id="provider-model" maxlength="150" required placeholder="填写或选择模型标识"></label>
         </div>
         <label>接口地址<input id="provider-url" type="url" maxlength="1500" required placeholder="https://…"></label>
+        <div class="actions"><button id="fetch-models" type="button" class="button">从上游获取模型</button></div>
+        <label id="model-list-label" hidden>上游模型<select id="provider-model-list"><option value="">选择模型</option></select></label>
+        <p id="models-message" class="message" role="status"></p><p id="model-details" class="field-note"></p>
        </div>
 
        <div class="form-section">

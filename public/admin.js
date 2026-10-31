@@ -23,12 +23,24 @@
  function busy(value){state.providerBusy=value;$('#provider-form').inert=value;for(const id of ['save-provider','new-provider','reset-provider','refresh-providers'])$('#'+id).disabled=value;for(const b of $('#providers-list').querySelectorAll('button'))b.disabled=value;}
  function resetProvider(p=null){
   state.editing=p;$('#provider-form').reset();$('#provider-form-title').textContent=p?'编辑 Provider':'新增 Provider';
-  $('#provider-name').value=p?.name||'';$('#provider-protocol').value=p?.protocol||'openai-compatible';$('#provider-url').value=p?.baseUrl||'';$('#provider-model').value=p?.model||'';$('#provider-currency').value=p?.currency||'USD';$('#provider-enabled').checked=p?.enabled??true;
+  $('#provider-name').value=p?.name||'DeepSeek';$('#provider-protocol').value=p?.protocol||'openai-compatible';$('#provider-url').value=p?.baseUrl||'https://api.deepseek.com';$('#provider-model').value=p?.model||'deepseek-flash';$('#provider-currency').value=p?.currency||'CNY';$('#provider-enabled').checked=p?.enabled??true;
+  $('#provider-preset').value=!p||p.baseUrl.replace(/\/v1\/?$/,'')==='https://api.deepseek.com'?'deepseek':'custom';clearModels();
   $('#price-input').value=p?.inputPrice||'';$('#price-cached').value=p?.cachedInputPrice||'';$('#price-output').value=p?.outputPrice||'';
   $('#provider-key').value='';$('#provider-key').disabled=!state.ready;$('#provider-clear-key').checked=false;$('#clear-key-label').hidden=!p?.hasKey;
   $('#key-state').textContent=p?.hasKey?'已设置密钥'+(p.keyUpdatedAt?' · 更新于 '+date(p.keyUpdatedAt):'')+'；原文不可读取。':'未设置密钥';
   message('#provider-message','');
  }
+ function clearModels(){state.models=[];$('#provider-model-list').replaceChildren(new Option('选择模型',''));$('#model-list-label').hidden=true;$('#model-details').textContent='';message('#models-message','');}
+ function modelDetails(){const model=state.models.find(m=>m.id===$('#provider-model-list').value);if(!model){$('#model-details').textContent='';return;}$('#provider-model').value=model.id;const details=[];if(model.contextWindow)details.push('上下文 '+number(model.contextWindow)+' Token');if(model.maxOutputTokens)details.push('最大输出 '+number(model.maxOutputTokens)+' Token');if(model.inputModalities?.length)details.push('输入 '+model.inputModalities.join('、'));if(model.effortLevels?.length)details.push('推理强度 '+model.effortLevels.join(' / '));$('#model-details').textContent=details.join(' · ')||'上游未提供额外模型信息。';}
+ async function fetchModels(){
+  if(state.providerBusy)return;const p=state.editing;
+  if(!p||p.baseUrl!==$('#provider-url').value.trim()||p.protocol!==$('#provider-protocol').value||$('#provider-key').value||$('#provider-clear-key').checked){message('#models-message','请先保存 Provider 配置和 API Key，再获取模型。',true);return;}
+  clearModels();busy(true);message('#models-message','正在从上游获取模型…');
+  try{const data=await api('/api/admin/models',{id:p.id,expectedRevision:p.revision});state.models=data.models;for(const m of data.models)$('#provider-model-list').add(new Option(m.name?m.name+' · '+m.id:m.id,m.id));$('#model-list-label').hidden=!data.models.length;const current=$('#provider-model').value;if(data.models.some(m=>m.id===current)){$('#provider-model-list').value=current;modelDetails();}message('#models-message',data.models.length?'已获取 '+data.models.length+' 个模型；选择后保存配置生效。':'上游未返回可用模型，可继续手动填写。');}catch(e){message('#models-message',e.message,true);}finally{busy(false);renderProviders();}
+ }
+ $('#fetch-models').addEventListener('click',fetchModels);$('#provider-model-list').addEventListener('change',modelDetails);
+ $('#provider-model').addEventListener('input',()=>{if($('#provider-model').value!==$('#provider-model-list').value){$('#provider-model-list').value='';$('#model-details').textContent='';}});
+ $('#provider-preset').addEventListener('change',()=>{clearModels();if($('#provider-preset').value==='deepseek'){$('#provider-name').value='DeepSeek';$('#provider-protocol').value='openai-compatible';$('#provider-url').value='https://api.deepseek.com';$('#provider-model').value='deepseek-flash';$('#provider-currency').value='CNY';for(const id of ['price-input','price-cached','price-output'])$('#'+id).value='';}});
  function renderProviders(){
   const box=$('#providers-list');box.replaceChildren();
   if(!state.providers.length)box.append(node('p','尚未配置 Provider。','empty'));
