@@ -234,7 +234,7 @@ function setupNavigation(){
 async function boot(){
   try{
     const [data,schools,workflows,difficulty,standards]=await Promise.all(['bank.json','schools.json','workflows.json','difficulty.json','exam-standards.json'].map(path=>fetch(path).then(r=>{if(!r.ok)throw Error('内容加载失败');return r.json()})));
-    bank=data;Hub.init(schools);StudyFlow.init(workflows);TierStudio.init(difficulty);await PublicApp.init();ExamStandards.init(standards);SchoolTracks.init();QualityUI.init();AIGrading.init();init();
+    bank=data;Hub.init(schools);StudyFlow.init(workflows);TierStudio.init(difficulty);await PublicApp.init();ExamStandards.init(standards);SchoolTracks.init();QualityUI.init();AIGrading.init();OralAudioAnalysis.init();init();
     document.querySelectorAll('.topbar').forEach(el=>el.inert=false);setupNavigation();
   }catch(e){
     document.querySelectorAll('.topbar').forEach(el=>el.inert=false);setupNavigation();

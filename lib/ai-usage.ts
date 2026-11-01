@@ -3,12 +3,12 @@ import {AdminInputError,estimateCostMicros,validateUsage,type Pricing,type Usage
 import type {Principal} from './user-access';
 
 export type BillingProvider={id:string;name:string;model:string;currency:string;revision:number;pricing:Pricing};
-export type UsageEvent={requestId:string;task:'writing'|'translation'|'oral';status:'success'|'error'|'unknown';counts:UsageCounts;elapsedMs?:number|null};
+export type UsageEvent={requestId:string;task:'writing'|'translation'|'oral'|'oral-audio';status:'success'|'error'|'unknown';counts:UsageCounts;elapsedMs?:number|null};
 
 // Call only from server-side model execution, using a trusted user and a pricing
 // snapshot taken before the request. There is deliberately no public ingestion API.
 export async function recordAIUsage(user:Principal,provider:BillingProvider,event:UsageEvent){
- if(!user.id||user.id.length>300||!/^provider-[a-f0-9-]{36}$/.test(provider.id)||!event.requestId||event.requestId.length>160||/[\r\n\u0000]/.test(event.requestId)||!['writing','translation','oral'].includes(event.task)||!['success','error','unknown'].includes(event.status)||!CURRENCIES.includes(provider.currency as any))throw new AdminInputError('用量记录字段不正确。');
+ if(!user.id||user.id.length>300||!/^provider-[a-f0-9-]{36}$/.test(provider.id)||!event.requestId||event.requestId.length>160||/[\r\n\u0000]/.test(event.requestId)||!['writing','translation','oral','oral-audio'].includes(event.task)||!['success','error','unknown'].includes(event.status)||!CURRENCIES.includes(provider.currency as any))throw new AdminInputError('用量记录字段不正确。');
  validateUsage(event.counts);
  if(event.elapsedMs!==undefined&&event.elapsedMs!==null&&(!Number.isSafeInteger(event.elapsedMs)||event.elapsedMs<0))throw new AdminInputError('请求耗时不正确。');
  const cost=estimateCostMicros(event.counts,provider.pricing),id='usage-'+crypto.randomUUID(),db=adminDb();

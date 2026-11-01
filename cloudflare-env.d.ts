@@ -6,5 +6,6 @@ declare namespace Cloudflare {
     ADMIN_USER_IDS?: string;
     AI_CREDENTIALS_ENCRYPTION_KEY?: string;
     AI_MODEL_HOSTS?: string;
+    ORAL_AUDIO_PROVIDER_ID?: string;
   }
 }

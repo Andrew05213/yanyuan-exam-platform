@@ -25,7 +25,7 @@ const appModules=[{type:'ESModule',path:path.join(serverRoot,'index.js')},...pat
 const mf=new Miniflare({workers:[
  {name:'app',modules:appModules,modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings,d1Databases:dbConfig,r2Buckets:['BUCKET']},
  {name:'no-master',modules:appModules,modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{ADMIN_EMAILS:bindings.ADMIN_EMAILS},d1Databases:dbConfig,r2Buckets:['BUCKET']},
- {name:'no-allowlist',modules:appModules,modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{},d1Databases:dbConfig,r2Buckets:['BUCKET']},
+ {name:'no-allowlist',modules:appModules,modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{ADMIN_EMAILS:''},d1Databases:dbConfig,r2Buckets:['BUCKET']},
  {name:'internal-test',script:harness,modules:true,compatibilityDate:'2026-05-15',bindings,d1Databases:dbConfig},
 ]});
 let checks=0;
