@@ -233,8 +233,12 @@ function setupNavigation(){
 }
 async function boot(){
   try{
-    const [data,schools,workflows,difficulty,standards]=await Promise.all(['bank.json','schools.json','workflows.json','difficulty.json','exam-standards.json'].map(path=>fetch(path).then(r=>{if(!r.ok)throw Error('内容加载失败');return r.json()})));
-    bank=data;Hub.init(schools);StudyFlow.init(workflows);TierStudio.init(difficulty);await PublicApp.init();ExamStandards.init(standards);SchoolTracks.init();QualityUI.init();AIGrading.init();OralAudioAnalysis.init();init();
+    const paths=['bank.json','schools.json','workflows.json','difficulty.json','exam-standards.json','/api/session'];let loaded=0;
+    const [data,schools,workflows,difficulty,standards,session]=await Promise.all(paths.map(async path=>{
+      const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+      try{const r=await fetch(path,{signal:controller.signal,...(path==='/api/session'?{credentials:'same-origin',cache:'no-store'}:{})});if(!r.ok)throw Error('内容加载失败');const data=await r.json();const status=document.querySelector('.loading-state');if(status)status.textContent='正在打开资料库（'+(++loaded)+'/'+paths.length+'）…';return data;}catch(e){if(e.name==='AbortError')throw Error('连接超时，请刷新重试。');throw e;}finally{clearTimeout(timer);}
+    }));
+    bank=data;Hub.init(schools);StudyFlow.init(workflows);TierStudio.init(difficulty);await PublicApp.init(session);ExamStandards.init(standards);SchoolTracks.init();QualityUI.init();AIGrading.init();OralAudioAnalysis.init();init();
     document.querySelectorAll('.topbar').forEach(el=>el.inert=false);setupNavigation();
   }catch(e){
     document.querySelectorAll('.topbar').forEach(el=>el.inert=false);setupNavigation();

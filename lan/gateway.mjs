@@ -7,6 +7,7 @@ import {readFileSync, mkdirSync, chmodSync, writeFileSync, realpathSync, statSyn
 import {homedir} from 'node:os';
 import {join} from 'node:path';
 import {allowedOrigin,AuthLimiter} from './auth-policy.mjs';
+import {createPublicAssetHandler} from './public-assets.mjs';
 
 const scrypt=promisify(scryptCallback), dir=process.env.YANYUAN_DATA_DIR||join(homedir(),'.local/share/yanyuan-lan');
 mkdirSync(dir,{recursive:true,mode:0o700});chmodSync(dir,0o700);
@@ -29,6 +30,7 @@ const options={key:readFileSync(join(certDir,'server.key')),cert:readFileSync(jo
 const lanPrefix=process.env.YANYUAN_LAN_PREFIX||'192.168.100.';
 if(!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.$/.test(lanPrefix))throw Error('Invalid LAN prefix.');
 const publicRoot=realpathSync(join(process.cwd(),'public'));
+const servePublicAsset=createPublicAssetHandler(publicRoot);
 const apiPaths=new Set(['/api/session','/api/archive','/api/attachments','/api/essays/review','/api/materials','/api/material-files','/api/study-state','/api/oral-audio','/api/oral-analysis','/api/feedback','/api/learning-report','/api/ai-grading','/api/admin/session','/api/admin/providers','/api/admin/usage','/api/admin/models']);
 function permittedPath(path){
  if(path==='/'||path==='/admin'||path==='/mcp'||apiPaths.has(path))return true;
@@ -75,6 +77,7 @@ const server=https.createServer(options,async(req,res)=>{try{
  }
  if(!permittedPath(path))return respond(res,404,'不存在');
  if(req.method!=='GET'&&req.method!=='HEAD'&&req.headers.origin&&!originOK(req,url))return respond(res,403,'请求来源不匹配');
+ if(servePublicAsset(req,res,url))return;
  const user=session(req),headers={...req.headers};for(const key of Object.keys(headers))if(key.startsWith('oai-authenticated-user-')||key.startsWith('x-forwarded-')||['forwarded','x-real-ip','cf-connecting-ip','x-yanyuan-lan'].includes(key))delete headers[key];headers['x-yanyuan-lan']='1';
  if(user){headers['oai-authenticated-user-id']=user.id;headers['oai-authenticated-user-email']=user.email;}
  if(headers.origin)headers.origin='http://'+req.headers.host;
