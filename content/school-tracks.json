@@ -218,6 +218,12 @@
       "label": "语言学（专业方向）",
       "countryType": "country-linguistics",
       "scope": "语言学（专业方向）相关国家与地区"
+    },
+    "sa-pi": {
+      "id": "sa-pi",
+      "label": "梵文与巴利文",
+      "countryType": "country-sa-pi",
+      "scope": "南亚古典文献与佛教文化交流"
     }
   },
   "schools": [
@@ -257,24 +263,30 @@
       "profileFocus": "文学、思想与跨文化解释",
       "userFormat": "原有专项配置保留为历史训练；目标语种与招生分组条件见下方说明。",
       "languageIds": [
+        "es",
+        "de",
+        "fr",
+        "ja",
         "ar",
         "ko",
-        "de",
+        "hi",
+        "he",
+        "sa-pi",
         "ru",
-        "fr",
-        "pt",
-        "ja",
-        "th",
-        "es",
-        "id",
         "ur"
       ],
       "defaultLanguageId": "ja",
       "languagePolicy": {
         "year": 2026,
         "checkedAt": "2026-10-30",
-        "note": "2026暂定招11个语种；部分专业限第一志愿。语种选择用于训练分类，不代替志愿资格审核。",
-        "sourceUrl": "https://bkzs.pku.edu.cn/tzgg/d24d1f3ac99d4263bd2ab51442a7a7a8.htm"
+        "note": "当前目标语种按用户2026年11月1日提供的本届备考名单设置，共11个方向；名单尚未经本届官方简章核验。下方链接仅为2026届历史参考，不作为当前语种名单的依据。训练范围不代替报考资格审核。",
+        "sourceUrl": "https://bkzs.pku.edu.cn/tzgg/d24d1f3ac99d4263bd2ab51442a7a7a8.htm",
+        "trainingListSource": {
+          "kind": "user-provided",
+          "receivedAt": "2026-11-01",
+          "targetYear": 2027,
+          "officiallyVerified": false
+        }
       }
     },
     {
