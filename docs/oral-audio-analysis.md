@@ -4,7 +4,11 @@
 
 ## 配置和费用
 
-在现有管理后台保存一个支持音频输入的 OpenAI 兼容 Provider，在服务端设置 `ORAL_AUDIO_PROVIDER_ID` 为它的编号。默认文字 Provider 不会被替换；没有配置时，录音保存播放和文字批改继续可用。
+在管理后台的「Provider 与密钥」保存一个已启用、已设置密钥的 OpenAI 兼容 Provider，然后在「原音分析」独立选择 Provider、填写原音模型并保存。可从上游获取模型列表，也可手动填写；模型必须实际支持 Chat Completions 的 `input_audio` 输入，列表存在不代表支持音频。
+
+原音模型单独存储，不修改 Provider 自身的模型、密钥或文字默认项，因此当前 DeepSeek 文字批改不会改变。选择「不启用原音分析」并保存可停用，录音保存、播放和文字批改继续可用。Provider 被停用、清除密钥或协议不兼容时不会自动改用文字 Provider。
+
+既有数据库追加应用 `drizzle/0006_oral_audio_settings.sql`，只新增任务配置表，不重建原有数据。尚未在后台保存时，兼容旧的 `ORAL_AUDIO_PROVIDER_ID` 及该 Provider 的模型；后台首次保存（包括停用）后以数据库配置为准，无需重启服务。配置采用版本校验，避免多位管理员相互覆盖；变更原音模型后，用户必须重新同意发送录音。
 
 管理员身份仍只由服务端 `ADMIN_EMAILS` 或 `ADMIN_USER_IDS` 确定，没有写在源码中的默认管理员名单。原有十校预设和题库不作替换。
 

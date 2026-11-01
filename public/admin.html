@@ -8,8 +8,8 @@
  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'">
  <title>管理后台 · 燕园备考</title>
  <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
- <link rel="stylesheet" href="/admin.css?v=4">
- <script src="/admin.js?v=7" defer></script>
+ <link rel="stylesheet" href="/admin.css?v=5">
+ <script src="/admin.js?v=8" defer></script>
 </head>
 <body>
  <header class="admin-top">
@@ -41,7 +41,7 @@
 
      <h1>管理后台</h1>
     </div>
-    <p id="service-state" class="status-line"><span class="status-dot" aria-hidden="true"></span>AI 批改使用已启用的默认 Provider 与模型</p>
+    <p id="service-state" class="status-line"><span class="status-dot" aria-hidden="true"></span>文字批改使用默认 Provider；原音分析单独配置</p>
    </header>
 
    <nav class="tabs" aria-label="后台导航" role="tablist">
@@ -52,6 +52,23 @@
 
    <section id="providers-view" class="admin-view" role="tabpanel" aria-labelledby="tab-providers">
     <p id="encryption-notice" class="notice" hidden>服务器密钥存储尚未初始化，暂不能写入密钥；其他配置可以保存。</p>
+    <section class="panel audio-settings-panel" aria-labelledby="audio-settings-title">
+     <div class="panel-heading"><div><h2 id="audio-settings-title">原音分析</h2><p id="audio-config-state" class="field-note" aria-live="polite">正在读取配置…</p></div><button id="audio-refresh" class="button" type="button">重新读取</button></div>
+     <form id="audio-settings-form">
+      <fieldset id="audio-settings-fields" disabled>
+       <div class="form-grid">
+        <label>原音 Provider<select id="audio-provider"><option value="">不启用原音分析</option></select></label>
+        <label>原音模型<input id="audio-model" maxlength="150" placeholder="支持音频输入的模型标识" disabled></label>
+       </div>
+       <div class="actions"><button id="audio-fetch-models" class="button" type="button" disabled>获取原音模型列表</button></div>
+       <label id="audio-model-list-label" hidden>上游模型<select id="audio-model-list"><option value="">选择模型</option></select></label>
+       <p id="audio-models-message" class="message" role="status"></p>
+       <p class="field-note">选择支持 input_audio 的 OpenAI 兼容模型。保存只影响原音分析，不会修改文字批改的默认 Provider、模型或密钥。</p>
+       <div class="form-footer"><button id="audio-save" class="button primary" type="submit">保存原音配置</button></div>
+      </fieldset>
+      <p id="audio-settings-message" class="message" role="status"></p>
+     </form>
+    </section>
     <div class="provider-layout">
      <section class="panel provider-list-panel">
       <div class="panel-heading">

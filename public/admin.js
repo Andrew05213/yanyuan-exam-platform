@@ -1,6 +1,6 @@
 'use strict';
 (()=>{
- const $=s=>document.querySelector(s),state={providers:[],editing:null,ready:false,providerBusy:false,usageEpoch:0,page:1,pages:1,view:'users',userId:''};
+ const $=s=>document.querySelector(s),state={providers:[],editing:null,ready:false,providerBusy:false,audioSettings:null,audioBusy:false,audioModelsEpoch:0,usageEpoch:0,page:1,pages:1,view:'users',userId:''};
  function node(tag,text='',className=''){const n=document.createElement(tag);if(text!==null)n.textContent=String(text);if(className)n.className=className;return n;}
  function button(label,fn,className='button'){const n=node('button',label,className);n.type='button';n.addEventListener('click',fn);return n;}
  function message(selector,text,error=false){const n=$(selector);n.textContent=text;n.classList.toggle('error',error);}
@@ -62,7 +62,44 @@
   }
   const select=$('#usage-provider'),previous=select.value;select.replaceChildren(new Option('全部 Provider',''));for(const p of state.providers)select.add(new Option(p.name,p.id));if(state.providers.some(p=>p.id===previous))select.value=previous;
  }
- async function loadProviders(){const data=await api('/api/admin/providers');state.providers=data.providers;state.ready=data.encryptionReady;$('#encryption-notice').hidden=state.ready;$('#provider-key').disabled=!state.ready;renderProviders();}
+ async function loadProviders(){const data=await api('/api/admin/providers');state.providers=data.providers;state.ready=data.encryptionReady;$('#encryption-notice').hidden=state.ready;$('#provider-key').disabled=!state.ready;renderProviders();renderAudioProviders();}
+ function usableAudioProvider(p){return p.enabled&&p.hasKey&&p.protocol==='openai-compatible';}
+ function renderAudioProviders(){
+  const select=$('#audio-provider'),previous=select.value;select.replaceChildren(new Option('不启用原音分析',''));
+  for(const p of state.providers){const option=new Option(p.name+(usableAudioProvider(p)?'':'（不可用）'),p.id);option.disabled=!usableAudioProvider(p);select.add(option);}
+  if(previous&&!state.providers.some(p=>p.id===previous))select.add(new Option('已配置的 Provider 不存在',previous));
+  select.value=previous;audioControls();
+ }
+ function audioControls(){const enabled=!!$('#audio-provider').value;$('#audio-model').disabled=!enabled;$('#audio-model').required=enabled;$('#audio-fetch-models').disabled=!enabled||state.audioBusy;}
+ function clearAudioModels(){state.audioModelsEpoch++;$('#audio-model-list').replaceChildren(new Option('选择模型',''));$('#audio-model-list-label').hidden=true;message('#audio-models-message','');}
+ function showAudioSettings(settings){
+  state.audioSettings=settings;renderAudioProviders();
+  if(settings.providerId&&!state.providers.some(p=>p.id===settings.providerId))$('#audio-provider').add(new Option('已配置的 Provider 不存在',settings.providerId));
+  $('#audio-provider').value=settings.providerId||'';$('#audio-model').value=settings.model||'';clearAudioModels();audioControls();
+  const p=state.providers.find(p=>p.id===settings.providerId);
+  $('#audio-config-state').textContent=settings.providerId?(p?.name||'Provider 不可用')+' / '+(settings.model||'未设置模型')+(p&&usableAudioProvider(p)?'':'（请检查 Provider）')+(settings.source==='environment'?' · 沿用服务器配置':''):'未启用；录音保存、播放与文字批改继续可用';
+ }
+ async function loadAudioSettings(){
+  if(state.audioBusy)return;state.audioBusy=true;$('#audio-settings-fields').disabled=true;$('#audio-refresh').disabled=true;
+  try{showAudioSettings((await api('/api/admin/oral-audio')).settings);message('#audio-settings-message','');}catch(e){message('#audio-settings-message',e.message,true);}finally{state.audioBusy=false;$('#audio-settings-fields').disabled=!state.audioSettings;$('#audio-refresh').disabled=false;audioControls();}
+ }
+ $('#audio-provider').addEventListener('change',()=>{$('#audio-model').value='';clearAudioModels();audioControls();message('#audio-settings-message','选择原音模型后保存；文字批改配置保持不变。');});
+ $('#audio-model-list').addEventListener('change',()=>{if($('#audio-model-list').value)$('#audio-model').value=$('#audio-model-list').value;});
+ $('#audio-model').addEventListener('input',()=>{$('#audio-model-list').value='';});
+ $('#audio-refresh').addEventListener('click',async()=>{try{await loadProviders();await loadAudioSettings();}catch(e){message('#audio-settings-message',e.message,true);}});
+ $('#audio-fetch-models').addEventListener('click',async()=>{
+  if(state.audioBusy)return;const p=state.providers.find(p=>p.id===$('#audio-provider').value);if(!p||!usableAudioProvider(p))return;
+  clearAudioModels();const epoch=state.audioModelsEpoch;state.audioBusy=true;$('#audio-settings-fields').disabled=true;$('#audio-refresh').disabled=true;message('#audio-models-message','正在从上游获取模型…');
+  try{const data=await api('/api/admin/models',{id:p.id,expectedRevision:p.revision});if(epoch!==state.audioModelsEpoch||$('#audio-provider').value!==p.id||state.providers.find(v=>v.id===p.id)?.revision!==p.revision)return;
+   for(const m of data.models)$('#audio-model-list').add(new Option((m.name?m.name+' · ':'')+m.id+(m.inputModalities?.includes('audio')?' · 音频输入':''),m.id));
+   $('#audio-model-list-label').hidden=!data.models.length;message('#audio-models-message',data.models.length?'已获取 '+data.models.length+' 个模型，请选择支持音频输入的模型。':'上游未返回模型，可手动填写。');
+  }catch(e){if(epoch===state.audioModelsEpoch)message('#audio-models-message',e.message,true);}finally{state.audioBusy=false;$('#audio-settings-fields').disabled=!state.audioSettings;$('#audio-refresh').disabled=false;audioControls();}
+ });
+ $('#audio-settings-form').addEventListener('submit',async event=>{
+  event.preventDefault();if(state.audioBusy||!state.audioSettings)return;const providerId=$('#audio-provider').value||null,p=state.providers.find(p=>p.id===providerId);
+  state.audioBusy=true;$('#audio-settings-fields').disabled=true;$('#audio-refresh').disabled=true;
+  try{const data=await api('/api/admin/oral-audio',{providerId,model:providerId?$('#audio-model').value.trim():null,expectedRevision:state.audioSettings.revision,expectedProviderRevision:providerId?p?.revision:null});showAudioSettings(data.settings);message('#audio-settings-message',providerId?'原音配置已保存，文字批改配置保持不变。':'原音分析已停用，文字批改配置保持不变。');}catch(e){message('#audio-settings-message',e.message,true);}finally{state.audioBusy=false;$('#audio-settings-fields').disabled=!state.audioSettings;$('#audio-refresh').disabled=false;audioControls();}
+ });
  async function chooseDefault(p){if(state.providerBusy)return;busy(true);try{await api('/api/admin/providers',{action:'select-default',id:p.id,expectedRevision:p.revision});await loadProviders();message('#provider-message','默认 Provider 已更新。');}catch(e){message('#provider-message',e.message,true);}finally{busy(false);renderProviders();}}
  async function saveProvider(event){
   event.preventDefault();if(state.providerBusy)return;
@@ -94,7 +131,7 @@
  async function start(){
   try{const session=await api('/api/admin/session');state.ready=session.encryptionReady;$('#admin-account').textContent=session.email||session.userId;
    const today=new Date(Date.now()+8*3600000).toISOString().slice(0,10);$('#usage-from').value=today.slice(0,8)+'01';$('#usage-to').value=today;
-   await loadProviders();resetProvider();$('#admin-access').hidden=true;$('#admin-app').hidden=false;
+   await loadProviders();await loadAudioSettings();resetProvider();$('#admin-access').hidden=true;$('#admin-app').hidden=false;
   }catch(e){$('#admin-access').hidden=false;$('#admin-app').hidden=true;$('#access-title').textContent=e.status===401?'请先登录':e.status===403?'没有管理权限':'后台暂时无法打开';$('#access-message').textContent=e.message;$('#admin-login').hidden=e.status!==401;$('#admin-retry').hidden=false;}
  }
  $('#admin-retry').addEventListener('click',()=>location.reload());$('#tab-providers').addEventListener('click',()=>toggleTab('providers'));$('#tab-usage').addEventListener('click',()=>toggleTab('usage'));

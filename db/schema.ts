@@ -41,6 +41,10 @@ export const aiProviders=sqliteTable('ai_providers',{
  createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull(),
 },t=>[uniqueIndex('ai_providers_one_default_idx').on(t.isDefault).where(sql`${t.isDefault}=1`)]);
 
+export const aiTaskSettings=sqliteTable('ai_task_settings',{
+ task:text('task').primaryKey(),providerId:text('provider_id'),model:text('model'),revision:integer('revision').notNull().default(1),updatedAt:text('updated_at').notNull(),updatedBy:text('updated_by').notNull(),
+});
+
 export const aiUsageEvents=sqliteTable('ai_usage_events',{
  id:text('id').primaryKey(),requestId:text('request_id').notNull(),userId:text('user_id').notNull(),providerId:text('provider_id').notNull(),providerName:text('provider_name').notNull(),model:text('model').notNull(),task:text('task').notNull(),status:text('status').notNull(),currency:text('currency').notNull(),
  inputTokens:integer('input_tokens'),cachedInputTokens:integer('cached_input_tokens'),outputTokens:integer('output_tokens'),estimatedCostMicros:text('estimated_cost_micros'),pricingSnapshot:text('pricing_snapshot').notNull(),elapsedMs:integer('elapsed_ms'),createdAt:text('created_at').notNull(),

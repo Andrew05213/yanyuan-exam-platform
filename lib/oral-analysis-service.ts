@@ -1,7 +1,7 @@
 import {env} from 'cloudflare:workers';
 import {principal,sameOrigin,AccessError,privateHeaders,readLimitedText,fail} from './user-access';
 import {adminDb} from './admin-access';
-import {providerForExecution} from './admin-providers';
+import {audioProviderForExecution} from './oral-audio-settings';
 import {getRecord} from './study-store';
 import {textHash} from './study-contracts';
 import {modelListUrl} from './provider-models';
@@ -12,9 +12,8 @@ type AudioRow={object_key:string;mime:string;size:number};
 type JobRow={id:string;record_id:string;status:string;result:string|null;error:string|null;source_hash:string;kind:string};
 const reply=(data:unknown,status=200)=>Response.json(data,{status,headers:privateHeaders});
 async function configured(){
- const id=env.ORAL_AUDIO_PROVIDER_ID;if(!id||!/^provider-[a-f0-9-]{36}$/.test(id))throw new AccessError('原音分析尚未配置。',503);
- const p=await providerForExecution(id);if(p.protocol!=='openai-compatible')throw new AccessError('请配置支持音频输入的独立OpenAI兼容Provider。',503);
- const url=modelListUrl(p.baseUrl,env.AI_MODEL_HOSTS);return {...p,host:new URL(url).hostname,consentToken:await textHash(JSON.stringify([p.id,p.revision,p.baseUrl,p.model]))};
+ const p=await audioProviderForExecution();
+ const url=modelListUrl(p.baseUrl,env.AI_MODEL_HOSTS);return {...p,host:new URL(url).hostname,consentToken:await textHash(JSON.stringify([p.id,p.revision,p.baseUrl,p.model,p.audioConfigRevision]))};
 }
 async function target(recordId:string,user:ReturnType<typeof principal>){
  const record=await getRecord(recordId,user);if(record.kind!=='oral-attempt')throw new AccessError('请选择已保存的口试录音。',400);
