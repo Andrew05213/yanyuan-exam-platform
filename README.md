@@ -44,6 +44,8 @@ Apply the append-only `drizzle/0004_pink_pyro.sql` migration after existing migr
 
 Use the Sites skill’s install, managed preview, build, source-helper and private publish workflow.
 
+GitHub CI runs on pull requests and pushes to `main`: it installs the frozen pnpm lockfile, prepares self-hosted OCR, builds, checks TypeScript and runs `node scripts/verify-ci.mjs`. The regression suites use isolated fixtures and simulated upstreams, with no deployment credentials or real AI charges. Browser/microphone and real audio-provider acceptance remain separate checks.
+
 - `python content/build_multischool.py` builds `public/schools.json`.
 - `python scripts/prepare_bank.py` regenerates the original bank into `public/`.
 - `node scripts/verify_hub.mjs` checks school composition, whole-passage selection, uniqueness, interpreting pair separation, weighted totals, failures, and preview-compatible IDs.

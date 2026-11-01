@@ -46,6 +46,7 @@ try{
  for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const sql of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(sql).run();
  const noMaster=await mf.getWorker('no-master'),noAllowlist=await mf.getWorker('no-allowlist');
  eq((await noAllowlist.fetch('https://study.test/api/admin/session',{headers:admin})).status,403);
+ for(const email of ['andreswang0702@163.com','andrew052131@gmail.com'])for(const lan of [false,true])eq((await noAllowlist.fetch('https://study.test/api/admin/session',{headers:{'oai-authenticated-user-id':'no-default-admin','oai-authenticated-user-email':email,...(lan?{'x-yanyuan-lan':'1'}:{})}})).status,403);
  const locked=await noMaster.fetch('https://study.test/api/admin/session',{headers:admin});eq((await locked.json()).encryptionReady,false);
  const rejected=await noMaster.fetch('https://study.test/api/admin/providers',{method:'POST',headers:{...admin,'Content-Type':'application/json'},body:JSON.stringify({...publicConfig,apiKey:fakeKey})});eq(rejected.status,503);ok(!(await rejected.text()).includes(fakeKey));
  for(const endpoint of ['session','providers','usage']){

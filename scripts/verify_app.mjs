@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const root=new URL('../',import.meta.url);
 const bank=JSON.parse(fs.readFileSync(new URL('public/bank.json',root),'utf8'));
 const source=fs.readFileSync(new URL('public/app.js',root),'utf8');
-const context=vm.createContext({fetch:()=>new Promise(()=>{}),structuredClone,Date,JSON,Number,Math,Set,Object,Array,String,Error,localStorage:{setItem(){}},window:{scrollTo(){}},setTimeout:()=>0,clearTimeout(){}});
+const context=vm.createContext({fetch:()=>new Promise(()=>{}),AbortController,structuredClone,Date,JSON,Number,Math,Set,Object,Array,String,Error,localStorage:{setItem(){}},window:{scrollTo(){}},setTimeout:()=>0,clearTimeout(){}});
 vm.runInContext(source,context);
 vm.runInContext(`bank=${JSON.stringify(bank)};renderPaper=()=>{};toast=()=>{};`,context);
 const run=s=>vm.runInContext(s,context);

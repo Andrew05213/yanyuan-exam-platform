@@ -7,11 +7,10 @@ const PublicApp={
  gate(title='我的学习资料库'){
   $('#screen').innerHTML='<div class="empty-state"><div class="empty-mark">▤</div><h1>'+this.e(title)+'</h1><p>登录后保存和查看自己的学习记录。</p>'+this.loginLink()+' <a class="btn secondary" href="#studio">先去组卷</a></div>';
  },
- async init(){
+ async init(sessionSnapshot){
   window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
-  const r=await fetch('/api/session',{credentials:'same-origin',cache:'no-store'});
-  if(!r.ok)throw Error('登录状态暂时无法确认，请刷新。');
-  this.session=await r.json();KEY='yanyuan-v2:'+(this.session.authenticated?this.session.userId:'guest');
+  if(sessionSnapshot===undefined){const r=await fetch('/api/session',{credentials:'same-origin',cache:'no-store'});if(!r.ok)throw Error('登录状态暂时无法确认，请刷新。');sessionSnapshot=await r.json();}
+  this.session=sessionSnapshot;KEY='yanyuan-v2:'+(this.session.authenticated?this.session.userId:'guest');
   try{if(this.session.legacyOwner&&!localStorage.getItem(KEY)){const old=localStorage.getItem('yanyuan-archive-v1');if(old)localStorage.setItem(KEY,old);}}catch{storageAvailable=false;}
   this.account();
   const render=Hub.render.bind(Hub),route=Hub.route.bind(Hub);
