@@ -25,7 +25,7 @@ const appModules=[{type:'ESModule',path:path.join(serverRoot,'index.js')},...pat
 const mf=new Miniflare({workers:[
  {name:'app',modules:appModules,modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings,d1Databases:dbConfig,r2Buckets:['BUCKET']},
  {name:'no-master',modules:appModules,modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{ADMIN_EMAILS:bindings.ADMIN_EMAILS},d1Databases:dbConfig,r2Buckets:['BUCKET']},
- {name:'no-allowlist',modules:appModules,modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{ADMIN_EMAILS:''},d1Databases:dbConfig,r2Buckets:['BUCKET']},
+ {name:'no-allowlist',modules:appModules,modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{},d1Databases:dbConfig,r2Buckets:['BUCKET']},
  {name:'internal-test',script:harness,modules:true,compatibilityDate:'2026-05-15',bindings,d1Databases:dbConfig},
 ]});
 let checks=0;
@@ -46,6 +46,7 @@ try{
  for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const sql of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(sql).run();
  const noMaster=await mf.getWorker('no-master'),noAllowlist=await mf.getWorker('no-allowlist');
  eq((await noAllowlist.fetch('https://study.test/api/admin/session',{headers:admin})).status,403);
+ for(const email of ['andreswang0702@163.com','andrew052131@gmail.com'])for(const lan of [false,true])eq((await noAllowlist.fetch('https://study.test/api/admin/session',{headers:{'oai-authenticated-user-id':'no-default-admin','oai-authenticated-user-email':email,...(lan?{'x-yanyuan-lan':'1'}:{})}})).status,403);
  const locked=await noMaster.fetch('https://study.test/api/admin/session',{headers:admin});eq((await locked.json()).encryptionReady,false);
  const rejected=await noMaster.fetch('https://study.test/api/admin/providers',{method:'POST',headers:{...admin,'Content-Type':'application/json'},body:JSON.stringify({...publicConfig,apiKey:fakeKey})});eq(rejected.status,503);ok(!(await rejected.text()).includes(fakeKey));
  for(const endpoint of ['session','providers','usage']){

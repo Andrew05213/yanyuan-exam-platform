@@ -1,5 +1,4 @@
 import {env} from 'cloudflare:workers';
-import defaults from '../config/admin-allowlist.json';
 import {principal,AccessError} from './user-access';
 
 const list=(value:unknown)=>typeof value==='string'?value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean):[];
@@ -8,9 +7,7 @@ export function isAdmin(request:Request){
  if(!id)return false;
  const settings=env as unknown as Record<string,unknown>;
  const email=request.headers.get('oai-authenticated-user-email')?.trim().toLowerCase();
- // LAN self-registration does not verify email ownership; defaults never bootstrap LAN admins.
- const emails=settings.ADMIN_EMAILS===undefined?(request.headers.get('x-yanyuan-lan')==='1'?[]:defaults.emails):list(settings.ADMIN_EMAILS);
- return list(settings.ADMIN_USER_IDS).includes(id)||!!email&&emails.some(x=>x.toLowerCase()===email);
+ return list(settings.ADMIN_USER_IDS).includes(id)||!!email&&list(settings.ADMIN_EMAILS).some(x=>x.toLowerCase()===email);
 }
 export function adminPrincipal(request:Request){
  const user=principal(request);
