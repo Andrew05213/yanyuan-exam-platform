@@ -26,6 +26,8 @@ const suites=[
  'verify_multiuser.mjs',
  'verify_merge_features.mjs',
  'verify_ai_grading.mjs',
+ 'verify_ai_questions.mjs',
+ 'verify_study_features.mjs',
  'verify_oral_analysis.mjs',
 ];
 const cwd=fileURLToPath(new URL('../',import.meta.url));

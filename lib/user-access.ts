@@ -12,7 +12,7 @@ export function principal(request:Request):Principal{
 export function owned(column:any,user:Principal){return or(eq(column,user.id),and(isNull(column),sql`${user.legacyOwner?1:0}=1`))!;}
 export function owns(ownerId:string|null|undefined,user:Principal){return ownerId===user.id||(ownerId==null&&user.legacyOwner);}
 export function sameOrigin(request:Request){const origin=request.headers.get('Origin'),url=new URL(request.url);try{if(request.headers.get('Sec-Fetch-Site')==='cross-site'||(origin&&new URL(origin).origin!==url.origin))throw Error();}catch{throw new AccessError('请从本站页面提交。',403);}}
-export async function readLimitedText(request:Request,max:number){
+export async function readLimitedText(request:Pick<Request,'headers'|'body'>,max:number){
  if(Number(request.headers.get('Content-Length'))>max)throw new AccessError('请求内容超过大小限制。',413);
  const reader=request.body?.getReader();if(!reader)return '';
  const chunks:Uint8Array[]=[];let size=0;

@@ -52,3 +52,4 @@ yarn-error.log*
 
 # Reproducible OCR vendor assets copied from pinned dependencies
 /public/ocr/
+/public/literature-app/

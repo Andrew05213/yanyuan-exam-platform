@@ -69,3 +69,43 @@ export const qualityFeedback=sqliteTable('quality_feedback',{
 export const aiGradingJobs=sqliteTable('ai_grading_jobs',{
  id:text('id').primaryKey(),ownerId:text('owner_id').notNull(),recordId:text('record_id').notNull(),questionId:text('question_id').notNull().default(''),sourceHash:text('source_hash').notNull(),kind:text('kind').notNull(),status:text('status').notNull(),providerId:text('provider_id').notNull(),model:text('model').notNull(),result:text('result'),error:text('error'),createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull(),
 },t=>[index('ai_grading_owner_date_idx').on(t.ownerId,t.createdAt),uniqueIndex('ai_grading_one_pending_idx').on(t.ownerId).where(sql`${t.status}='pending'`)]);
+// Owner-scoped personal question bank. AI-generated items are stored only
+// after the user confirms them, with an explicit review state. Payload holds
+// one catalog-compatible unit (subject/section/tier/questions[]); the columns
+// duplicate the fields needed for listing and filtering without parsing JSON.
+export const questionBank = sqliteTable("question_bank", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id").notNull(),
+  subject: text("subject").notNull(),
+  section: text("section").notNull(),
+  difficulty: text("difficulty").notNull().default("进阶"),
+  source: text("source").notNull().default("ai"),
+  reviewStatus: text("review_status").notNull().default("pending"),
+  payload: text("payload").notNull(),
+  revision: integer("revision").notNull().default(1),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, t => [
+  index("question_bank_owner_updated_idx").on(t.ownerId, t.updatedAt),
+  index("question_bank_owner_subject_idx").on(t.ownerId, t.subject),
+]);
+
+// One row per AI topic-generation attempt. Used for per-account rate limits,
+// idempotent replays and failure records. Results never contain the API key.
+export const aiQuestionJobs = sqliteTable("ai_question_jobs", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id").notNull(),
+  requestHash: text("request_hash").notNull(),
+  status: text("status").notNull(),
+  model: text("model"),
+  elapsedMs: integer("elapsed_ms"),
+  result: text("result"),
+  error: text("error"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, t => [
+  index("ai_question_jobs_request_idx").on(t.ownerId, t.requestHash),
+  index("ai_question_jobs_owner_date_idx").on(t.ownerId, t.createdAt),
+]);
+
+export * from "./literature-schema";
