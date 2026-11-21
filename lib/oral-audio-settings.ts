@@ -1,7 +1,7 @@
 import {env} from 'cloudflare:workers';
 import {adminDb} from './admin-access';
 import {listProviders,providerForExecution} from './admin-providers';
-import {AdminInputError} from './admin-contracts';
+import {AdminInputError,isOpenAIProtocol} from './admin-contracts';
 import {AccessError} from './user-access';
 import {modelListUrl} from './provider-models';
 
@@ -27,12 +27,12 @@ export async function saveAudioSettings(body:any,actorId:string){
   const p=(await listProviders()).find(p=>p.id===body.providerId);
   if(!p)throw new AdminInputError('Provider 不存在。');
   if(p.revision!==body.expectedProviderRevision)throw conflict();
-  if(!p.enabled||!p.hasKey||p.protocol!=='openai-compatible')throw new AdminInputError('请选择已启用、已设置密钥的 OpenAI 兼容 Provider。');
+  if(!p.enabled||!p.hasKey||!isOpenAIProtocol(p.protocol))throw new AdminInputError('请选择已启用、已设置密钥的 OpenAI 兼容 Provider。');
   modelListUrl(p.baseUrl,env.AI_MODEL_HOSTS);
  }
  const now=new Date().toISOString(),db=adminDb();
  // One conditional UPSERT protects both first-save and subsequent concurrent edits.
- const guard=disabled?'1=1':"EXISTS(SELECT 1 FROM ai_providers WHERE id=? AND revision=? AND enabled=1 AND encrypted_key IS NOT NULL AND protocol='openai-compatible')";
+ const guard=disabled?'1=1':"EXISTS(SELECT 1 FROM ai_providers WHERE id=? AND revision=? AND enabled=1 AND encrypted_key IS NOT NULL AND protocol IN ('openai-compatible','openai-responses'))";
  const args:unknown[]=[body.providerId,disabled?null:body.model.trim(),now,actorId];
  if(!disabled)args.push(body.providerId,body.expectedProviderRevision);
  args.push(body.expectedRevision,body.expectedRevision,body.expectedRevision);
@@ -49,6 +49,6 @@ export async function audioProviderForExecution(){
  const settings=await audioSettings();
  if(!settings.providerId||!settings.model)throw new AccessError('原音分析尚未配置。',503);
  const provider=await providerForExecution(settings.providerId);
- if(provider.protocol!=='openai-compatible')throw new AccessError('请配置支持音频输入的 OpenAI 兼容 Provider。',503);
+ if(!isOpenAIProtocol(provider.protocol))throw new AccessError('请配置支持音频输入的 OpenAI 兼容 Provider。',503);
  return {...provider,model:settings.model,audioConfigRevision:settings.revision};
 }

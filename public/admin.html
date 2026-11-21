@@ -9,7 +9,7 @@
  <title>管理后台 · 燕园备考</title>
  <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
  <link rel="stylesheet" href="/admin.css?v=5">
- <script src="/admin.js?v=8" defer></script>
+ <script src="/admin.js?v=10" defer></script>
 </head>
 <body>
  <header class="admin-top">
@@ -63,7 +63,7 @@
        <div class="actions"><button id="audio-fetch-models" class="button" type="button" disabled>获取原音模型列表</button></div>
        <label id="audio-model-list-label" hidden>上游模型<select id="audio-model-list"><option value="">选择模型</option></select></label>
        <p id="audio-models-message" class="message" role="status"></p>
-       <p class="field-note">选择支持 input_audio 的 OpenAI 兼容模型。保存只影响原音分析，不会修改文字批改的默认 Provider、模型或密钥。</p>
+       <p class="field-note">可复用文字 Provider 的 Key，单独选音频模型。原音使用 Chat Completions 音频输入；文字模型和默认项保持独立。</p>
        <div class="form-footer"><button id="audio-save" class="button primary" type="submit">保存原音配置</button></div>
       </fieldset>
       <p id="audio-settings-message" class="message" role="status"></p>
@@ -76,6 +76,7 @@
        <div class="actions"><button id="new-provider" class="button">新增</button><button id="refresh-providers" class="button">刷新</button></div>
       </div>
       <div id="providers-list" aria-live="polite"></div>
+      <p id="providers-message" class="message" role="status"></p>
      </section>
 
      <section class="panel editor-panel">
@@ -84,10 +85,10 @@
       </div>
       <form id="provider-form" autocomplete="off">
        <div class="form-section">
-        <label>Provider 预设<select id="provider-preset"><option value="deepseek">DeepSeek</option><option value="custom">自定义</option></select></label>
+        <label>Provider 预设<select id="provider-preset"><option value="deepseek">DeepSeek</option><option value="openai-responses">OpenAI · Responses</option><option value="openai-chat">OpenAI · Chat Completions</option><option value="custom">自定义</option></select></label>
         <label>名称<input id="provider-name" maxlength="80" required></label>
         <div class="form-grid">
-         <label>接口协议<select id="provider-protocol"><option value="openai-compatible">OpenAI 兼容</option><option value="anthropic">Anthropic</option><option value="gemini">Gemini</option><option value="custom">自定义</option></select></label>
+         <label>文字接口协议<select id="provider-protocol"><option value="openai-compatible">OpenAI Chat Completions（含 DeepSeek）</option><option value="openai-responses">OpenAI Responses</option><option value="anthropic">Anthropic</option><option value="gemini">Gemini</option><option value="custom">自定义</option></select></label>
          <label>模型<input id="provider-model" maxlength="150" required placeholder="填写或选择模型标识"></label>
         </div>
         <label>接口地址<input id="provider-url" type="url" maxlength="1500" required placeholder="https://…"></label>

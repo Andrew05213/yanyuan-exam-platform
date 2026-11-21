@@ -25,9 +25,10 @@ export function validatedGrade(raw:any,source:ReturnType<typeof gradingSource>,e
  const specs=[40,25,35];if(!Number.isInteger(raw.score)||raw.score<0||raw.score>100||typeof raw.summary!=='string'||raw.summary.length>6000||!Array.isArray(raw.criteria)||raw.criteria.length!==3||raw.criteria.some((d:any,i:number)=>d?.max!==specs[i]||!Number.isInteger(d.score)||d.score<0||d.score>d.max||typeof d.name!=='string'||typeof d.reason!=='string')||raw.criteria.reduce((n:number,d:any)=>n+d.score,0)!==raw.score||!Array.isArray(raw.strengths)||!Array.isArray(raw.improvements)||[...raw.strengths,...raw.improvements].some(s=>typeof s!=='string'))throw new AdminInputError('AI 返回的评分或总分不符合要求，本次未计入成绩。');
  return {score:raw.score,summary:raw.summary,criteria:raw.criteria.map((d:any)=>({name:d.name,max:d.max,score:d.score,reason:d.reason})),strengths:raw.strengths.slice(0,10),improvements:raw.improvements.slice(0,10)};
 }
-export function reportedUsage(raw:any){
+export function reportedUsage(raw:any,protocol='openai-compatible'){
  const n=(v:any)=>Number.isSafeInteger(v)&&v>=0&&v<=100000000?v:null;
- const inputTokens=n(raw?.prompt_tokens),outputTokens=n(raw?.completion_tokens);let cachedInputTokens=n(raw?.prompt_tokens_details?.cached_tokens??raw?.prompt_cache_hit_tokens);
+ const responses=protocol==='openai-responses';
+ const inputTokens=n(responses?raw?.input_tokens:raw?.prompt_tokens),outputTokens=n(responses?raw?.output_tokens:raw?.completion_tokens);let cachedInputTokens=n(responses?raw?.input_tokens_details?.cached_tokens:raw?.prompt_tokens_details?.cached_tokens??raw?.prompt_cache_hit_tokens);
  if(inputTokens!==null&&cachedInputTokens!==null&&cachedInputTokens>inputTokens)cachedInputTokens=null;
  return {inputTokens,cachedInputTokens,outputTokens};
 }

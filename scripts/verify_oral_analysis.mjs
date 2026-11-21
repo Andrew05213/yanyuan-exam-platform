@@ -26,6 +26,8 @@ try{
  await provider('provider-00000000-0000-4000-8000-000000000002','Text default','must-not-be-used','https://api.deepseek.com',1);
  let config=(await call('/api/oral-analysis','A')).body;eq(config.enabled,true);eq(config.model,'qa-audio-model');const environmentConsent=config.consentToken;
  const admin={'oai-authenticated-user-email':'admin@qa.invalid'},endpoint='/api/admin/oral-audio',selection={providerId,model:'qa-audio-override',expectedRevision:0,expectedProviderRevision:1};
+ const removeAudioProvider=()=>call('/api/admin/providers','admin',{action:'delete',id:providerId,expectedRevision:1},admin);
+ eq((await removeAudioProvider()).status,409);
  eq((await call(endpoint)).status,401);eq((await call(endpoint,'A')).status,403);
  eq((await call(endpoint,null,selection)).status,401);eq((await call(endpoint,'A',selection)).status,403);
  eq((await call(endpoint,'admin',selection,{...admin,Origin:'https://other.test'})).status,403);
@@ -36,6 +38,7 @@ try{
  const concurrent=await Promise.all([call(endpoint,'admin',selection,admin),call(endpoint,'admin',selection,admin)]);eq(concurrent.map(r=>r.status).sort(),[200,409]);
  const saved=concurrent.find(r=>r.status===200);eq(saved.body.settings.revision,1);eq(saved.body.settings.model,'qa-audio-override');
  eq((await call(endpoint,'admin',selection,admin)).status,409);
+ const protectedAudio=await removeAudioProvider();eq(protectedAudio.status,409);eq(protectedAudio.body.error.includes('原音分析'),true);
  config=(await call('/api/oral-analysis','A')).body;eq(config.model,'qa-audio-override');eq(config.consentToken===environmentConsent,false);const firstConsent=config.consentToken;
  eq((await call(endpoint,'admin',{providerId:null,model:null,expectedRevision:1,expectedProviderRevision:null},admin)).status,200);
  eq((await call('/api/oral-analysis','A')).body.enabled,false); // Explicit disable overrides the old environment binding.
@@ -45,7 +48,9 @@ try{
  await db.prepare('UPDATE ai_providers SET enabled=0 WHERE id=?').bind(providerId).run();eq((await call('/api/oral-analysis','A')).body.enabled,false);
  eq((await call(endpoint,'admin',{...selection,expectedRevision:3},admin)).status,400);
  await db.prepare('UPDATE ai_providers SET enabled=1,protocol=? WHERE id=?').bind('anthropic',providerId).run();eq((await call(endpoint,'admin',{...selection,expectedRevision:3},admin)).status,400);
- await db.prepare('UPDATE ai_providers SET protocol=? WHERE id=?').bind('openai-compatible',providerId).run();
+ await db.prepare('UPDATE ai_providers SET protocol=? WHERE id=?').bind('openai-responses',providerId).run();
+ eq((await call(endpoint,'admin',{...selection,expectedRevision:3},admin)).status,200);
+ config=(await call('/api/oral-analysis','A')).body;eq(config.enabled,true);eq(config.model,'qa-audio-override'); // Same Key as a Responses text Provider, independent Chat audio model.
  async function audio(suffix,silent=false){const id='oral-audio-00000000-0000-4000-8000-'+suffix.padStart(12,'0'),bytes=wave(silent),objectKey='fixture/'+id;await bucket.put(objectKey,bytes);await db.prepare('INSERT INTO oral_audio(id,owner_id,object_key,mime,size,created_at) VALUES(?,?,?,?,?,?)').bind(id,'A',objectKey,'audio/wav',bytes.length,new Date().toISOString()).run();return id;}
  const a=await audio('1'),b=await audio('2'),silent=await audio('3',true),payload={answer:'Notes',audioId:a,item:{prompt:'Describe the idea',language:'English'}};
  const record={id:'qa-oral-analysis',kind:'oral-attempt',schoolId:'pku',title:'Isolated audio fixture',expectedRevision:0,payload};eq((await call('/api/archive','A',record)).status,201);

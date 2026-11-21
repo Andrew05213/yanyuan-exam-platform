@@ -30,6 +30,10 @@ API Key 只能新增、更换或清除：留空保留现有值，清除需要勾
 
 「原音分析」区域独立保存 Provider 与音频模型，可获取上游模型或手动填写，选择不启用并保存即可停用。此操作不改变文字默认 Provider、其模型和密钥。须追加应用 `drizzle/0006_oral_audio_settings.sql`；接口 `/api/admin/oral-audio` 仅管理员可读写，沿用来源校验、版本冲突检测和操作审计。兼容性、旧环境配置及音频费用说明见 [原音分析](oral-audio-analysis.md)。
 
+OpenAI 预设提供 Responses 和 Chat Completions 两种文字协议，均从 `/models` 读取上游可用模型。一个 Provider 的地址与加密 Key 可同时供文字模型和独立原音模型使用；原音仍使用 Chat Completions 的音频输入格式，需选择实际支持该输入的模型。Responses 的输出、拒绝/截断状态和 `input_tokens` / `output_tokens` / 缓存 Token 单独解析；保留既有评分校验与费用账本。切换模型前应核对该模型的权限、用途和单价，未知音频费用不套用文字单价。
+
+本地 Worker 不依赖 `HTTP_PROXY` 自动代理。若部署设置 `AI_OPENAI_RELAY_URL=http://127.0.0.1:18081/forward` 与私密 `AI_OPENAI_RELAY_TOKEN`，官方 `api.openai.com` 的模型获取、文字及原音请求通过 `lan/openai-relay.mjs` 连接本机 HTTP 代理 `127.0.0.1:18080`。relay 仅绑定回环地址，要求独立令牌并限制域名、接口与请求方法，不转发令牌到上游，也不跟随跳转。DeepSeek 等其他上游保持原路径。令牌与节点密码均须留在忽略的服务端配置中，不得提交仓库。
+
 ## 用量与费用
 
 后台支持按北京时间日期、用户、Provider 和请求状态筛选，提供按用户汇总、单个用户调用明细及分页。登录后会记录用户编号和平台提供的邮箱、名称；历史记录若没有邮箱，仅显示用户编号。没有调用的用户显示“暂无调用”。

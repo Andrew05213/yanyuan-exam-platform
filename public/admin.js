@@ -24,7 +24,7 @@
  function resetProvider(p=null){
   state.editing=p;$('#provider-form').reset();$('#provider-form-title').textContent=p?'编辑 Provider':'新增 Provider';
   $('#provider-name').value=p?.name||'DeepSeek';$('#provider-protocol').value=p?.protocol||'openai-compatible';$('#provider-url').value=p?.baseUrl||'https://api.deepseek.com';$('#provider-model').value=p?.model||'deepseek-flash';$('#provider-currency').value=p?.currency||'CNY';$('#provider-enabled').checked=p?.enabled??true;
-  $('#provider-preset').value=!p||p.baseUrl.replace(/\/v1\/?$/,'')==='https://api.deepseek.com'?'deepseek':'custom';clearModels();
+  $('#provider-preset').value=!p||p.baseUrl.replace(/\/v1\/?$/,'')==='https://api.deepseek.com'?'deepseek':p.baseUrl.replace(/\/v1\/?$/,'')==='https://api.openai.com'?(p.protocol==='openai-responses'?'openai-responses':p.protocol==='openai-compatible'?'openai-chat':'custom'):'custom';clearModels();
   $('#price-input').value=p?.inputPrice||'';$('#price-cached').value=p?.cachedInputPrice||'';$('#price-output').value=p?.outputPrice||'';
   $('#provider-key').value='';$('#provider-key').disabled=!state.ready;$('#provider-clear-key').checked=false;$('#clear-key-label').hidden=!p?.hasKey;
   $('#key-state').textContent=p?.hasKey?'已设置密钥'+(p.keyUpdatedAt?' · 更新于 '+date(p.keyUpdatedAt):'')+'；原文不可读取。':'未设置密钥';
@@ -40,7 +40,9 @@
  }
  $('#fetch-models').addEventListener('click',fetchModels);$('#provider-model-list').addEventListener('change',modelDetails);
  $('#provider-model').addEventListener('input',()=>{if($('#provider-model').value!==$('#provider-model-list').value){$('#provider-model-list').value='';$('#model-details').textContent='';}});
- $('#provider-preset').addEventListener('change',()=>{clearModels();if($('#provider-preset').value==='deepseek'){$('#provider-name').value='DeepSeek';$('#provider-protocol').value='openai-compatible';$('#provider-url').value='https://api.deepseek.com';$('#provider-model').value='deepseek-flash';$('#provider-currency').value='CNY';for(const id of ['price-input','price-cached','price-output'])$('#'+id).value='';}});
+ $('#provider-preset').addEventListener('change',()=>{clearModels();const preset=$('#provider-preset').value;if(preset==='deepseek'||preset==='openai-responses'||preset==='openai-chat'){
+  const deepseek=preset==='deepseek';$('#provider-name').value=deepseek?'DeepSeek':'OpenAI';$('#provider-protocol').value=preset==='openai-responses'?'openai-responses':'openai-compatible';$('#provider-url').value=deepseek?'https://api.deepseek.com':'https://api.openai.com/v1';$('#provider-model').value=deepseek?'deepseek-flash':'gpt-5-mini';$('#provider-currency').value=deepseek?'CNY':'USD';for(const id of ['price-input','price-cached','price-output'])$('#'+id).value='';
+ }});
  function renderProviders(){
   const box=$('#providers-list');box.replaceChildren();
   if(!state.providers.length)box.append(node('p','尚未配置 Provider。','empty'));
@@ -58,12 +60,13 @@
    }
    card.append(facts);
    const actions=node('div',null,'actions');actions.append(button('编辑',()=>{resetProvider(p);$('#provider-form-title').scrollIntoView({behavior:'smooth',block:'start'});}));
-   const select=button(p.isDefault?'已设为默认':'设为默认',()=>chooseDefault(p));select.disabled=p.isDefault||!p.enabled;actions.append(select);card.append(actions);box.append(card);
+   const select=button(p.isDefault?'已设为默认':'设为默认',()=>chooseDefault(p));select.disabled=p.isDefault||!p.enabled;
+   actions.append(select,button('删除',()=>removeProvider(p),'button danger'));card.append(actions);box.append(card);
   }
   const select=$('#usage-provider'),previous=select.value;select.replaceChildren(new Option('全部 Provider',''));for(const p of state.providers)select.add(new Option(p.name,p.id));if(state.providers.some(p=>p.id===previous))select.value=previous;
  }
  async function loadProviders(){const data=await api('/api/admin/providers');state.providers=data.providers;state.ready=data.encryptionReady;$('#encryption-notice').hidden=state.ready;$('#provider-key').disabled=!state.ready;renderProviders();renderAudioProviders();}
- function usableAudioProvider(p){return p.enabled&&p.hasKey&&p.protocol==='openai-compatible';}
+ function usableAudioProvider(p){return p.enabled&&p.hasKey&&['openai-compatible','openai-responses'].includes(p.protocol);}
  function renderAudioProviders(){
   const select=$('#audio-provider'),previous=select.value;select.replaceChildren(new Option('不启用原音分析',''));
   for(const p of state.providers){const option=new Option(p.name+(usableAudioProvider(p)?'':'（不可用）'),p.id);option.disabled=!usableAudioProvider(p);select.add(option);}
@@ -101,6 +104,23 @@
   try{const data=await api('/api/admin/oral-audio',{providerId,model:providerId?$('#audio-model').value.trim():null,expectedRevision:state.audioSettings.revision,expectedProviderRevision:providerId?p?.revision:null});showAudioSettings(data.settings);message('#audio-settings-message',providerId?'原音配置已保存，文字批改配置保持不变。':'原音分析已停用，文字批改配置保持不变。');}catch(e){message('#audio-settings-message',e.message,true);}finally{state.audioBusy=false;$('#audio-settings-fields').disabled=!state.audioSettings;$('#audio-refresh').disabled=false;audioControls();}
  });
  async function chooseDefault(p){if(state.providerBusy)return;busy(true);try{await api('/api/admin/providers',{action:'select-default',id:p.id,expectedRevision:p.revision});await loadProviders();message('#provider-message','默认 Provider 已更新。');}catch(e){message('#provider-message',e.message,true);}finally{busy(false);renderProviders();}}
+ async function removeProvider(provider){
+  if(state.providerBusy)return;
+  if(provider.isDefault){message('#providers-message','请先切换默认 Provider，再删除此配置。',true);return;}
+  if(state.audioSettings?.providerId===provider.id){message('#providers-message','请先更换或停用原音分析的 Provider，再删除此配置。',true);return;}
+  if(!window.confirm('删除「'+provider.name+'」及其保存的密钥？历史用量和费用将保留。'))return;
+  busy(true);message('#providers-message','');
+  try{
+   await api('/api/admin/providers',{action:'delete',id:provider.id,expectedRevision:provider.revision});
+   state.providers=state.providers.filter(p=>p.id!==provider.id);
+   if(state.editing?.id===provider.id)resetProvider();
+   if($('#audio-provider').value===provider.id){
+    $('#audio-provider').value='';$('#audio-model').value='';clearAudioModels();
+   }
+   renderAudioProviders();message('#providers-message','已删除「'+provider.name+'」。');
+  }catch(e){message('#providers-message',e.message,true);}
+  finally{busy(false);renderProviders();}
+ }
  async function saveProvider(event){
   event.preventDefault();if(state.providerBusy)return;
   const body={...(state.editing?{id:state.editing.id,expectedRevision:state.editing.revision}:{}),name:$('#provider-name').value,protocol:$('#provider-protocol').value,baseUrl:$('#provider-url').value,model:$('#provider-model').value,currency:$('#provider-currency').value,enabled:$('#provider-enabled').checked,inputPrice:$('#price-input').value,cachedInputPrice:$('#price-cached').value,outputPrice:$('#price-output').value,clearKey:$('#provider-clear-key').checked};

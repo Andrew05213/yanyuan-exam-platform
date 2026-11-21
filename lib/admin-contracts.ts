@@ -1,4 +1,5 @@
-export const PROTOCOLS=['openai-compatible','anthropic','gemini','custom'] as const;
+export const PROTOCOLS=['openai-compatible','openai-responses','anthropic','gemini','custom'] as const;
+export const isOpenAIProtocol=(protocol:unknown)=>protocol==='openai-compatible'||protocol==='openai-responses';
 export const CURRENCIES=['USD','CNY','EUR'] as const;
 export class AdminInputError extends Error{}
 export function priceToMicros(value:unknown):number|null{

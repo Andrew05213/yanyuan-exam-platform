@@ -8,6 +8,8 @@
 
 原音模型单独存储，不修改 Provider 自身的模型、密钥或文字默认项，因此当前 DeepSeek 文字批改不会改变。选择「不启用原音分析」并保存可停用，录音保存、播放和文字批改继续可用。Provider 被停用、清除密钥或协议不兼容时不会自动改用文字 Provider。
 
+文字协议选择 Responses 的 OpenAI Provider 也可复用于原音分析，沿用同一份加密 Key、单独选择音频模型。原音请求使用 `/chat/completions` 的 `input_audio`，不把 WAV 直接发送给 `/responses`。同一 Key 能否调用某个模型由上游账号权限决定；模型列表中出现并不保证支持当前任务。
+
 既有数据库追加应用 `drizzle/0006_oral_audio_settings.sql`，只新增任务配置表，不重建原有数据。尚未在后台保存时，兼容旧的 `ORAL_AUDIO_PROVIDER_ID` 及该 Provider 的模型；后台首次保存（包括停用）后以数据库配置为准，无需重启服务。配置采用版本校验，避免多位管理员相互覆盖；变更原音模型后，用户必须重新同意发送录音。
 
 管理员身份仍只由服务端 `ADMIN_EMAILS` 或 `ADMIN_USER_IDS` 确定，没有写在源码中的默认管理员名单。原有十校预设和题库不作替换。

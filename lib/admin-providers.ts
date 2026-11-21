@@ -46,6 +46,39 @@ export async function selectDefaultProvider(body:any,actorId:string){
  await audit(actorId,p.id,'provider.default_selected').run();return providerMetadata(p.id);
 }
 
+export async function deleteProvider(body:any,actorId:string){
+ if(!body||Object.keys(body).some(k=>!['action','id','expectedRevision'].includes(k))||
+    typeof body.id!=='string'||!/^provider-[a-f0-9-]{36}$/.test(body.id)||
+    !Number.isSafeInteger(body.expectedRevision)||body.expectedRevision<1){
+  throw new AdminInputError('删除 Provider 的请求不正确。');
+ }
+
+ const db=adminDb();
+ const {id,expectedRevision}=body;
+ const legacyAudioProvider=env.ORAL_AUDIO_PROVIDER_ID||null;
+ const audioProvider="COALESCE((SELECT provider_id FROM ai_task_settings WHERE task='oral-audio'), '')";
+ const audioReference=`CASE WHEN EXISTS(SELECT 1 FROM ai_task_settings WHERE task='oral-audio') THEN ${audioProvider} ELSE COALESCE(?, '') END`;
+ const eligible=`id=? AND revision=? AND is_default=0 AND id<>(${audioReference})`;
+ const args=[id,expectedRevision,legacyAudioProvider];
+ // Audit and deletion share one transaction. Jobs and usage retain their historical provider IDs.
+ const [,deletion]=await db.batch([
+  db.prepare(`INSERT INTO admin_audit_events(id,actor_id,action,provider_id,created_at)
+   SELECT ?,?,'provider.deleted',id,? FROM ai_providers WHERE ${eligible}`)
+   .bind('audit-'+crypto.randomUUID(),actorId,new Date().toISOString(),...args),
+  db.prepare(`DELETE FROM ai_providers WHERE ${eligible}`).bind(...args),
+ ]);
+ if(deletion.meta.changes===1)return {deletedId:id};
+
+ const current=await providerMetadata(id);
+ if(current.revision!==expectedRevision)throw new AccessError('配置已更新，请刷新后重试。',409);
+ if(current.isDefault)throw new AccessError('请先切换默认 Provider，再删除此配置。',409);
+ const audio=await db.prepare("SELECT provider_id FROM ai_task_settings WHERE task='oral-audio'").first<{provider_id:string|null}>();
+ if((audio?audio.provider_id:legacyAudioProvider)===id){
+  throw new AccessError('请先更换或停用原音分析的 Provider，再删除此配置。',409);
+ }
+ throw new AccessError('配置已更新，请刷新后重试。',409);
+}
+
 // Model execution uses this internally. It must never serialize apiKey
 // into route responses, errors, logs, client state or usage/audit records.
 export async function providerForExecution(id?:string){

@@ -8,6 +8,7 @@ import {modelListUrl} from './provider-models';
 import {recordAIUsage,finalizeAIUsage} from './ai-usage';
 import {wavMetrics,audioRate,AUDIO_MAX_BYTES} from './oral-audio-contracts';
 import {analyzeAudio} from './oral-audio-upstream';
+import {configuredAIFetch} from './configured-ai-fetch';
 type AudioRow={object_key:string;mime:string;size:number};
 type JobRow={id:string;record_id:string;status:string;result:string|null;error:string|null;source_hash:string;kind:string};
 const reply=(data:unknown,status=200)=>Response.json(data,{status,headers:privateHeaders});
@@ -46,7 +47,7 @@ export async function POST(request:Request){let jobId='',owner='',created=false;
  // Audio pricing differs from text. Never apply text-only prices to mixed usage.
  const billing={...provider,pricing:{inputPriceMicros:null,cachedInputPriceMicros:null,outputPriceMicros:null}};
  await recordAIUsage(user,billing,{requestId:jobId,task:'oral-audio',status:'unknown',counts:{inputTokens:null,cachedInputTokens:null,outputTokens:null}});
- const out=await analyzeAudio(provider,bytes,metrics.durationSeconds,t.prompt,env.AI_MODEL_HOSTS);await finalizeAIUsage(user,billing,{requestId:jobId,task:'oral-audio',status:out.status,counts:out.counts,elapsedMs:out.elapsedMs});
+ const out=await analyzeAudio(provider,bytes,metrics.durationSeconds,t.prompt,env.AI_MODEL_HOSTS,configuredAIFetch());await finalizeAIUsage(user,billing,{requestId:jobId,task:'oral-audio',status:out.status,counts:out.counts,elapsedMs:out.elapsedMs});
  if(out.error||!out.result){await db.prepare("UPDATE ai_grading_jobs SET status='failed',error=?,updated_at=? WHERE id=? AND owner_id=?").bind(out.error,new Date().toISOString(),jobId,user.id).run();return reply({jobId,status:'failed',error:out.error});}
  const result={feedback:out.result,metrics:{...metrics,...audioRate(out.result.transcript,metrics.durationSeconds,t.record.payload.item?.language||'')},audioId:t.audioId,sourceHash:t.sourceHash,provider:{name:provider.name,model:provider.model},usage:out.counts,analyzedAt:new Date().toISOString(),scope:'原音训练参考；转写与时间可能有误，不计入总分。'};
  await db.prepare("UPDATE ai_grading_jobs SET status='succeeded',result=?,updated_at=? WHERE id=? AND owner_id=?").bind(JSON.stringify(result),new Date().toISOString(),jobId,user.id).run();let current=false;try{current=(await target(t.record.id,user)).sourceHash===t.sourceHash;}catch{}return reply({jobId,status:'succeeded',result,current});
