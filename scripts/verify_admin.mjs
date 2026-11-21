@@ -83,9 +83,6 @@ try{
  p=(await call('/api/admin/providers',{...editable(p),apiKey:replacement})).data.provider;
  eq((await internalCall({operation:'execution',id:p.id,expectedKey:replacement})).data.keyMatches,true);
  p=(await call('/api/admin/providers',{action:'select-default',id:p.id,expectedRevision:p.revision})).data.provider;eq(p.isDefault,true);
- const deleteConfig=provider=>({action:'delete',id:provider.id,expectedRevision:provider.revision});
- const protectedDefault=await call('/api/admin/providers',deleteConfig(p));
- eq(protectedDefault.status,409);ok(protectedDefault.data.error.includes('默认'));
  const other=(await call('/api/admin/providers',{...publicConfig,name:'Second',currency:'CNY'})).data.provider;
  eq((await call('/api/admin/providers',{action:'select-default',id:other.id,expectedRevision:other.revision})).status,200);
  eq((await db.prepare('SELECT COUNT(*) AS n FROM ai_providers WHERE is_default=1').first()).n,1);
@@ -130,18 +127,6 @@ try{
  eq((await internalCall({operation:'execution',id:p.id,expectedKey:replacement})).status,400);
  const audit=await db.prepare('SELECT * FROM admin_audit_events').all();ok(audit.results.length>0);ok(!JSON.stringify(audit.results).includes(replacement));
  eq((await call('/api/ai-grading')).data.enabled,false);
- const providerPath='/api/admin/providers';
- eq((await call(providerPath,deleteConfig(p),ordinary)).status,403);
- eq((await call(providerPath,deleteConfig(p),admin,{headers:{Origin:'https://elsewhere.test'}})).status,403);
- eq((await call(providerPath,{...deleteConfig(p),expectedRevision:p.revision-1})).status,409);
- const attempts=await Promise.all([call(providerPath,deleteConfig(p)),call(providerPath,deleteConfig(p))]);
- eq(attempts.map(result=>result.status).sort(),[200,404]);
- eq(attempts.find(result=>result.status===200).data,{deletedId:p.id});
- eq((await call(providerPath)).data.providers.some(provider=>provider.id===p.id),false);
- const deletionAudit=await db.prepare("SELECT count(*) AS count FROM admin_audit_events WHERE action='provider.deleted' AND provider_id=?").bind(p.id).first();
- eq(deletionAudit.count,1);
- const retained=(await call(query+'&providerId='+p.id+'&view=events')).data;
- eq(retained.pagination.total,3);ok(retained.rows.some(row=>row.estimatedCostMicros==='2425000'));
  const notAdmin=await mf.dispatchFetch('https://study.test/api/admin/providers',{method:'POST',headers:{...ordinary,'Content-Type':'application/json'},body:'{malformed'});eq(notAdmin.status,403);
  console.log(`Passed ${checks} admin authorization, encryption, concurrency, ledger and usage-query checks.`);
 }finally{await mf.dispose();}

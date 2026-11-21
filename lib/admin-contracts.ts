@@ -1,5 +1,4 @@
-export const PROTOCOLS=['openai-compatible','openai-responses','anthropic','gemini','custom'] as const;
-export const isOpenAIProtocol=(protocol:unknown)=>protocol==='openai-compatible'||protocol==='openai-responses';
+export const PROTOCOLS=['openai-compatible','anthropic','gemini','custom'] as const;
 export const CURRENCIES=['USD','CNY','EUR'] as const;
 export class AdminInputError extends Error{}
 export function priceToMicros(value:unknown):number|null{
@@ -43,3 +42,4 @@ export function estimateCostMicros(counts:UsageCounts,prices:Pricing):string|nul
  let sum=BigInt(0);for(const [tokens,price] of parts){if(!tokens)continue;if(price===null)return null;if(!Number.isSafeInteger(price)||price<0)throw new AdminInputError('模型单价不正确。');sum+=BigInt(tokens)*BigInt(price);}
  return ((sum+BigInt(500000))/BigInt(1000000)).toString();
 }
+

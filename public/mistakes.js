@@ -36,9 +36,9 @@ const MistakeUI={
   const box=$('#mistake-records');if(!box)return;box.innerHTML='<div class="hub-form-note">正在读取错题档案…</div>';
   try{const query=$('#mistake-query')?.value.trim()||'',result=await Hub.api('?kind=error-set'+(query?'&q='+encodeURIComponent(query):''));if(!$('#mistake-records'))return;$('#mistake-records').innerHTML=result.records.length?`<div class="record-list">${result.records.map(r=>`<article class="record-row"><span class="hub-record-kind">错题</span><div class="record-detail"><h3>${StudyFlow.e(r.title)}</h3><p>${StudyFlow.e(Hub.schoolById(r.schoolId)?.short||'')} · ${Hub.dateText(r.createdAt,true)}</p></div><a class="btn secondary" href="#mistake/${StudyFlow.e(r.id)}">打开 ↗</a></article>`).join('')}</div>`:'<div class="hub-empty">尚无匹配的错题；可以先录入一组题号与选项。</div>';}catch(e){if($('#mistake-records'))$('#mistake-records').innerHTML=`<div class="notice">${StudyFlow.e(e.message)}</div>`;}
  },
- async load(id){
+ async load(id,redo=false){
   const token=++Hub.routeToken;$('#screen').innerHTML='<div class="loading">正在读取错题与原卷快照…</div>';
-  try{const r=await Hub.api('?id='+encodeURIComponent(id));if(token!==Hub.routeToken)return;if(r.kind!=='error-set')throw Error('这不是错题档案');this.record=r;this.redo=false;this.redoAnswers={};this.reviewMeta=null;this.renderRecord();}catch(e){Hub.errorPage(e.message);}
+  try{const r=await Hub.api('?id='+encodeURIComponent(id));if(token!==Hub.routeToken)return;if(r.kind!=='error-set')throw Error('这不是错题档案');this.record=r;this.redo=redo;this.redoAnswers={};this.reviewMeta=null;this.renderRecord();}catch(e){Hub.errorPage(e.message);}
  },
  renderRecord(){
   const r=this.record,p=r.payload;this.entries=p.entries;
@@ -63,3 +63,4 @@ const MistakeUI={
  change(event){if(event.target.id==='mistake-source')this.selectSource(event.target.value);if(event.target.hasAttribute('data-redo-answer'))this.redoAnswers[event.target.dataset.redoAnswer]=event.target.value;},
  input(){},
 };
+

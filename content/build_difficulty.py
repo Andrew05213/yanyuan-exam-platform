@@ -58,3 +58,4 @@ data=dict(version='3.0',reviewDate='2026-10-29',tiers={s:[dict(id=i,label=l,desc
 from school_tracks import apply_difficulty
 data = apply_difficulty(data)
 (P/'difficulty.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8');print('Classified',len(items),'units; no fabricated competition or graduate stock.')
+

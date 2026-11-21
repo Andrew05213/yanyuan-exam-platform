@@ -53,3 +53,4 @@ export async function POST(request:Request){try{
  await db.insert(qualityFeedback).values({id,ownerId:user.id,targetKey,kind:b.kind,title:String(packet.title||'训练卷').slice(0,180),payload:JSON.stringify(payload),createdAt:now,updatedAt:now}).onConflictDoUpdate({target:qualityFeedback.id,set:{payload:JSON.stringify(payload),status:'open',adminNote:'',handledBy:null,updatedAt:now}});
  return Response.json({id,saved:true},{headers:privateHeaders});
 }catch(e){if(e instanceof SyntaxError)return fail(new AccessError('反馈格式无效。',400));return fail(e,'反馈未保存，请保留内容后重试。');}}
+

@@ -26,3 +26,4 @@ assert.throws(()=>E.parseErrors('999A',sample));assert.throws(()=>E.parseErrors(
 const adjusted=E.parseAdjustment('阅读2篇、语法填空20题、不要作文、45分钟、不重复',data.profiles.speit);assert.equal(adjusted.config.readingCount,2);assert.equal(adjusted.config.fillCount,20);assert.equal(adjusted.config.writingCount,0);assert.equal(adjusted.config.minutes,45);assert.equal(adjusted.unhandled,'');
 const unknown=E.parseAdjustment('阅读2篇，并加入莎士比亚戏剧表演',data.profiles.pku);assert(unknown.unhandled.includes('莎士比亚'),'Unknown instructions must remain visible');
 console.log('PASS: 90 school-specific mixed papers, numbering/weights, objective vs subjective scores, non-silent deduplication, strict quick-error parsing, and reviewed adjustments.');
+

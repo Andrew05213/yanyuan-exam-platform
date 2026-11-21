@@ -67,3 +67,4 @@ export function reviewTemplate(){return {
   optimizedText:"保留原稿立场、遵守原题字数的英文优化全文",optimizedWordCount:0,
   nextSteps:["下一篇可执行目标"],provisional:true,
 };}
+

@@ -95,3 +95,4 @@ try{
  check((await rpc('get_school_profile',{schoolId:'fudan'},'A')).result.isError,undefined);
  console.log('Passed '+checks+' merged-feature checks: feedback handling, owner-only audio/archive, report privacy, pagination, new schools and bounded requests.');
 }finally{await mf.dispose();}
+

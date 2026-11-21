@@ -56,3 +56,4 @@ CREATE TABLE `site_users` (
 	`display_name` text,
 	`last_seen_at` text NOT NULL
 );
+

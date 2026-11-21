@@ -10,3 +10,4 @@ export async function POST(request:Request){
     return Response.json({record},{headers:{'Cache-Control':'private, no-store'}});
   }catch(error){if(error instanceof AccessError)return fail(error);return Response.json({error:(error as Error).message||'批改导入未完成'},{status:400,headers:{'Cache-Control':'private, no-store'}});}
 }
+

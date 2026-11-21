@@ -18,3 +18,4 @@ export async function encryptProviderKey(value:string,providerId:string,secret:s
 export async function decryptProviderKey(value:string,providerId:string,secret:string){
  try{const envelope=JSON.parse(value);if(envelope.v!==1)throw Error();const bytes=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode(envelope.iv),additionalData:encoder.encode('ai-provider:'+providerId)},await masterKey(secret),decode(envelope.data));return new TextDecoder().decode(bytes);}catch{throw Error('服务端密钥无法解密，请核对加密配置。');}
 }
+

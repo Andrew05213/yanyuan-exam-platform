@@ -18,3 +18,4 @@ export async function adminWrite(request:Request){
  let body;try{body=JSON.parse(new TextDecoder().decode(bytes));}catch{throw new AdminInputError('配置格式不完整。');}
  return {user,body};
 }
+

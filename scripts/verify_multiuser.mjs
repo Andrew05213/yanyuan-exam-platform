@@ -115,3 +115,4 @@ try{
  check((await call('/api/materials','A',material,{'Origin':'https://other.test','Sec-Fetch-Site':'cross-site'})).status,403);
  console.log('Passed '+checks+' multi-user privacy, ownership, reference, publication, revision and community assembly checks.');
 }finally{await mf.dispose();}
+

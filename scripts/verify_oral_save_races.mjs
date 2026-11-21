@@ -13,3 +13,4 @@ assert.equal(draft.dirty,true);assert.equal(removed.length,0);assert.match(nodes
 hub.oralUploading=true;await hub.saveAttempt();assert.match(messages.at(-1),/等待上传/);hub.oralUploading=false;
 hub.oralRecordingDraft=draft;await hub.saveAttempt();assert.match(messages.at(-1),/结束录音/);
 console.log('PASS: oral recording and upload block save; edits during save remain unsaved.');
+

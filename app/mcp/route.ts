@@ -53,3 +53,4 @@ export async function POST(request:Request){
     try{return Response.json({jsonrpc:'2.0',id:rpc.id,result:await result()},{headers:{'Cache-Control':'private, no-store'}});}catch(error){return Response.json({jsonrpc:'2.0',id:rpc.id,result:{isError:true,content:[{type:'text',text:(error as Error).message}]}},{headers:{'Cache-Control':'private, no-store'}});}
   }catch(error){return Response.json({jsonrpc:'2.0',id:rpc?.id||null,error:{code:-32600,message:(error as Error).message}},{status:400,headers:{'Cache-Control':'private, no-store'}});}
 }
+

@@ -29,3 +29,4 @@ export async function POST(request:Request){try{
  try{await db.insert(oralAudio).values({id,ownerId:user.id,objectKey,mime,size:length,createdAt});}catch(e){await env.BUCKET.delete(objectKey);throw e;}
  return Response.json({id,mime,size:length,createdAt},{status:201,headers:privateHeaders});
 }catch(e){return fail(e,'录音上传失败，请保留原文件后重试。');}}
+

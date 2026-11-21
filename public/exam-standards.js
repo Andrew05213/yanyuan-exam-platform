@@ -41,16 +41,17 @@ const UI={
   const route=Hub.route.bind(Hub);
   Hub.route=hash=>{if(hash.startsWith('exam-standard/')){const id=hash.slice(14);if(!data.schools[id])return false;Hub.page('schools','考试标准');this.render(id);return true;}return route(hash);};
  },
- banner(id){const e=Hub.e;(document.querySelector('.school-masthead')||document.querySelector('#screen .page-heading')).insertAdjacentHTML('afterend','<div class="notice no-print"><b>'+e(this.data.schools[id].schoolName)+'考试标准已录入</b> · 用户提供，待样卷校准。当前通用组卷仅用于专项训练。 <a class="text-link" href="#exam-standard/'+e(id)+'">查看各科结构与缺口 →</a></div>');},
+ banner(id){const e=Hub.e;(document.querySelector('.school-masthead')||document.querySelector('#screen .page-heading')).insertAdjacentHTML('afterend','<div class="notice no-print"><b>'+e(this.data.schools[id].schoolName)+'个人提供的题型记录</b> · 用户提供，待样卷校准。当前通用组卷仅用于专项训练。 <a class="text-link" href="#exam-standard/'+e(id)+'">查看各科结构与缺口 →</a></div>');},
  render(id){
   const s=this.data.schools[id],e=Hub.e,items=TierStudio.data.items;
-  const content=Object.entries(s.subjects).map(([name,subject])=>'<section class="hub-panel flow-space"><h2>'+e(name)+' · '+subject.totalQuestions+'题</h2><p class="hub-form-note">考试时长：'+(subject.minutes===null?'待补充':subject.minutes+'分钟')+' · 总分：'+(subject.totalPoints===null?'待补充':subject.totalPoints)+'。'+e(subject.difficulty?.label||s.difficulty.label)+'</p><div class="flow-config-table"><table><thead><tr><th>部分</th><th>材料与题量</th><th>形式</th><th>符合标准的库存</th></tr></thead><tbody>'+subject.sections.map(section=>{
+  const content=Object.entries(s.subjects).map(([name,subject])=>'<section class="hub-panel flow-space"><h2>'+e(name)+' · '+subject.totalQuestions+'题</h2><p class="hub-form-note">考试时长：'+(subject.minutes===null?'待补充':subject.minutes+'分钟')+' · 总分：'+(subject.totalPoints===null?'待补充':subject.totalPoints)+'。'+e(subject.difficulty?.label||s.difficulty.label)+'</p><div class="flow-config-table"><table><thead><tr><th>部分</th><th>材料与题量</th><th>形式</th><th>对应题型库存</th></tr></thead><tbody>'+subject.sections.map(section=>{
    const stock=items.filter(u=>eligible(u,id,name,section)).length,need=section.passageCount||section.count;
    const composition=section.composition?.map(c=>c.count+'道'+kindLabel[c.kind]).join('＋')||kindLabel[section.questionKind];
    return '<tr><td>'+e(section.title)+'</td><td>'+ (section.passageCount?section.passageCount+'篇 · ':'')+section.count+'题'+(section.questionsPerPassage?'（每篇'+section.questionsPerPassage+'题）':'')+'</td><td>'+e(composition)+(section.optionCount?' · '+section.optionCount+'选项':'')+'</td><td>'+stock+' / '+need+(stock<need?' · 待补齐':'')+'</td></tr>';
   }).join('')+'</tbody></table></div><p class="hub-form-note">'+subject.pending.map(e).join('<br>')+'</p></section>').join('');
-  document.querySelector('#screen').innerHTML='<a class="back-link" href="#school/'+e(id)+'">← 返回学校专区</a><div class="page-heading"><h1>'+e(s.schoolName)+' · 考试标准</h1><p>来源：'+e(s.evidence.label)+' · '+e(s.updated)+' · 第'+s.revision+'版。考试年份待补充。</p></div><div class="notice">'+s.corrections.map(e).join('<br>')+'<br>现有题目须逐组核对材料、题型、题量与难度后才能计入整卷库存；暂不提供不符合本标准的整卷。</div>'+content;
+  document.querySelector('#screen').innerHTML='<a class="back-link" href="#school/'+e(id)+'">← 返回学校专区</a><div class="page-heading"><h1>'+e(s.schoolName)+' · 题型记录</h1><p>来源：'+e(s.evidence.label)+' · '+e(s.updated)+' · 第'+s.revision+'版。考试年份待补充。</p></div><div class="notice">'+s.corrections.map(e).join('<br>')+'<br>现有题目须逐组核对材料、题型、题量与难度后才能计入整卷库存；暂不提供不符合该记录的整卷。</div>'+content;
  }
 };
 root.ExamStandardEngine={validate,total,eligible,kindLabel};root.ExamStandards=UI;
 })(typeof window!=='undefined'?window:globalThis);
+

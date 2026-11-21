@@ -51,3 +51,4 @@ function defaults(subject,schoolId,data,profiles){
 function migrate(c,data,profiles){if(c.schema==='tiers-v1'){validate(c,data);return clone(c);}const n=defaults('英语',c.schoolId,data,profiles);const map={reading:'readingCount',mc:'mcCount',fill:'fillCount',cloze:'clozeCount',ordering:'orderCount',translation:'translationCount',writing:'writingCount'};for(const r of n.rows)if(Number.isInteger(c[map[r.section]]))r.count=c[map[r.section]];for(const f of ['name','minutes','topics','excludeAttempted','excludeGenerated','excludeMaterials'])if(c[f]!==undefined)n[f]=clone(c[f]);return n;}
 root.DifficultyEngine={validate,label,available,plan,preview,makePacket,defaults,migrate,clone};
 })(typeof window!=='undefined'?window:globalThis);
+

@@ -19,3 +19,4 @@ export function buildLearningReport(records:RecordRow[]){
  let reviewAnswered=0,reviewCorrect=0;for(const [id,r] of latestReviews){const p=errorSets.get(id);for(const e of p.entries){if(!e||!['A','B','C','D'].includes(e.correct))continue;const a=r.payload.answers?.[e.qid];if(!['A','B','C','D'].includes(a))continue;reviewAnswered++;if(a===e.correct)reviewCorrect++;}}
  return {uniqueWrong:wrong.size,repeatWrong:[...wrong.values()].filter(w=>w.observations>1).length,objectiveObservations,correctObservations,uniqueAnswered:answered.size,reviewAnswered,reviewCorrect,reviewedSets:latestReviews.size,tags:[...tags.values()].sort((a,b)=>b.uniqueWrong-a.uniqueWrong||b.observations-a.observations).slice(0,30),evidence:'已保存的选择题作答与手动错题记录；手动错题不计算整卷正确率，未作答题不计为答错。重复记录可能来自同一次练习，不等同于多次独立失败。'};
 }
+

@@ -24,3 +24,4 @@ export async function rememberUser(request:Request,id:string){
  if(name&&request.headers.get('oai-authenticated-user-full-name-encoding')==='percent-encoded-utf-8'){try{name=decodeURIComponent(name);}catch{name=null;}}
  await adminDb().prepare('INSERT INTO site_users(id,email,display_name,last_seen_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET email=COALESCE(excluded.email,site_users.email),display_name=COALESCE(excluded.display_name,site_users.display_name),last_seen_at=excluded.last_seen_at').bind(id,email,name?.replace(/[\r\n\u0000]/g,'').slice(0,120)||null,new Date().toISOString()).run();
 }
+

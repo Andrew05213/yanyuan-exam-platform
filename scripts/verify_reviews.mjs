@@ -24,3 +24,4 @@ assert.deepEqual(corrected.transcriptionHistory[0].firstReview,partial);
 assert.throws(()=>validateStudyPayload('essay',{...corrected,transcriptionHistory:[]},unconfirmed),/历史/);
 assert.throws(()=>validateStudyPayload('essay',{...original,textConfirmed:false},original),/尚未核对/);
 console.log('PASS: provisional OCR correction preserves old review and rejects lost history or unverified full score.');
+

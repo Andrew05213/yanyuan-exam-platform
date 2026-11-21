@@ -22,6 +22,7 @@ const StudyFlow={
   MistakeUI.init();WritingUI.init();
  },
  route(hash){
+  if(hash.startsWith('redo/')){Hub.page('mistakes','到期复习');MistakeUI.load(hash.slice(5),true);return true;}
   if(hash.startsWith('mistake/')){Hub.page('mistakes','错题分析与复习');MistakeUI.load(hash.slice(8));return true;}
   if(hash.startsWith('essay/')){Hub.page('writing','作文与翻译');WritingUI.load(hash.slice(6));return true;}
   if(hash.startsWith('preset/')){Hub.page('studio','个人预设');this.loadPreset(hash.slice(7),true);return true;}
@@ -70,7 +71,7 @@ const StudyFlow={
   Hub.restoreWrittenTimer();
  },
  blockHTML(block,index,review){
-  const kind={modern:'现代文阅读',classical:'文言文阅读',poem:'古诗阅读',algebra:'代数与函数',geometry:'几何与向量',counting:'计数与概率',number:'数论与离散',reading:'阅读理解',mc:'语言知识',fill:'语法填空',cloze:'完形填空',ordering:'语篇排序',translation:'翻译',writing:'写作'}[block.kind]||'训练';
+  const kind={modern:'现代文阅读',classical:'文言文阅读',poem:'古诗阅读',algebra:'代数与函数',geometry:'几何与向量',counting:'计数与概率',number:'数论与离散',reading:'阅读理解',mc:'语言知识',fill:'语法填空',cloze:'完形填空',ordering:'语篇排序',translation:'翻译',writing:'写作',country:'日本国别'}[block.kind]||'训练';
   return `<section class="flow-paper-section"><h2>${index}. ${this.e(kind)} <span>${this.e(block.title)}</span></h2>${block.text?`<article class="reading english-text"><div class="reading-source">${this.e(block.source)}${Hub.safeUrl(block.sourceUrl)?` <a href="${this.e(block.sourceUrl)}" target="_blank" rel="noopener">原文 ↗</a>`:''}</div>${(block.paragraphs||block.text.split('\n\n')).map(p=>`<p>${Hub.safeRich(p)}</p>`).join('')}</article>`:''}${block.questions.map(q=>this.questionHTML(q,review)).join('')}</section>`;
  },
  questionHTML(q,review){
@@ -143,3 +144,4 @@ async loadArchive(reset=false){
   try{const result=await Hub.api('?'+params.toString());if(serial!==this.archiveSerial||token!==Hub.routeToken||$('#flow-archive-results')!==container)return;this.archiveRecords=reset?result.records:[...new Map([...this.archiveRecords,...result.records].map(r=>[r.id,r])).values()];this.archiveNext=result.next;this.filterArchive();more.hidden=!this.archiveNext;}catch(e){if(serial===this.archiveSerial&&token===Hub.routeToken)toast(e.message);}finally{if(serial===this.archiveSerial){this.archiveLoading=false;more.disabled=false;}}
  },
 };
+
