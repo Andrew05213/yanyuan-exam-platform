@@ -77,8 +77,17 @@ const server=https.createServer(options,async(req,res)=>{try{
  }
  if(!permittedPath(path))return respond(res,404,'不存在');
  if(req.method!=='GET'&&req.method!=='HEAD'&&req.headers.origin&&!originOK(req,url))return respond(res,403,'请求来源不匹配');
- const assetUrl=path==='/literature'?new URL('/literature-app/index.html',url):url;
- if(servePublicAsset(req,res,assetUrl))return;
+ if(path==='/literature'&&(req.method==='GET'||req.method==='HEAD')){
+  let page;
+  try{page=readFileSync(join(publicRoot,'literature-app','index.html'));}
+  catch{return respond(res,503,'文学研习暂时不可用');}
+  res.writeHead(200,{
+   'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff',
+   'content-security-policy':"default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+  });
+  return res.end(req.method==='HEAD'?undefined:page);
+ }
+ if(servePublicAsset(req,res,url))return;
  const user=session(req),headers={...req.headers};for(const key of Object.keys(headers))if(key.startsWith('oai-authenticated-user-')||key.startsWith('x-forwarded-')||['forwarded','x-real-ip','cf-connecting-ip','x-yanyuan-lan'].includes(key))delete headers[key];headers['x-yanyuan-lan']='1';
  if(user){headers['oai-authenticated-user-id']=user.id;headers['oai-authenticated-user-email']=user.email;}
  if(headers.origin)headers.origin='http://'+req.headers.host;
