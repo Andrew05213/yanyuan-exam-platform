@@ -67,3 +67,4 @@ const ids=vm.runInContext('Array.from({length:100},()=>Hub.id("packet"))',uiCont
 assert.equal(new Set(ids).size,100);
 assert(ids.every(id=>/^packet-[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(id)));
 console.log('PASS: UUIDs also work in non-secure local previews without crypto.randomUUID.');
+

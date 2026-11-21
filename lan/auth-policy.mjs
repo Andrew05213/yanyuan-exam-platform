@@ -16,3 +16,4 @@ export class AuthLimiter {
  register(ip){return this.take('register:'+ip,12,60000);}
  password(user){return this.take('password:'+user,10,60000);}
 }
+

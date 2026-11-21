@@ -7,8 +7,7 @@ import {textHash} from './study-contracts';
 import {gradingSource,applyWrittenGrade} from './grading-contracts';
 import {executeGrading} from './grading-upstream';
 import {recordAIUsage,finalizeAIUsage} from './ai-usage';
-import {AdminInputError,isOpenAIProtocol} from './admin-contracts';
-import {configuredAIFetch} from './configured-ai-fetch';
+import {AdminInputError} from './admin-contracts';
 import {modelListUrl} from './provider-models';
 const reply=(data:unknown,status=200)=>Response.json(data,{status,headers:privateHeaders});
 const present=(row:any)=>({jobId:row.id,status:row.status,recordId:row.record_id,questionId:row.question_id,kind:row.kind,result:row.result?JSON.parse(row.result):null,error:row.error});
@@ -16,7 +15,7 @@ async function expire(userId:string){await adminDb().prepare("UPDATE ai_grading_
 export async function GET(request:Request){try{
  const id=new URL(request.url).searchParams.get('jobId');if(id){const user=principal(request);await expire(user.id);const row=await adminDb().prepare('SELECT * FROM ai_grading_jobs WHERE id=? AND owner_id=?').bind(id,user.id).first();if(!row)throw new AccessError('批改记录不存在。',404);return reply(present(row));}
  const row=await adminDb().prepare('SELECT protocol,base_url FROM ai_providers WHERE is_default=1 AND enabled=1 AND encrypted_key IS NOT NULL').first<any>();
- let enabled=false;if(isOpenAIProtocol(row?.protocol)){try{modelListUrl(row.base_url,env.AI_MODEL_HOSTS);enabled=true;}catch{}}
+ let enabled=false;if(row?.protocol==='openai-compatible'){try{modelListUrl(row.base_url,env.AI_MODEL_HOSTS);enabled=true;}catch{}}
  return reply({enabled,status:enabled?'ready':'not_configured',message:enabled?'AI 批改已就绪':'请管理员配置默认 Provider、模型及密钥（OpenAI 兼容协议）。',kinds:['writing','translation','oral'],score:null});
 }catch(e){return fail(e);}}
 export async function POST(request:Request){
@@ -28,11 +27,11 @@ export async function POST(request:Request){
   const prior=await db.prepare('SELECT * FROM ai_grading_jobs WHERE id=? AND owner_id=?').bind(jobId,user.id).first<any>();if(prior){if(prior.record_id!==body.recordId||prior.question_id!==(body.questionId||''))throw new AccessError('请求编号不能用于另一份作答。',409);return reply(present(prior),prior.status==='pending'?202:200);}
   const record=await getRecord(body.recordId,user);if(record.revision!==body.expectedRevision)throw new AccessError('作答已更新，请刷新后重新发起批改。',409);
   const source=gradingSource(record,body.questionId||''),sourceHash=await textHash(JSON.stringify(source)),provider=await providerForExecution();
-  if(!isOpenAIProtocol(provider.protocol))throw new AdminInputError('默认 Provider 须使用 OpenAI Chat Completions / Responses 协议。');modelListUrl(provider.baseUrl,env.AI_MODEL_HOSTS);
+  if(provider.protocol!=='openai-compatible')throw new AdminInputError('默认 Provider 须使用 OpenAI 兼容协议（支持 DeepSeek）。');modelListUrl(provider.baseUrl,env.AI_MODEL_HOSTS);
   const now=new Date().toISOString();try{await db.prepare("INSERT INTO ai_grading_jobs(id,owner_id,record_id,question_id,source_hash,kind,status,provider_id,model,created_at,updated_at) VALUES(?,?,?,?,?,?,'pending',?,?,?,?)").bind(jobId,user.id,record.id,body.questionId||'',sourceHash,source.kind,provider.id,provider.model,now,now).run();}catch{const concurrent=await db.prepare('SELECT * FROM ai_grading_jobs WHERE id=? AND owner_id=?').bind(jobId,user.id).first<any>();if(concurrent)return reply(present(concurrent),202);throw new AccessError('当前已有批改在进行，请等待完成。',429);}
   created=true;const task=source.kind as 'writing'|'translation'|'oral';
   await recordAIUsage(user,provider,{requestId:jobId,task,status:'unknown',counts:{inputTokens:null,cachedInputTokens:null,outputTokens:null}});
-  const execution=await executeGrading(provider,source,record.kind==='essay',env.AI_MODEL_HOSTS,configuredAIFetch());
+  const execution=await executeGrading(provider,source,record.kind==='essay',env.AI_MODEL_HOSTS);
   await finalizeAIUsage(user,provider,{requestId:jobId,task,status:execution.status,counts:execution.counts,elapsedMs:execution.elapsedMs});
   if(execution.error){await db.prepare("UPDATE ai_grading_jobs SET status='failed',error=?,updated_at=? WHERE id=? AND owner_id=?").bind(execution.error,new Date().toISOString(),jobId,user.id).run();return reply({jobId,status:'failed',error:execution.error});}
   const result={assessment:execution.result,provider:{name:provider.name,model:provider.model},usage:execution.counts,gradedAt:new Date().toISOString(),sourceHash,applied:false};
@@ -53,3 +52,4 @@ export async function POST(request:Request){
   if(e instanceof AdminInputError)return reply({error:e.message},400);if(e instanceof SyntaxError)return reply({error:'批改请求格式无效。'},400);return fail(e,'批改或记账未完成，请保留作答后重试。');
  }
 }
+

@@ -29,3 +29,4 @@ export async function POST(request:Request){try{
  for(const f of files)await db.update(materialFiles).set({materialId:id}).where(and(eq(materialFiles.id,f.id),eq(materialFiles.ownerId,user.id)));
  return reply({material:publicMaterial(r)},existing?200:201);
  }catch(error){return fail(error,'发布未完成，请保留原稿后重试。');}}
+

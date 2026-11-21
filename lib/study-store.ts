@@ -35,3 +35,4 @@ export async function saveEssayReview(user:Principal,id:string,sourceHash:string
  const record=await getRecord(id,user);if(record.kind!=='essay')throw Error('请选择作文原稿。');const p=record.payload;if(!p.originalText?.trim())throw Error('请先识别原稿。');if(await textHash(p.originalText)!==sourceHash)throw Error('原稿已变化，请重新读取并对当前原稿批改。');if(!p.textConfirmed&&review.total!==null)throw Error('原稿尚未核对，只能保存部分评语，不得给出完整总分。');validateReview(review,p.originalText);
  const completed={...review,sourceHash,reviewedAt:new Date().toISOString(),reviewer};return updateRecord(record,{...p,firstReview:p.firstReview||completed,latestReview:completed,reviews:[...(p.reviews||[]),completed].slice(-30),status:'reviewed'},user);
 }
+

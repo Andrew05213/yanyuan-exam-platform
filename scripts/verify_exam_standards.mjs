@@ -28,7 +28,8 @@ const mathUnit={subject:'数学',examCalibration:{schoolId:'thu',sectionId:indef
 assert(!E.eligible(mathUnit,'thu','数学',indefinite),'single-choice cannot replace indefinite-choice');
 assert(E.eligible({...mathUnit,questions:[{kind:'indefinite',options:['A','B','C','D']}]},'thu','数学',indefinite));
 const mutated=structuredClone(data);mutated.schools.thu.subjects['语文'].sections.at(-1).count=6;assert.throws(()=>E.validate(mutated));
-const html=fs.readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+const html=fs.readFileSync(new URL('../public/training.html',import.meta.url),'utf8');
 assert(html.includes('exam-standards.js'));
 const app=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8');assert(app.includes('exam-standards.json'));assert(app.includes('ExamStandards.init(standards)'));
 console.log('PASS: THU 50/40/30 structure, corrected history argument, unknown metadata, four-option constraints, strict ten-blank cloze and distinct multiple/indefinite formats; generic stock excluded.');
+

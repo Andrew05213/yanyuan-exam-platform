@@ -10,7 +10,7 @@ const QualityUI={
   $('#screen').addEventListener('click',e=>this.click(e));$('#screen').addEventListener('submit',e=>{if(e.target.id==='quality-form'){e.preventDefault();this.save(e.target);}});
  },
  e:s=>Hub.e(s),
- standards(){const e=this.e;$('#screen').innerHTML='<div class="page-heading"><h1>考试标准</h1><p>明确已知题型、待确认信息和题库缺口。专项训练的题量与考试整卷分别说明。</p></div><div class="hub-task-grid">'+Hub.data.schools.map(s=>'<article class="hub-panel"><h2>'+e(s.name)+'</h2><p>'+e(s.track)+'</p><a class="btn secondary" href="'+(ExamStandards.data.schools[s.id]?'#exam-standard/'+s.id:'#school/'+s.id)+'">'+(ExamStandards.data.schools[s.id]?'查看已录入标准':'查看要求与待确认信息')+'</a></article>').join('')+'</div>';},
+ standards(){const e=this.e;$('#screen').innerHTML='<div class="page-heading"><h1>考试标准</h1><p>明确已知题型、待确认信息和题库缺口。专项训练的题量与考试整卷分别说明。</p></div><div class="hub-task-grid">'+Hub.data.schools.map(s=>'<article class="hub-panel"><h2>'+e(s.name)+'</h2><p>'+e(s.track)+'</p><a class="btn secondary" href="'+(ExamStandards.data.schools[s.id]?'#exam-standard/'+s.id:'#school/'+s.id)+'">'+(ExamStandards.data.schools[s.id]?'查看个人提供的题型记录':'查看要求与待确认信息')+'</a></article>').join('')+'</div>';},
 
  decorate(){
   if(!PublicApp.session.authenticated)return;
@@ -44,3 +44,4 @@ const QualityUI={
   if(action==='handle'){b.disabled=true;const r=this.feedbackRows.find(x=>x.id===b.dataset.id);try{await StudyFlow.request('/api/feedback',{action:'handle',id:r.id,status:b.dataset.status,note:$('#note-'+r.id).value,expectedUpdatedAt:r.updatedAt});await this.feedback(true);}catch(e){toast(e.message);}finally{b.disabled=false;}}
  }
 };
+

@@ -27,3 +27,4 @@
 在既有迁移后追加应用 `drizzle/0005_modern_valeria_richards.sql`，建立所有者隔离的批改任务及并发约束。不要重建原有档案、Provider 或用量表。费用规则和价格快照见 [管理后台](admin.md)。
 
 构建后运行 `node scripts/verify_ai_contracts.mjs` 和 `node scripts/verify_ai_grading.mjs`。后者使用隔离 Worker、数据库和模拟上游，覆盖三类主观题、真实用量字段、费用、重复请求、客观题拒绝、身份隔离、非法评分和并发修改，不产生真实模型费用。
+

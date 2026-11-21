@@ -89,3 +89,4 @@ const WritingUI={
  change(event){const el=event.target;if(el.id==='essay-photo-files'||el.id==='essay-camera-file'){this.upload([...el.files]);el.value='';}if(el.id==='essay-review-file'){const f=el.files[0];if(f){if(f.size>750000){toast('批改文件过大。');return;}f.text().then(t=>{$('#essay-review-json').value=t;});}el.value='';}if(el.closest('.flow-essay-columns')&&el.id!=='essay-language'&&!el.type.includes('file')){this.dirty=true;this.readDraft();}},
  input(event){const el=event.target;if(el.closest('.flow-essay-columns')&&el.id!=='essay-language'){this.dirty=true;if(el.id==='essay-original'){$('#essay-wordcount').textContent=WorkflowEngine.countWords(el.value)+' words';if(!this.draft.firstReview||this.draft.firstReview.total===null&&!this.draft.textConfirmed)$('#essay-confirm').checked=false;}this.readDraft();}},
 };
+

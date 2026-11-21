@@ -2,7 +2,7 @@
 const PublicApp={
  session:{authenticated:false},baseItems:[],materials:[],mine:new Set(),token:0,editing:null,files:[],
  e:s=>Hub.e(s),
- signin(){return '/signin-with-chatgpt?return_to='+encodeURIComponent('/index.html'+(location.hash.startsWith('#packet/')&&!Hub.packetMeta?.revision?'#studio':location.hash));},
+ signin(){return '/signin-with-chatgpt?return_to='+encodeURIComponent('/training.html'+(location.hash.startsWith('#packet/')&&!Hub.packetMeta?.revision?'#studio':location.hash));},
  loginLink(text='登录后使用'){return '<a class="btn primary" target="_top" href="'+this.e(this.signin())+'">'+this.e(text)+' ↗</a>';},
  gate(title='我的学习资料库'){
   $('#screen').innerHTML='<div class="empty-state"><div class="empty-mark">▤</div><h1>'+this.e(title)+'</h1><p>登录后保存和查看自己的学习记录。</p>'+this.loginLink()+' <a class="btn secondary" href="#studio">先去组卷</a></div>';

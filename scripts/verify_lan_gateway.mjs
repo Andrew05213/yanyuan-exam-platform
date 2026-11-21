@@ -12,3 +12,4 @@ const br=await call('/auth/register',{method:'POST',headers:postHeaders,body:for
 const cross=await call('/api/archive',{method:'POST',headers:{cookie:ac,origin:'https://other.invalid','content-type':'application/json'},body:JSON.stringify(record)});assert.equal(cross.status,403);
 const pw=await call('/auth/password',{method:'POST',headers:{...postHeaders,cookie:ac},body:new URLSearchParams({old:password,password:next}).toString()});assert.equal(pw.status,303);assert.equal((await call('/api/session',{headers:{cookie:ac}})).json.authenticated,false);assert.equal((await call('/auth/login',{method:'POST',headers:postHeaders,body:form(a,password)})).status,401);assert.equal((await call('/auth/login',{method:'POST',headers:postHeaders,body:form(a,next)})).status,303);
 console.log(JSON.stringify({message:'PASS: TLS, self-registration, account isolation, admin impersonation prevention, CSRF, secret file protection and password change.',id,emails:[a,b]}));
+

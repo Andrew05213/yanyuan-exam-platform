@@ -13,5 +13,5 @@ for(const status of [401,403,429,500])await assert.rejects(()=>fetchModelList(p,
 await assert.rejects(()=>fetchModelList(p,'',async()=>{throw Error(key);}));
 await assert.rejects(()=>fetchModelList(p,'',async()=>new Response('x'.repeat(512001))));
 await assert.rejects(()=>fetchModelList({...p,protocol:'anthropic'},'',async()=>{throw Error('must not request');}));
-const responseModels=await fetchModelList({...p,protocol:'openai-responses',baseUrl:'https://api.openai.com/v1'},'',async(url,options)=>{assert.equal(url,'https://api.openai.com/v1/models');assert.equal(options.headers.Authorization,'Bearer '+key);return Response.json({data:[{id:'text-model'},{id:'audio-model',input_modalities:['audio']}]});});assert.equal(responseModels.length,2);
 console.log('PASS: upstream host restrictions, exact model URL, saved-secret header, bounded metadata, duplicate removal, secret redaction and safe failure handling.');
+

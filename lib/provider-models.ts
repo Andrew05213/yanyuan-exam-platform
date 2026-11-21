@@ -1,4 +1,4 @@
-import {AdminInputError,publicBaseUrl,isOpenAIProtocol} from './admin-contracts';
+import {AdminInputError,publicBaseUrl} from './admin-contracts';
 import {upstreamFetch} from './upstream-fetch';
 export function modelListUrl(baseUrl:string,extraHosts=''){
  const base=publicBaseUrl(baseUrl),url=new URL(base);
@@ -16,7 +16,7 @@ export function modelMetadata(payload:any,key:string){
  return models;
 }
 export async function fetchModelList(provider:{baseUrl:string;protocol:string;apiKey:string},extraHosts='',request:typeof fetch=upstreamFetch){
- if(!isOpenAIProtocol(provider.protocol))throw new AdminInputError('当前支持 OpenAI Chat Completions / Responses 的模型列表；其他协议可手动填写模型。');
+ if(provider.protocol!=='openai-compatible')throw new AdminInputError('当前支持 OpenAI 兼容协议的模型列表；其他协议可手动填写模型。');
  const url=modelListUrl(provider.baseUrl,extraHosts),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
  try{
   let response:Response;try{response=await request(url,{method:'GET',headers:{Authorization:'Bearer '+provider.apiKey,Accept:'application/json'},redirect:'manual',signal:controller.signal});}catch{throw new AdminInputError('连接上游失败或超时，请检查接口地址后重试。');}
@@ -28,3 +28,4 @@ export async function fetchModelList(provider:{baseUrl:string;protocol:string;ap
   return modelMetadata(body,provider.apiKey);
  }catch(e){if(e instanceof AdminInputError)throw e;throw new AdminInputError('获取模型列表失败，请稍后重试。');}finally{clearTimeout(timeout);}
 }
+

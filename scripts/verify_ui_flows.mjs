@@ -141,3 +141,4 @@ for(const fail of [false,true]){
  for(const school of schools.schools)for(const subject of school.subjects){f.Hub.school=school.id;f.TierStudio.reset(subject,school.id);f.TierStudio.render();check(f.screen.innerHTML.includes('id="tier-form"'),true);check(f.screen.innerHTML.includes('data-tier-field="count"'),true);check((f.screen.innerHTML.match(/<details\b/g)||[]).length,(f.screen.innerHTML.match(/<\/details>/g)||[]).length);}
 }
 console.log('PASS: '+checks+' frontend grading, save failure, delayed request, essay edit, backup and template checks.');
+

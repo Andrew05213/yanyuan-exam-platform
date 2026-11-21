@@ -15,7 +15,6 @@ const suites=[
  'verify_admin_contracts.mjs',
  'verify_ai_contracts.mjs',
  'verify_provider_models.mjs',
- 'verify_openai_relay.mjs',
  'verify_ui_flows.mjs',
  'verify_oral_save_races.mjs',
  'verify_lan_auth_policy.mjs',

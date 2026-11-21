@@ -218,12 +218,6 @@
       "label": "语言学（专业方向）",
       "countryType": "country-linguistics",
       "scope": "语言学（专业方向）相关国家与地区"
-    },
-    "sa-pi": {
-      "id": "sa-pi",
-      "label": "梵文与巴利文",
-      "countryType": "country-sa-pi",
-      "scope": "南亚古典文献与佛教文化交流"
     }
   },
   "schools": [
@@ -263,30 +257,24 @@
       "profileFocus": "文学、思想与跨文化解释",
       "userFormat": "原有专项配置保留为历史训练；目标语种与招生分组条件见下方说明。",
       "languageIds": [
-        "es",
-        "de",
-        "fr",
-        "ja",
         "ar",
         "ko",
-        "hi",
-        "he",
-        "sa-pi",
+        "de",
         "ru",
+        "fr",
+        "pt",
+        "ja",
+        "th",
+        "es",
+        "id",
         "ur"
       ],
       "defaultLanguageId": "ja",
       "languagePolicy": {
         "year": 2026,
         "checkedAt": "2026-10-30",
-        "note": "当前目标语种按用户2026年11月1日提供的本届备考名单设置，共11个方向；名单尚未经本届官方简章核验。下方链接仅为2026届历史参考，不作为当前语种名单的依据。训练范围不代替报考资格审核。",
-        "sourceUrl": "https://bkzs.pku.edu.cn/tzgg/d24d1f3ac99d4263bd2ab51442a7a7a8.htm",
-        "trainingListSource": {
-          "kind": "user-provided",
-          "receivedAt": "2026-11-01",
-          "targetYear": 2027,
-          "officiallyVerified": false
-        }
+        "note": "2026暂定招11个语种；部分专业限第一志愿。语种选择用于训练分类，不代替志愿资格审核。",
+        "sourceUrl": "https://bkzs.pku.edu.cn/tzgg/d24d1f3ac99d4263bd2ab51442a7a7a8.htm"
       }
     },
     {
@@ -306,7 +294,7 @@
         "语种国别拓展",
         "个人学习档案"
       ],
-      "writtenNote": "数外笔试参照2026招生简章公开转载；本专区按英语选考方向训练。具体题型仍需样卷校准。",
+      "writtenNote": "2026年笔试包括数学及外语，外语为30%英语与70%选考语种。本站英语练习按英语选考方向设置。",
       "oralOfficial": "2026公开招生信息列外语能力测试与综合面试；英语选考方向的外语能力测试使用英语。",
       "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
       "sourceUrl": "https://admissions.sjtu.edu.cn/newDetails?contentsID=3810000004162",
@@ -567,7 +555,6 @@
       "region": "多语种",
       "color": "#417c71",
       "subjects": [
-        "语文",
         "数学",
         "英语"
       ],
@@ -577,15 +564,14 @@
         "通用能力",
         "国别与区域"
       ],
-      "writtenNote": "数学和外语笔试、面试；具体语种规则见2026简章。",
-      "oralOfficial": "以2026简章为参考；2027考核安排待公布。",
+      "writtenNote": "2026年数学与外语笔试各90分钟，外语不设听力。本站英语练习适用于英语考生，题型为训练设计。",
+      "oralOfficial": "2026年面试包含回答问题、主题讨论和自由会话。",
       "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
       "sourceUrl": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=2wub9s179b9ix5qe",
       "sourceLabel": "2026招生简章（高校或阳光高考平台）",
       "writtenMinutes": {
-        "语文": 60,
-        "数学": 60,
-        "英语": 30
+        "数学": 90,
+        "英语": 90
       },
       "oralRecipe": [
         "reading",
@@ -593,7 +579,7 @@
         "country"
       ],
       "profileFocus": "通用专项训练 · 考试标准待补充",
-      "userFormat": "已开放通用笔试与口试抽题。可选科目为本站训练选项，不代表学校正式考试科目。",
+      "userFormat": "以下为本站按英语考生设置的专项练习，组卷题量与限时由本站设定。",
       "outlineOnly": false,
       "languageIds": [
         "ru",
@@ -620,7 +606,6 @@
       "color": "#3e668b",
       "subjects": [
         "语文",
-        "数学",
         "英语"
       ],
       "tagline": "先了解报考要求，再安排自己的训练。",
@@ -629,14 +614,13 @@
         "通用能力",
         "国别与区域"
       ],
-      "writtenNote": "语文、外语笔试（含听力）及外语口试；各专业志愿有考试语种限制。",
+      "writtenNote": "2026年考核包括语文笔试、外语笔试（含听力）和外语口试。本站英语练习适用于英语考生。",
       "oralOfficial": "以2026简章为参考；2027考核安排待公布。",
       "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
-      "sourceUrl": "https://admissions.shisu.edu.cn/1a/69/c632a203369/page.htm",
+      "sourceUrl": "https://admissions.shisu.edu.cn/1b/c7/c631a203719/pagem.htm",
       "sourceLabel": "2026招生简章（高校或阳光高考平台）",
       "writtenMinutes": {
         "语文": 60,
-        "数学": 60,
         "英语": 30
       },
       "oralRecipe": [
@@ -645,7 +629,7 @@
         "country"
       ],
       "profileFocus": "通用专项训练 · 考试标准待补充",
-      "userFormat": "已开放通用笔试与口试抽题。可选科目为本站训练选项，不代表学校正式考试科目。",
+      "userFormat": "以下为本站按英语考生设置的专项练习，组卷题量与限时由本站设定。",
       "outlineOnly": false,
       "languageIds": [
         "en",
@@ -681,8 +665,6 @@
       "region": "多语种",
       "color": "#785784",
       "subjects": [
-        "语文",
-        "数学",
         "英语"
       ],
       "tagline": "先了解报考要求，再安排自己的训练。",
@@ -691,14 +673,12 @@
         "通用能力",
         "国别与区域"
       ],
-      "writtenNote": "已建立学校与语种入口；各科结构、题量与评分规则待逐项录入。",
+      "writtenNote": "2026年按报名的考试语种参加笔试和面试，具体安排见准考证。本站提供英语专项练习。",
       "oralOfficial": "以2026简章为参考；2027考核安排待公布。",
       "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
-      "sourceUrl": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=wl755l2lrt96gt8r",
-      "sourceLabel": "2026招生简章（高校或阳光高考平台）",
+      "sourceUrl": "https://gaokao.eol.cn/jiang_su/dongtai/202601/t20260108_2714839.shtml",
+      "sourceLabel": "南京大学2026简章转载（教育在线）",
       "writtenMinutes": {
-        "语文": 60,
-        "数学": 60,
         "英语": 30
       },
       "oralRecipe": [
@@ -707,7 +687,7 @@
         "country"
       ],
       "profileFocus": "通用专项训练 · 考试标准待补充",
-      "userFormat": "已开放通用笔试与口试抽题。可选科目为本站训练选项，不代表学校正式考试科目。",
+      "userFormat": "以下为本站按英语考生设置的专项练习，组卷题量与限时由本站设定。",
       "outlineOnly": false,
       "languageIds": [
         "fr",
@@ -722,7 +702,7 @@
         "year": 2026,
         "checkedAt": "2026-10-30",
         "note": "2026列法、德、西、日、俄、朝六个语种；报考资格、测试语种及项目限制以简章为准。",
-        "sourceUrl": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=wl755l2lrt96gt8r"
+        "sourceUrl": "https://gaokao.eol.cn/jiang_su/dongtai/202601/t20260108_2714839.shtml"
       },
       "examStandardStatus": "pending"
     },
@@ -734,7 +714,6 @@
       "region": "多语种",
       "color": "#3e6588",
       "subjects": [
-        "语文",
         "数学",
         "英语"
       ],
@@ -744,13 +723,12 @@
         "通用能力",
         "国别与区域"
       ],
-      "writtenNote": "零起点考核英语能力、数理特长；高起点考核对应小语种、数学与数理特长，面试另有区别。",
-      "oralOfficial": "以2026简章为参考；2027考核安排待公布。",
+      "writtenNote": "2026年零起点笔试考核英语能力和数理特长，高起点考核对应小语种、数学能力和数理特长。本站为通用专项练习。",
+      "oralOfficial": "2026年零起点面试考核综合能力和英语能力，高起点考核综合能力和理科思维能力，另有体育测试。",
       "oralTraining": "本站通用能力训练在语种间复用；国别与区域题按目标语种区分。这是训练组织方式，不代表实际校测仅有国别题不同。",
       "sourceUrl": "https://ao.fudan.edu.cn/aa/b5/c36330a764597/page.htm",
       "sourceLabel": "2026招生简章（高校或阳光高考平台）",
       "writtenMinutes": {
-        "语文": 60,
         "数学": 60,
         "英语": 30
       },
@@ -760,7 +738,7 @@
         "country"
       ],
       "profileFocus": "通用专项训练 · 考试标准待补充",
-      "userFormat": "已开放通用笔试与口试抽题。可选科目为本站训练选项，不代表学校正式考试科目。",
+      "userFormat": "以下为本站按英语考生设置的专项练习，组卷题量与限时由本站设定。",
       "outlineOnly": false,
       "languageIds": [
         "ru",

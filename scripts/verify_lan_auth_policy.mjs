@@ -19,3 +19,4 @@ for(let i=0;i<12;i++)assert.equal(limiter.register('shared-router'),true);
 assert.equal(limiter.register('shared-router'),false);
 assert.equal(limiter.login('shared-router','new'),true);
 console.log('PASS: explicit proxy origins, cross-site rejection, shared-router sign-ins, scoped failed-login limit, expiry and separate registration limit.');
+

@@ -32,3 +32,4 @@ await assert.rejects(()=>decryptProviderKey(encrypted,id,randomBytes(32).toStrin
 const tampered=JSON.parse(encrypted);tampered.data=(tampered.data[0]==='A'?'B':'A')+tampered.data.slice(1);
 await assert.rejects(()=>decryptProviderKey(JSON.stringify(tampered),id,master));checks++;
 console.log(`Passed ${checks} admin encryption, validation and exact-price checks.`);
+

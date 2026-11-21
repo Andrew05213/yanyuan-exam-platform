@@ -7,7 +7,8 @@ declare namespace Cloudflare {
     AI_CREDENTIALS_ENCRYPTION_KEY?: string;
     AI_MODEL_HOSTS?: string;
     ORAL_AUDIO_PROVIDER_ID?: string;
-    AI_OPENAI_RELAY_URL?: string;
-    AI_OPENAI_RELAY_TOKEN?: string;
+    DEEPSEEK_API_KEY?: string;
+    DEEPSEEK_MODEL?: string;
+    DEEPSEEK_BASE_URL?: string;
   }
 }

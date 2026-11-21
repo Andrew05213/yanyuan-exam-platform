@@ -23,3 +23,4 @@ export async function readLimitedText(request:Request,max:number){
 
 export const privateHeaders={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'};
 export function fail(error:unknown,fallback='操作未完成，请重试。'){return Response.json({error:error instanceof AccessError?error.message:fallback},{status:error instanceof AccessError?error.status:503,headers:privateHeaders});}
+

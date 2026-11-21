@@ -28,3 +28,4 @@ const AIGrading={
   }catch(e){failed=true;const message=e.name==='AbortError'?'等待超时，再次点击可查询同一请求；请勿重复新建批改。':e.message;toast(message);const n=document.querySelector('.ai-grading-state');if(n)n.textContent=message;}finally{this.busy=false;if(!failed)this.buttons();else document.querySelectorAll('[data-ai-grade]').forEach(b=>b.disabled=!this.enabled);}
  },
 };
+

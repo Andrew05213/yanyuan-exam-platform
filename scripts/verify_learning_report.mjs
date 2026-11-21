@@ -5,3 +5,4 @@ const q={id:1,sourceId:'q1',stem:'test',answer:'A',tag:'语法',kind:'mc'},packe
 const rows=[{id:'e1',kind:'error-set',updatedAt:'2026-01-01',payload:{packet,entries:[{question:q,qid:1,selected:'B',correct:'A'}]}},{id:'w1',kind:'written-attempt',updatedAt:'2026-01-02',payload:{packet,answers:{1:'B'}}},{id:'r1',kind:'review-attempt',updatedAt:'2026-01-03',payload:{parentId:'e1',answers:{1:'B'}}},{id:'r2',kind:'review-attempt',updatedAt:'2026-01-04',payload:{parentId:'e1',answers:{1:'A'}}}];
 const r=buildLearningReport(rows);assert.equal(r.uniqueWrong,1);assert.equal(r.repeatWrong,1);assert.equal(r.objectiveObservations,1);assert.equal(r.uniqueAnswered,1);assert.equal(r.reviewAnswered,1);assert.equal(r.reviewCorrect,1);assert.equal(r.tags[0].uniqueWrong,1);assert.equal(buildLearningReport([]).uniqueWrong,0);
 console.log('PASS: report deduplicates questions, excludes unanswered items, separates manual errors, uses latest review and handles empty history.');
+

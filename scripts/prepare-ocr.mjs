@@ -27,3 +27,4 @@ for(const [dir,label] of [[tess,'tesseract'],[core,'tesseract-core']]){
   if(name)await fs.copyFile(path.join(dir,name),path.join(out,label+'-LICENSE.txt'));
 }
 console.log('Prepared self-hosted OCR worker, four core variants and English/Chinese language data.');
+

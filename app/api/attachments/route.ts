@@ -29,3 +29,4 @@ export async function POST(request:Request){
     return reply({id,filename,mime,size,createdAt:now,url:'/api/attachments?id='+id},201);
   }catch{return reply({error:'图片上传未完成，请重试；原图仍保留在你的设备中。'},503);}
 }
+

@@ -285,3 +285,4 @@ if __name__=='__main__':
     path=ROOT/'public'/'schools.json'
     path.write_text(json.dumps(DATA,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(f'{len(SCHOOLS)} schools, {len(ORAL)} oral tasks, {len(EXTRA)} supplementary written questions → {path}')
+

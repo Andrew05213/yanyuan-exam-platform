@@ -48,6 +48,9 @@ export default defineConfig(async ({ command }) => {
   return {
     server: {
       allowedHosts: [...(managedLinux ? ["terminal.local"] : []), ...allowedHosts],
+      // Windows editors and agent tools create transient files; watching them
+      // can crash the dev server with EBUSY. They are never part of the build.
+      watch: { ignored: ["**/.*.tmpdir/**", "**/*.tmp", "**/node_modules/**", "**/.wrangler/**", "**/.sites-runtime/**", "**/artifacts/**"] },
       ...(managedLinux
         ? { host: "0.0.0.0" }
         : {}),
@@ -93,3 +96,4 @@ export default defineConfig(async ({ command }) => {
     ],
   };
 });
+
