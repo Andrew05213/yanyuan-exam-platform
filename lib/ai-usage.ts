@@ -1,20 +1,22 @@
 import {adminDb} from './admin-access';
 import {AdminInputError,estimateCostMicros,validateUsage,type Pricing,type UsageCounts,CURRENCIES} from './admin-contracts';
-import type {Principal} from './user-access';
+import {AccessError,type Principal} from './user-access';
 
 export type BillingProvider={id:string;name:string;model:string;currency:string;revision:number;pricing:Pricing};
-export type UsageEvent={requestId:string;task:'writing'|'translation'|'oral'|'oral-audio';status:'success'|'error'|'unknown';counts:UsageCounts;elapsedMs?:number|null};
+const tasks=['writing','translation','oral','oral-audio','question-generation','literature-feedback'] as const;
+export type UsageEvent={requestId:string;task:typeof tasks[number];status:'success'|'error'|'unknown';counts:UsageCounts;elapsedMs?:number|null};
 
 // Call only from server-side model execution, using a trusted user and a pricing
 // snapshot taken before the request. There is deliberately no public ingestion API.
-export async function recordAIUsage(user:Principal,provider:BillingProvider,event:UsageEvent){
- if(!user.id||user.id.length>300||!/^provider-[a-f0-9-]{36}$/.test(provider.id)||!event.requestId||event.requestId.length>160||/[\r\n\u0000]/.test(event.requestId)||!['writing','translation','oral','oral-audio'].includes(event.task)||!['success','error','unknown'].includes(event.status)||!CURRENCIES.includes(provider.currency as any))throw new AdminInputError('用量记录字段不正确。');
+export async function recordAIUsage(user:Principal,provider:BillingProvider,event:UsageEvent,quota?:{since:string;limit:number}){
+ if(!user.id||user.id.length>300||!/^provider-[a-f0-9-]{36}$/.test(provider.id)||!event.requestId||event.requestId.length>160||/[\r\n\u0000]/.test(event.requestId)||!tasks.includes(event.task)||!['success','error','unknown'].includes(event.status)||!CURRENCIES.includes(provider.currency as any))throw new AdminInputError('用量记录字段不正确。');
  validateUsage(event.counts);
  if(event.elapsedMs!==undefined&&event.elapsedMs!==null&&(!Number.isSafeInteger(event.elapsedMs)||event.elapsedMs<0))throw new AdminInputError('请求耗时不正确。');
  const cost=estimateCostMicros(event.counts,provider.pricing),id='usage-'+crypto.randomUUID(),db=adminDb();
  const snapshot=JSON.stringify({revision:provider.revision,inputPriceMicros:provider.pricing.inputPriceMicros,cachedInputPriceMicros:provider.pricing.cachedInputPriceMicros,outputPriceMicros:provider.pricing.outputPriceMicros});
- const r=await db.prepare('INSERT INTO ai_usage_events(id,request_id,user_id,provider_id,provider_name,model,task,status,currency,input_tokens,cached_input_tokens,output_tokens,estimated_cost_micros,pricing_snapshot,elapsed_ms,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(provider_id,request_id) DO NOTHING').bind(id,event.requestId,user.id,provider.id,provider.name,provider.model,event.task,event.status,provider.currency,event.counts.inputTokens,event.counts.cachedInputTokens,event.counts.outputTokens,cost,snapshot,event.elapsedMs??null,new Date().toISOString()).run();
- if(!r.meta.changes){const old=await db.prepare('SELECT id,user_id,task,input_tokens,cached_input_tokens,output_tokens FROM ai_usage_events WHERE provider_id=? AND request_id=?').bind(provider.id,event.requestId).first<any>();if(!old||old.user_id!==user.id||old.task!==event.task||old.input_tokens!==event.counts.inputTokens||old.cached_input_tokens!==event.counts.cachedInputTokens||old.output_tokens!==event.counts.outputTokens)throw new AdminInputError('重复请求的用量内容不一致。');return {id:old.id,duplicate:true};}
+ const guard=quota?'(SELECT COUNT(*) FROM ai_usage_events WHERE user_id=? AND task=? AND created_at>=?) < ?':'1';
+ const r=await db.prepare('INSERT INTO ai_usage_events(id,request_id,user_id,provider_id,provider_name,model,task,status,currency,input_tokens,cached_input_tokens,output_tokens,estimated_cost_micros,pricing_snapshot,elapsed_ms,created_at) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE '+guard+' ON CONFLICT(provider_id,request_id) DO NOTHING').bind(id,event.requestId,user.id,provider.id,provider.name,provider.model,event.task,event.status,provider.currency,event.counts.inputTokens,event.counts.cachedInputTokens,event.counts.outputTokens,cost,snapshot,event.elapsedMs??null,new Date().toISOString(),...(quota?[user.id,event.task,quota.since,quota.limit]:[])).run();
+ if(!r.meta.changes){const old=await db.prepare('SELECT id,user_id,task,input_tokens,cached_input_tokens,output_tokens FROM ai_usage_events WHERE provider_id=? AND request_id=?').bind(provider.id,event.requestId).first<any>();if(!old&&quota)throw new AccessError('AI 请求次数已达上限，请稍后重试。',429);if(!old||old.user_id!==user.id||old.task!==event.task||old.input_tokens!==event.counts.inputTokens||old.cached_input_tokens!==event.counts.cachedInputTokens||old.output_tokens!==event.counts.outputTokens)throw new AdminInputError('重复请求的用量内容不一致。');return {id:old.id,duplicate:true};}
  return {id,duplicate:false};
 }
 

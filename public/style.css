@@ -3133,3 +3133,42 @@ dialog p { color: var(--muted-strong); font-size: 12px; line-height: 1.8; }
 .school-language-filter{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:20px 0}.school-language-filter label{display:flex;align-items:center;gap:12px;font-weight:600}.school-language-filter select{min-width:150px}.language-policy{max-width:640px}.language-policy summary{cursor:pointer;color:var(--muted)}.language-policy p{line-height:1.7}.training-language{margin-bottom:24px}.oral-audio-panel{border-top:1px solid var(--line);padding-top:20px;margin-top:20px}.oral-audio-panel audio{display:block;width:100%;margin:16px 0}.oral-audio-panel input[type=file]{max-width:100%}.feature-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:24px 0}.feature-stats .stat{background:var(--paper);border:1px solid var(--line);padding:20px}.feature-stats strong,.feature-stats small{display:block}.feature-stats strong{font-size:28px;margin-bottom:8px}.quality-snapshot{white-space:pre-wrap;overflow-wrap:anywhere;max-height:360px;overflow:auto;font-size:14px}.hub-panel{overflow-wrap:anywhere}.hub-panel details summary{cursor:pointer}.feature-stats small{font-size:14px;line-height:1.5}
 @media(max-width:700px){.feature-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.school-language-filter{gap:16px}.school-language-filter label{flex-wrap:wrap}}
 .feature-stats .stat{display:block;min-width:0}.feature-stats .stat small{white-space:normal;overflow-wrap:anywhere}.feature-stats .stat strong{display:block}
+
+/* 专题出题与个人题库 */
+.ai-studio { padding: 22px 24px 28px; }
+.ai-studio-head { margin-bottom: 14px; }
+.ai-studio-head h2 { font-family: var(--serif); font-size: 24px; font-weight: 600; letter-spacing: .01em; }
+.ai-studio .mode-note { white-space: nowrap; }
+.ai-studio .flow-warning { color: var(--danger); border-color: var(--danger); }
+.ai-form { margin-top: 6px; }
+.ai-form .tier-header-grid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.ai-form .studio-actions { margin-top: 14px; }
+.ai-preview-list { display: grid; gap: 12px; margin-top: 14px; }
+.ai-preview-item { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-raised); padding: 14px 16px; }
+.ai-preview-item > header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.ai-preview-item h3 { font-family: var(--serif); font-size: 17px; font-weight: 600; margin: 4px 0 8px; }
+.ai-preview-item .hub-check { margin: 0; }
+.ai-passage { margin: 6px 0 10px; border-left: 2px solid var(--accent-soft); padding-left: 12px; }
+.ai-passage summary { cursor: pointer; color: var(--green); font-size: 13px; }
+.ai-passage div { margin-top: 8px; color: var(--ink-soft); font-family: var(--latin); font-size: 14px; line-height: 1.75; }
+.ai-question { border-top: 1px dashed var(--line-soft); padding: 10px 0 4px; }
+.ai-question:first-of-type { border-top: 0; }
+.ai-stem { font-weight: 500; }
+.ai-options { margin: 8px 0; padding-left: 0; list-style: none; display: grid; gap: 4px; }
+.ai-options li { display: flex; gap: 8px; color: var(--ink-soft); }
+.ai-options b { color: var(--accent); font-family: var(--mono); font-weight: 600; }
+.ai-answer { color: var(--green); font-size: 13px; }
+.ai-analysis, .ai-reference { color: var(--muted-strong); font-size: 13px; }
+.ai-bank-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.ai-bank-list { display: grid; gap: 8px; margin-top: 12px; }
+.ai-bank-row { display: flex; gap: 12px; justify-content: space-between; align-items: center; border: 1px solid var(--line-soft); border-radius: var(--radius-sm); background: var(--surface); padding: 10px 12px; }
+.ai-bank-row h3 { font-size: 15px; font-weight: 600; margin: 2px 0; }
+.ai-bank-row p { color: var(--muted); font-size: 12.5px; }
+.ai-bank-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.ai-empty { border: 1px dashed var(--line); border-radius: var(--radius); padding: 22px; text-align: center; background: var(--surface); }
+.ai-empty h3 { font-family: var(--serif); font-size: 17px; margin-bottom: 4px; }
+.ai-empty p { color: var(--muted); font-size: 13px; }
+@media (max-width: 620px) {
+  .ai-bank-row { flex-direction: column; align-items: flex-start; }
+  .ai-studio { padding: 16px; }
+}
