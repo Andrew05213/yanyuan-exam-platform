@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, 'feature/knowledge-community-v2', 'feature/hezhi-academic-visual']
     types: [opened, synchronize, reopened]
   push:
     branches: [main]

@@ -24,7 +24,7 @@ export function validateMaterial(body:any){
  if(section==='cloze'&&questions.length){const blanks=[...text.matchAll(/\[(\d+)\]/g)].map(m=>Number(m[1]));if(new Set(blanks).size!==questions.length||questions.some((_:any,i:number)=>!blanks.includes(i+1)))throw Error('完形空号须从[1]开始，与题目一一对应。');}
  return {title,authorAlias:alias,subject,section,tier,payload:{schema:1,text,source,sourceUrl,reason,rights:body.rights,questions,fileIds:body.fileIds,sharedAt:new Date().toISOString()}};
 }
-export function publicMaterial(row:any){const {ownerId,payload,...metadata}=row;return {...metadata,active:!!row.active,...JSON.parse(typeof payload==='string'?payload:JSON.stringify(payload))};}
+export function publicMaterial(row:any){const {ownerId,payload,...metadata}=row;return {...metadata,active:!!row.active,...JSON.parse(typeof payload==='string'?payload:JSON.stringify(payload)),authorAlias:'学习者-'+String(row.id).replace(/^material-/,'').slice(0,8)};}
 export function materialUnit(row:any){const p=publicMaterial(row);if(!p.active||!p.questions.length)return null;const id='community:'+p.id+':r'+p.revision;return {id,subject:p.subject,section:p.section,tier:p.tier,classificationStatus:'上传者自标，未审核',reason:p.reason,title:p.title,text:p.text,paragraphs:p.text?p.text.split(/\n\s*\n/):[],source:p.source+' · 分享者：'+p.authorAlias,sourceUrl:p.sourceUrl,materialId:id,communityId:p.id,questions:p.questions.map((q:any)=>({...q,sourceId:id+':'+q.id}))};}
 
 // Passage tasks remain whole; individual-question sections count actual questions.
