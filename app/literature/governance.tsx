@@ -9,7 +9,9 @@ type Log={id:string;action:string;targetId:string;reason:string;createdAt:string
 type Manage={members:Member[];nextOffset:number|null;appeals:Appeal[];invites:Invite[];logs:Log[]};
 async function api<T>(query="",body?:unknown):Promise<T>{
  const r=await fetch("/api/literature/governance"+query,{cache:"no-store",credentials:"same-origin",...(body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{})});
- const data=await r.json();if(!r.ok)throw Error(data.error||"治理操作暂不可用。");return data as T;
+ const data:unknown=await r.json();
+ if(!r.ok){const error=data&&typeof data==="object"&&"error" in data?data.error:undefined;throw Error(typeof error==="string"&&error?error:"治理操作暂不可用。");}
+ return data as T;
 }
 const message=(e:unknown)=>e instanceof Error?e.message:"操作失败。";
 const label=(state:string)=>({active:"有效",suspended:"访问暂停",revoked:"资格撤销","not-invited":"尚未获准",member:"社区成员",moderator:"社区管理员",admin:"系统管理员",student:"学习用户",pending:"待处理",accepted:"复核接受",dismissed:"复核驳回"} as Record<string,string>)[state]||state;
