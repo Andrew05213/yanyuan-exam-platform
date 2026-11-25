@@ -15,6 +15,7 @@ async function save(user,content){const r=await call('/api/literature/entries',u
 try{
  const db=await mf.getD1Database('DB');
  for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const sql of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(sql).run();
+ for(const uid of [a,b,u])await db.prepare("INSERT INTO research_memberships(user_id,id,role,state,change_id,created_at,updated_at) VALUES(?,?,'member','active',?,?,?)").bind(uid,'fixture-'+uid,'fixture-'+uid,new Date().toISOString(),new Date().toISOString()).run();
  const topic=(await call(c,a,{action:'createTopic',title:'QA topic'})).data.id;
  const publish=(user,v,tid=topic)=>call(c,user,{action:'publish',topicId:tid,entryId:'note_qa',sourceUpdatedAt:v,confirm:true});
  const va=await save(a,'A evidence'),vb=await save(b,'B response');

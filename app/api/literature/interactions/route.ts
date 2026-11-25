@@ -1,6 +1,6 @@
+import {requireCommunity} from "../../../../lib/community-access";
 import {getChatGPTUser} from "../../../chatgpt-auth";
 import {storage} from "../../../../db/store";
-import {isAdmin,adminPrincipal} from "../../../../lib/admin-access";
 import {AccessError,fail,privateHeaders,readLimitedText,sameOrigin} from "../../../../lib/user-access";
 import {visible,viewer,publicationVisible,publicationViewer,referenceVisible,paragraphs,type TargetKind} from "../../../../lib/research-community";
 
@@ -10,13 +10,13 @@ const json=(value:unknown,status=200)=>Response.json(value,{status,headers:priva
 function id(value:unknown){if(typeof value!=="string"||!uuid.test(value))throw new AccessError("编号无效。",400);return value;}
 function number(value:unknown,max=100000){if(typeof value!=="number"||!Number.isInteger(value)||value<0||value>max)throw new AccessError("版本或段落编号无效。",400);return value;}
 function text(value:unknown,max:number){if(typeof value!=="string"||!value.trim()||value.length>max)throw new AccessError("请检查文字及长度。",400);return value.trim();}
-function kind(value:unknown):TargetKind{if(value!=="topic"&&value!=="publication"&&value!=="annotation"&&value!=="reply"&&value!=="reference")throw new AccessError("对象类型无效。",400);return value;}
+function kind(value:unknown):TargetKind{if(value!=="topic"&&value!=="publication"&&value!=="annotation"&&value!=="reply"&&value!=="reference"&&value!=="material")throw new AccessError("对象类型无效。",400);return value;}
 type Pub={id:string;ownerId:string;revision:number;content:string;title:string};
 type Target={id:string;ownerId:string;revision:number;body:string};
 type Thread={id:string;ownerId:string;revision:number;paragraphIndex:number;quote:string;body:string;createdAt:string};
 type Reply={id:string;ownerId:string;body:string;createdAt:string};
-const alias=(value:string)=>"研究者-"+value.slice(0,8);
-const tableFor={topic:"research_topics",publication:"research_publications",annotation:"research_annotations",reply:"research_replies",reference:"research_references"} as const;
+const alias=(value:string)=>"研究者-"+value.replace(/^material-/,"").slice(0,8);
+const tableFor={topic:"research_topics",publication:"research_publications",annotation:"research_annotations",reply:"research_replies",reference:"research_references",material:"community_materials"} as const;
 async function publication(db:ReturnType<typeof storage>,pid:string,user:string){
  const row=await db.prepare("SELECT id,owner_id AS ownerId,revision,content,title FROM research_publications p WHERE id=? AND "+publicationVisible("p")).bind(pid,...publicationViewer(user)).first<Pub>();
  if(!row)throw notFound();return row;
@@ -27,6 +27,7 @@ async function target(db:ReturnType<typeof storage>,k:TargetKind,targetId:string
  else if(k==="publication"){
   const p=await publication(db,targetId,user);row={id:p.id,ownerId:p.ownerId,revision:p.revision,body:p.title+"\n"+p.content};
  }else if(k==="annotation")row=await db.prepare("SELECT a.id,a.owner_id AS ownerId,a.revision,a.body FROM research_annotations a JOIN research_publications p ON p.id=a.publication_id AND p.revision=a.revision WHERE a.id=? AND "+visible("a","annotation")+" AND "+publicationVisible("p")).bind(targetId,...viewer(user),...publicationViewer(user)).first<Target>();
+ else if(k==="material")row=await db.prepare("SELECT m.id,m.owner_id AS ownerId,m.revision,m.title||char(10)||substr(m.payload,1,1800) AS body FROM community_materials m WHERE m.id=? AND m.active=1 AND "+visible("m","material")).bind(targetId,...viewer(user)).first<Target>();
  else if(k==="reference")row=await db.prepare("SELECT r.id,r.owner_id AS ownerId,0 AS revision,r.title||char(10)||r.authors||char(10)||r.year||char(10)||r.identifier AS body FROM research_references r WHERE r.id=? AND "+referenceVisible("r")).bind(targetId,...publicationViewer(user)).first<Target>();
  else row=await db.prepare("SELECT r.id,r.owner_id AS ownerId,a.revision,r.body FROM research_replies r JOIN research_annotations a ON a.id=r.annotation_id JOIN research_publications p ON p.id=a.publication_id AND p.revision=a.revision WHERE r.id=? AND "+visible("r","reply")+" AND "+visible("a","annotation")+" AND "+publicationVisible("p")).bind(targetId,...viewer(user),...viewer(user),...publicationViewer(user)).first<Target>();
  if(!row)throw notFound();return row;
@@ -48,15 +49,16 @@ export async function GET(request:Request){
  try{
   const user=await getChatGPTUser();if(!user)throw new AccessError("请先登录。",401);
   const uid=user.userId,db=storage(),params=new URL(request.url).searchParams;
-  if(params.has("capabilities"))return json({admin:isAdmin(request)});
+  const access=await requireCommunity(request,uid);
+  if(params.has("capabilities"))return json({admin:access.moderate});
   if(params.has("blocks")){
    const rows=await db.prepare("SELECT id,label,created_at AS createdAt FROM research_blocks WHERE blocker_id=? ORDER BY created_at DESC LIMIT 200").bind(uid).all();return json({blocks:rows.results});
   }
   if(params.has("admin")){
-   adminPrincipal(request);
+   await requireCommunity(request,uid,"moderate");
    const status=params.get("status")==="handled"?"handled":"pending";
    const offset=number(Number(params.get("offset")??"0"),10000);
-   const rows=await db.prepare("SELECT id,target_kind AS targetKind,target_id AS targetId,target_revision AS targetRevision,category,snapshot,status,created_at AS createdAt,resolved_at AS resolvedAt FROM research_reports WHERE status"+(status==="handled"?"<>":"=")+"'pending' ORDER BY created_at DESC,id DESC LIMIT 21 OFFSET ?").bind(offset).all();
+   const rows=await db.prepare("SELECT r.id,r.target_kind AS targetKind,r.target_id AS targetId,r.target_revision AS targetRevision,r.category,r.snapshot,r.status,r.created_at AS createdAt,r.resolved_at AS resolvedAt,(SELECT m.id FROM research_memberships m WHERE m.user_id=CASE r.target_kind WHEN 'topic' THEN (SELECT owner_id FROM research_topics WHERE id=r.target_id) WHEN 'publication' THEN (SELECT owner_id FROM research_publications WHERE id=r.target_id) WHEN 'annotation' THEN (SELECT owner_id FROM research_annotations WHERE id=r.target_id) WHEN 'reply' THEN (SELECT owner_id FROM research_replies WHERE id=r.target_id) WHEN 'reference' THEN (SELECT owner_id FROM research_references WHERE id=r.target_id) WHEN 'material' THEN (SELECT owner_id FROM community_materials WHERE id=r.target_id) END) AS targetMemberId FROM research_reports r WHERE r.status"+(status==="handled"?"<>":"=")+"'pending' ORDER BY created_at DESC,id DESC LIMIT 21 OFFSET ?").bind(offset).all();
    return json({reports:rows.results.slice(0,20),nextOffset:rows.results.length>20?offset+20:null});
   }
   const p=await publication(db,id(params.get("publication")),uid);
@@ -73,6 +75,7 @@ export async function POST(request:Request){
   try{body=JSON.parse(await readLimitedText(request,16000));}catch(error){if(error instanceof AccessError)throw error;throw new AccessError("提交格式无效。",400);}
   if(!body||typeof body!=="object"||Array.isArray(body))throw new AccessError("提交格式无效。",400);
   const uid=user.userId,db=storage(),now=new Date().toISOString(),newId=crypto.randomUUID(),day=new Date(Date.now()-86400000).toISOString();
+  await requireCommunity(request,uid,body.action==="moderate"?"moderate":body.action==="annotate"||body.action==="reply"?"write":"read");
   if(body.action==="annotate"){
    const pid=id(body.publicationId),rev=number(body.revision),index=number(body.paragraphIndex),content=text(body.body,2000);
    const p=await publication(db,pid,uid);if(p.revision!==rev)throw new AccessError("版本已更新，请重新阅读。",409);
@@ -91,11 +94,11 @@ export async function POST(request:Request){
    if(!result.meta.changes)throw notFound();return json({ok:true});
   }
   if(body.action==="report"||body.action==="block"){
-   const k=kind(body.targetKind),targetId=id(body.targetId),row=await target(db,k,targetId,uid);
+   const k=kind(body.targetKind),targetId=k==="material"&&typeof body.targetId==="string"&&/^material-[a-f0-9-]{36}$/i.test(body.targetId)?body.targetId:id(body.targetId),row=await target(db,k,targetId,uid);
    if(row.ownerId===uid)throw new AccessError("不能举报或屏蔽自己。",400);
    if(body.action==="report"){
     const category=body.category;
-    if(category!=="harassment"&&category!=="privacy"&&category!=="spam"&&category!=="other")throw new AccessError("请选择举报原因。",400);
+    if(category!=="harassment"&&category!=="privacy"&&category!=="spam"&&category!=="other"&&category!=="copyright"&&category!=="dangerous"&&category!=="integrity")throw new AccessError("请选择举报原因。",400);
     if(number(body.revision)!==row.revision)throw new AccessError("内容版本已变化，请重新查看。",409);
     const result=await db.prepare("INSERT INTO research_reports(id,reporter_id,target_kind,target_id,target_revision,category,snapshot,created_at) SELECT ?,?,?,?,?,?,?,? WHERE (SELECT count(*) FROM research_reports WHERE reporter_id=? AND created_at>=?)<20 ON CONFLICT(reporter_id,target_kind,target_id,target_revision) DO NOTHING").bind(newId,uid,k,targetId,row.revision,category,row.body.slice(0,2000),now,uid,day).run();
     if(!result.meta.changes)throw new AccessError("已举报此内容，或今日举报次数已达上限。",409);return json({ok:true},201);
@@ -107,27 +110,29 @@ export async function POST(request:Request){
    const result=await db.prepare("DELETE FROM research_blocks WHERE id=? AND blocker_id=?").bind(id(body.id),uid).run();if(!result.meta.changes)throw notFound();return json({ok:true});
   }
   if(body.action==="moderate"){
-   adminPrincipal(request);
+   await requireCommunity(request,uid,"moderate");
    const reportId=id(body.id),decision=body.decision;
    if(decision!=="hide"&&decision!=="dismiss"&&decision!=="restore")throw new AccessError("处理方式无效。",400);
    const report=await db.prepare("SELECT target_kind AS targetKind,target_id AS targetId,target_revision AS targetRevision,status FROM research_reports WHERE id=?").bind(reportId).first<{targetKind:TargetKind;targetId:string;targetRevision:number;status:string}>();
    if(!report)throw notFound();
    const k=kind(report.targetKind);
+   const why=typeof body.reason==="string"&&body.reason.trim()&&body.reason.length<=500?body.reason.trim():"按社区规则人工审核："+decision;
+   const logged=(status:string)=>db.prepare("INSERT INTO research_governance_audit(id,actor_id,action,target_id,reason,created_at) SELECT ?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM research_reports WHERE id=? AND status=? AND resolved_by=? AND resolved_at=?)").bind(crypto.randomUUID(),uid,"report-"+decision,reportId,why,now,reportId,status,uid,now);
    if(decision==="dismiss"){
-    const result=await db.prepare("UPDATE research_reports SET status='dismissed',resolved_by=?,resolved_at=? WHERE id=? AND status='pending'").bind(uid,now,reportId).run();if(!result.meta.changes)throw new AccessError("举报已被处理。",409);return json({ok:true});
+    const [result]=await db.batch([db.prepare("UPDATE research_reports SET status='dismissed',resolved_by=?,resolved_at=? WHERE id=? AND status='pending'").bind(uid,now,reportId),logged("dismissed")]);if(!result.meta.changes)throw new AccessError("举报已被处理。",409);return json({ok:true});
    }
    if(decision==="restore"){
     const results=await db.batch([
      db.prepare("DELETE FROM research_hidden WHERE report_id=? AND EXISTS(SELECT 1 FROM research_reports WHERE id=? AND status='hidden')").bind(reportId,reportId),
-     db.prepare("UPDATE research_reports SET status='restored',resolved_by=?,resolved_at=? WHERE id=? AND status='hidden' AND NOT EXISTS(SELECT 1 FROM research_hidden WHERE report_id=?)").bind(uid,now,reportId,reportId)
+     db.prepare("UPDATE research_reports SET status='restored',resolved_by=?,resolved_at=? WHERE id=? AND status='hidden' AND NOT EXISTS(SELECT 1 FROM research_hidden WHERE report_id=?)").bind(uid,now,reportId,reportId),logged("restored")
     ]);
     if(!results[0].meta.changes)throw new AccessError("该隐藏记录已不存在。",409);return json({ok:true});
    }
-   const exists="EXISTS(SELECT 1 FROM "+tableFor[k]+" WHERE id=?"+(k==="publication"?" AND revision=?":"")+")";
-   const args=k==="publication"?[report.targetId,report.targetRevision]:[report.targetId];
+   const exists="EXISTS(SELECT 1 FROM "+tableFor[k]+" WHERE id=?"+((k==="publication"||k==="material")?" AND revision=?":"")+")";
+   const args=(k==="publication"||k==="material")?[report.targetId,report.targetRevision]:[report.targetId];
    const results=await db.batch([
     db.prepare("INSERT INTO research_hidden(target_kind,target_id,report_id,created_at) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM research_reports WHERE id=? AND status='pending') AND "+exists+" ON CONFLICT(target_kind,target_id) DO NOTHING").bind(k,report.targetId,reportId,now,reportId,...args),
-    db.prepare("UPDATE research_reports SET status='hidden',resolved_by=?,resolved_at=? WHERE id=? AND status='pending' AND EXISTS(SELECT 1 FROM research_hidden WHERE report_id=?)").bind(uid,now,reportId,reportId)
+    db.prepare("UPDATE research_reports SET status='hidden',resolved_by=?,resolved_at=? WHERE id=? AND status='pending' AND EXISTS(SELECT 1 FROM research_hidden WHERE report_id=?)").bind(uid,now,reportId,reportId),logged("hidden")
    ]);
    if(!results[0].meta.changes)throw new AccessError("对象已变化、已隐藏或已被处理；请核对后关闭举报。",409);return json({ok:true});
   }

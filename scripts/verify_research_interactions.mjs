@@ -19,6 +19,7 @@ async function save(user,content){const r=await call('/api/literature/entries',u
 try{
  const db=await mf.getD1Database('DB');
  for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const statement of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();
+ for(const uid of [a,b,c])await db.prepare("INSERT INTO research_memberships(user_id,id,role,state,change_id,created_at,updated_at) VALUES(?,?,'member','active',?,?,?)").bind(uid,'fixture-'+uid,'fixture-'+uid,new Date().toISOString(),new Date().toISOString()).run();
  const v=await save(a,'First paragraph.\n\nSecond paragraph.');
  const topic=(await cpost(a,{action:'createTopic',title:'QA research'})).data.id;
  const publish=async version=>cpost(a,{action:'publish',topicId:topic,entryId:'note_qa',sourceUpdatedAt:version,confirm:true});

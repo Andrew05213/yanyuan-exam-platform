@@ -4,6 +4,7 @@ import type {Entry} from "./notes";
 import {ResearchThreads,SafetyActions,CommunityManagement} from "./research-interactions";
 import {TopicNetwork,NoteNetwork} from "./research-network";
 import {ResearchAssistant} from "./research-assistant";
+import {GovernanceGate} from "./governance";
 
 type Topic={id:string;title:string;description:string;createdAt:string;noteCount?:number;mine?:boolean};
 type Publication={id:string;topicId:string;title:string;content?:string;excerpt?:string;language:string|null;sourceLanguage:string|null;discipline:string|null;authorAlias:string;mine:boolean;entryId?:string;sourceUpdatedAt?:string;revision:number;updatedAt:string};
@@ -18,7 +19,9 @@ const message=(error:unknown)=>error instanceof Error?error.message:"操作未�
 function meta(n:{language?:string|null;sourceLanguage?:string|null;discipline?:string|null}){
  return [n.language,n.sourceLanguage&&"原文："+n.sourceLanguage,n.discipline].filter(Boolean).join(" · ")||"未分类";
 }
-export function Community({entries,createNote,refreshNotes}:{entries:Entry[];createNote:(topic:Topic,source?:Publication)=>void;refreshNotes:()=>Promise<void>}){
+type CommunityProps={entries:Entry[];createNote:(topic:Topic,source?:Publication)=>void;refreshNotes:()=>Promise<void>};
+export function Community(props:CommunityProps){return <GovernanceGate><CommunityContent {...props}/></GovernanceGate>;}
+function CommunityContent({entries,createNote,refreshNotes}:CommunityProps){
  const [topics,setTopics]=useState<Topic[]>([]),[topic,setTopic]=useState<Topic|null>(null),[publications,setPublications]=useState<Publication[]>([]),[detail,setDetail]=useState<Publication|null>(null);
  const [query,setQuery]=useState(""),[submittedQuery,setSubmittedQuery]=useState(""),[topicOffset,setTopicOffset]=useState(0),[topicNext,setTopicNext]=useState<number|null>(null),[noteOffset,setNoteOffset]=useState(0),[noteNext,setNoteNext]=useState<number|null>(null);
  const [title,setTitle]=useState(""),[description,setDescription]=useState(""),[creating,setCreating]=useState(false),[entryId,setEntryId]=useState(""),[confirmed,setConfirmed]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");

@@ -41,6 +41,7 @@ const answer={findings:[{statement:'材料支持一个观点。',evidence:[{sour
 try{
  const db=await mf.getD1Database('DB');
  for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const sql of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(sql).run();
+ for(const uid of ['A','B','C'])await db.prepare("INSERT INTO research_memberships(user_id,id,role,state,change_id,created_at,updated_at) VALUES(?,?,'member','active',?,?,?)").bind(uid,'fixture-'+uid,'fixture-'+uid,new Date().toISOString(),new Date().toISOString()).run();
  const version=await save('A','note_shared','物哀 mono no aware もののあはれ');
  await save('A','note_hidden','PRIVATE_A 物哀');
  const vb=await save('B','note_shared','PRIVATE_B 物哀');

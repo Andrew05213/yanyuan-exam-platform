@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {initRegistration,createRegistrationInvite,revokeRegistrationInvite,invitedAccount,accountDisabled,changeAccountState} from '../lan/registration-policy.mjs';
+const db=new DatabaseSync(':memory:');db.exec('CREATE TABLE accounts(id TEXT PRIMARY KEY,email TEXT UNIQUE NOT NULL,salt BLOB NOT NULL,hash BLOB NOT NULL,created INTEGER NOT NULL); CREATE TABLE sessions(token_hash TEXT PRIMARY KEY,user_id TEXT NOT NULL,expires INTEGER NOT NULL);');initRegistration(db);
+const now=1700000000000,account=(id,email=id+'@invalid.test')=>({id,email,salt:Buffer.alloc(16),hash:Buffer.alloc(64)});
+assert.throws(()=>invitedAccount(db,'x',account('A'),now));
+const invite=createRegistrationInvite(db,'admin',7,now);assert.equal(invite.expiresAt,now+7*86400000);assert.equal(db.prepare('SELECT code_hash FROM registration_invites').get().code_hash.length,64);assert.notEqual(db.prepare('SELECT code_hash FROM registration_invites').get().code_hash,invite.code);
+assert.equal(invitedAccount(db,invite.code,account('A'),now),'A');assert.throws(()=>invitedAccount(db,invite.code,account('B'),now));
+const second=createRegistrationInvite(db,'admin',7,now);assert.throws(()=>invitedAccount(db,second.code,account('B','A@invalid.test'),now));assert.equal(invitedAccount(db,second.code,account('B'),now),'B');
+const expired=createRegistrationInvite(db,'admin',1,now);assert.throws(()=>invitedAccount(db,expired.code,account('C'),now+86400000));
+const revoked=createRegistrationInvite(db,'admin',7,now);revokeRegistrationInvite(db,'admin',revoked.id,now);assert.throws(()=>invitedAccount(db,revoked.code,account('C'),now));
+db.prepare('INSERT INTO sessions VALUES(?,?,?)').run('test-session','A',now+10000);changeAccountState(db,'admin','A',true,'synthetic safety review',now);assert.ok(accountDisabled(db,'A'));assert.equal(db.prepare('SELECT count(*) AS n FROM sessions').get().n,0);assert.equal(db.prepare('SELECT count(*) AS n FROM accounts').get().n,2);changeAccountState(db,'admin','A',false,'reviewed',now);assert.ok(!accountDisabled(db,'A'));assert.throws(()=>changeAccountState(db,'A','A',true,'x',now));assert.ok(!JSON.stringify(db.prepare('SELECT * FROM account_governance_log').all()).includes(invite.code));
+console.log('PASS: registration invitation digest, single use, rollback on duplicate, expiry, revoke, account suspension and session invalidation.');
+db.close();

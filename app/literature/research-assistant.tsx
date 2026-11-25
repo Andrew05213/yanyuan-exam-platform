@@ -12,8 +12,8 @@ async function api<T>(body:unknown):Promise<T>{
 const message=(e:unknown)=>e instanceof Error?e.message:"请求失败。";
 const key=(x:ResearchSource)=>x.kind+":"+x.id;
 const label=(k:string)=>k==="private"?"私人笔记":k==="publication"?"公开笔记":"共享书目";
-export function ResearchAssistant({topicId}:{topicId?:string}){
- const [scope,setScope]=useState<ResearchScope>("public"),[inTopic,setInTopic]=useState(true),[query,setQuery]=useState(""),[languages,setLanguages]=useState("中文、英语、日语、德语、法语"),[keywords,setKeywords]=useState<string[]>([]),[expanded,setExpanded]=useState(false);
+export function ResearchAssistant({topicId,privateOnly=false}:{topicId?:string;privateOnly?:boolean}){
+ const [scope,setScope]=useState<ResearchScope>(privateOnly?"private":"public"),[inTopic,setInTopic]=useState(true),[query,setQuery]=useState(""),[languages,setLanguages]=useState("中文、英语、日语、德语、法语"),[keywords,setKeywords]=useState<string[]>([]),[expanded,setExpanded]=useState(false);
  const [hits,setHits]=useState<Hit[]>([]),[selected,setSelected]=useState<string[]>([]),[searched,setSearched]=useState(false),[task,setTask]=useState<ResearchTask>("synthesis"),[question,setQuestion]=useState(""),[language,setLanguage]=useState("中文"),[preview,setPreview]=useState<Preview|null>(null),[confirmed,setConfirmed]=useState(false),[result,setResult]=useState<Result|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
  const lock=useRef(false),serial=useRef(0);
  const chosen=hits.filter(h=>selected.includes(key(h)));
@@ -50,7 +50,7 @@ export function ResearchAssistant({topicId}:{topicId?:string}){
  return <details className="community-panel research-assistant"><summary>AI 学术研究助手</summary>
  <p className="community-privacy">普通检索仅访问站内数据库，不向模型发送资料。AI 扩展只发送检索词。分析前会预览实际发送的材料、问题与模型；私人笔记必须本人选择并确认。模型由管理员配置，外部服务可能保留请求，请勿提交个人信息或不宜共享的内容。</p>
  <fieldset disabled={busy} className="research-assistant-fields">
- <div className="field-pair"><label>检索范围<select value={scope} onChange={e=>setScope(e.target.value as ResearchScope)}><option value="public">站内公开笔记与共享书目</option><option value="private">仅我的私人笔记</option></select></label>{scope==="public"&&topicId&&<label className="community-consent"><input type="checkbox" checked={inTopic} onChange={e=>setInTopic(e.target.checked)}/>仅当前议题</label>}</div>
+ <div className="field-pair"><label>检索范围<select value={scope} onChange={e=>setScope(e.target.value as ResearchScope)}>{!privateOnly&&<option value="public">站内公开笔记与共享书目</option>}<option value="private">仅我的私人笔记</option></select></label>{scope==="public"&&topicId&&<label className="community-consent"><input type="checkbox" checked={inTopic} onChange={e=>setInTopic(e.target.checked)}/>仅当前议题</label>}</div>
  <label>关键词（可用逗号分隔不同语种）<input maxLength={100} value={query} onChange={e=>{setQuery(e.target.value);clearSearch();}} placeholder="物哀, mono no aware, もののあはれ"/></label>
  <label>AI 扩展目标语种<input maxLength={100} value={languages} onChange={e=>setLanguages(e.target.value)}/></label>
  <div className="community-controls"><button type="button" className="primary" disabled={!query.trim()} onClick={()=>void search(false)}>本地检索</button><button type="button" className="text-button" disabled={!query.trim()||!languages.trim()} onClick={()=>void search(true)}>AI 跨语种关键词扩展并检索</button></div>

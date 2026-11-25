@@ -20,6 +20,7 @@ async function rpc(name,args,user){return call('/mcp',user,{jsonrpc:'2.0',id:1,m
 try{
  const db=await mf.getD1Database('DB');
  for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const statement of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();
+ for(const uid of ['A','B'])await db.prepare("INSERT INTO research_memberships(user_id,id,role,state,change_id,created_at,updated_at) VALUES(?,?,'member','active',?,?,?)").bind(uid,'fixture-'+uid,'fixture-'+uid,new Date().toISOString(),new Date().toISOString()).run();
  for(const route of ['/api/archive','/api/materials','/api/essays/review','/api/attachments']){
   const bad=await mf.dispatchFetch('https://study.test'+route,{method:'POST',headers:{...actor('A'),'Origin':'http://study.test','Content-Type':'application/json'},body:'{}'});check(bad.status,403);
  }
@@ -78,8 +79,8 @@ try{
  const sharedPayload=JSON.stringify({schema:1,text:'',source:'QA source',sourceUrl:'',reason:'QA',rights:'original',questions:[],fileIds:[],sharedAt:'2030-01-01T00:00:00.000Z'});
  const sharedRows=Array.from({length:205},(_,i)=>db.prepare("INSERT INTO community_materials(id,owner_id,title,subject,section,tier,payload,author_alias,active,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)").bind('material-00000000-0000-4000-8000-'+String(i).padStart(12,'0'),'A','public '+i,'英语','mc','cet4',sharedPayload,'QA',1,1,'2030-01-01T00:00:00.000Z','2030-01-01T00:00:00.000Z'));
  await db.batch(sharedRows);
- const sharedFirst=await call('/api/materials?catalog=1');check(sharedFirst.materials.length,200);check(!!sharedFirst.next,true);
- const sharedNext=await call('/api/materials?catalog=1&beforeTime='+encodeURIComponent(sharedFirst.next.time)+'&beforeId='+encodeURIComponent(sharedFirst.next.id));
+ const sharedFirst=await call('/api/materials?catalog=1','B');check(sharedFirst.materials.length,200);check(!!sharedFirst.next,true);
+ const sharedNext=await call('/api/materials?catalog=1&beforeTime='+encodeURIComponent(sharedFirst.next.time)+'&beforeId='+encodeURIComponent(sharedFirst.next.id),'B');
  check(sharedNext.materials.some(r=>r.id==='material-00000000-0000-4000-8000-000000000000'),true);
  check(new Set([...sharedFirst.materials,...sharedNext.materials].map(r=>r.id)).size,sharedFirst.materials.length+sharedNext.materials.length);
  const reportQuestion={id:1,sourceId:'report-private-question',stem:'QA report',answer:'A',tag:'QA private tag',kind:'mc'};

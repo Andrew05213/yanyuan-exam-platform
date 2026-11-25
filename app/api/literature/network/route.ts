@@ -1,3 +1,4 @@
+import {requireCommunity} from "../../../../lib/community-access";
 import {getChatGPTUser} from "../../../chatgpt-auth";
 import {storage} from "../../../../db/store";
 import {AccessError,fail,privateHeaders,readLimitedText,sameOrigin} from "../../../../lib/user-access";
@@ -22,6 +23,7 @@ type ReferenceRow={id:string;ownerId:string;title:string;authors:string;year:str
 export async function GET(request:Request){
  try{
   const user=await getChatGPTUser();if(!user)throw new AccessError("请先登录。",401);
+  await requireCommunity(request,user.userId);
   const uid=user.userId,db=storage(),params=new URL(request.url).searchParams,o=offset(params.get("offset"));
   if(params.has("compare")){
    const tid=id(params.get("topic")),ids=(params.get("compare")||"").split(",").map(id);
@@ -49,6 +51,7 @@ export async function POST(request:Request){
   let body:Record<string,unknown>;
   try{body=JSON.parse(await readLimitedText(request,16000));}catch(e){if(e instanceof AccessError)throw e;throw new AccessError("提交格式无效。",400);}
   if(!body||typeof body!=="object"||Array.isArray(body))throw new AccessError("提交格式无效。",400);
+  await requireCommunity(request,user.userId,body.action==="unlink"||body.action==="removeReference"?"read":"write");
   const uid=user.userId,db=storage(),now=new Date().toISOString(),newId=crypto.randomUUID();
   if(body.action==="link"){
    const sid=id(body.sourceId),tid=id(body.targetId),sr=revision(body.sourceRevision),tr=revision(body.targetRevision),kind=body.kind;

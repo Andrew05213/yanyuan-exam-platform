@@ -9,11 +9,11 @@ async function api<T>(query="",body?:unknown):Promise<T>{
  return result as T;
 }
 const msg=(e:unknown)=>e instanceof Error?e.message:"操作未完成。";
-const reasons=[["harassment","骚扰或攻击"],["privacy","泄露隐私或不当联系"],["spam","广告或垃圾信息"],["other","其他不当内容"]];
+const reasons=[["harassment","骚扰或攻击"],["privacy","泄露隐私或不当联系"],["spam","广告或垃圾信息"],["copyright","侵权"],["dangerous","危险或不适宜内容"],["integrity","明显学术造假"],["other","其他不当内容"]];
 type Target={targetKind:TargetKind;targetId:string;revision:number};
 type Reply={id:string;mine:boolean;body:string;authorAlias:string;createdAt:string};
 type Thread={id:string;revision:number;paragraphIndex:number;quote:string;body:string;mine:boolean;authorAlias:string;replies:Reply[];createdAt:string};
-type Report={id:string;targetKind:TargetKind;targetId:string;targetRevision:number;category:string;snapshot:string;status:string;createdAt:string};
+type Report={targetMemberId?:string;id:string;targetKind:TargetKind;targetId:string;targetRevision:number;category:string;snapshot:string;status:string;createdAt:string};
 type Block={id:string;label:string;createdAt:string};
 
 export function SafetyActions({target,onChange}:{target:Target;onChange:()=>void}){
@@ -71,13 +71,13 @@ export function CommunityManagement({onChange}:{onChange:()=>void}){
   catch(e){setError(msg(e));}finally{setBusy(false);}
  }
  async function act(payload:Record<string,unknown>){
-  if(busy)return;setBusy(true);setError("");
+  if(busy)return;if(payload.action==="moderate"){const reason=window.prompt("请输入人工审核依据（不要填写私人信息）");if(!reason?.trim())return;payload={...payload,reason};}setBusy(true);setError("");
   try{await api("",payload);if(payload.action==="unblock")await loadBlocks();else await loadReports(status,offset);onChange();}
   catch(e){setError(msg(e));}finally{setBusy(false);}
  }
  return <details className="community-panel"><summary>社区安全与管理</summary><p className="muted">举报、屏蔽与审核仅限站内学习内容。不提供私聊或联系信息。</p>
   <button className="text-button" type="button" onClick={()=>void loadBlocks()}>查看我的屏蔽列表</button>{blocks.map(b=><div className="community-controls" key={b.id}><span>{b.label}</span><button type="button" disabled={busy} onClick={()=>void act({action:"unblock",id:b.id})}>解除屏蔽</button></div>)}
-  {admin&&<section className="research-threads"><h4>管理员举报审核</h4><p className="muted">仅显示公开内容的限量摘录，不读取私人笔记。隐藏会阻止其他用户访问内容；恢复须由管理员操作。</p><div className="community-controls"><button type="button" disabled={busy} onClick={()=>void loadReports("pending",0)}>待处理</button><button type="button" disabled={busy} onClick={()=>void loadReports("handled",0)}>处理记录</button></div>{reports.map(r=><article className="community-panel" key={r.id}><small>{r.targetKind} · {reasons.find(x=>x[0]===r.category)?.[1]||r.category} · {r.status} · 版本 {r.targetRevision}</small><p dir="auto" className="community-body">{r.snapshot}</p><div className="community-controls">{r.status==="pending"&&<><button type="button" disabled={busy} onClick={()=>window.confirm("确认隐藏该内容？")&&void act({action:"moderate",id:r.id,decision:"hide"})}>隐藏内容</button><button type="button" disabled={busy} onClick={()=>void act({action:"moderate",id:r.id,decision:"dismiss"})}>关闭举报</button></>}{r.status==="hidden"&&<button type="button" disabled={busy} onClick={()=>window.confirm("确认恢复公开显示？")&&void act({action:"moderate",id:r.id,decision:"restore"})}>恢复显示</button>}</div></article>)}<div className="community-controls"><button type="button" disabled={busy||offset===0} onClick={()=>void loadReports(status,Math.max(0,offset-20))}>上一页</button><button type="button" disabled={busy||next===null} onClick={()=>next!==null&&void loadReports(status,next)}>下一页</button></div></section>}
+  {admin&&<section className="research-threads"><h4>管理员举报审核</h4><p className="muted">仅显示公开内容的限量摘录，不读取私人笔记。隐藏会阻止其他用户访问内容；恢复须由管理员操作。</p><div className="community-controls"><button type="button" disabled={busy} onClick={()=>void loadReports("pending",0)}>待处理</button><button type="button" disabled={busy} onClick={()=>void loadReports("handled",0)}>处理记录</button></div>{reports.map(r=><article className="community-panel" key={r.id}><small>{r.targetKind} · {reasons.find(x=>x[0]===r.category)?.[1]||r.category} · {r.status} · 版本 {r.targetRevision}</small>{r.targetMemberId&&<p className="muted">治理成员编号：{r.targetMemberId.slice(0,8)}</p>}<p dir="auto" className="community-body">{r.snapshot}</p><div className="community-controls">{r.status==="pending"&&<><button type="button" disabled={busy} onClick={()=>window.confirm("确认隐藏该内容？")&&void act({action:"moderate",id:r.id,decision:"hide"})}>隐藏内容</button><button type="button" disabled={busy} onClick={()=>void act({action:"moderate",id:r.id,decision:"dismiss"})}>关闭举报</button></>}{r.status==="hidden"&&<button type="button" disabled={busy} onClick={()=>window.confirm("确认恢复公开显示？")&&void act({action:"moderate",id:r.id,decision:"restore"})}>恢复显示</button>}</div></article>)}<div className="community-controls"><button type="button" disabled={busy||offset===0} onClick={()=>void loadReports(status,Math.max(0,offset-20))}>上一页</button><button type="button" disabled={busy||next===null} onClick={()=>next!==null&&void loadReports(status,next)}>下一页</button></div></section>}
   {error&&<p className="form-error" role="alert">{error}</p>}
  </details>;
 }
