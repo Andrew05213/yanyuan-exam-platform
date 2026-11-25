@@ -1,5 +1,6 @@
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { storage } from "../../../../db/store";
+import { visible, viewer, publicationVisible, publicationViewer } from "../../../../lib/research-community";
 import { AccessError, fail, privateHeaders, readLimitedText, sameOrigin } from "../../../../lib/user-access";
 
 const pageSize=20;
@@ -35,20 +36,21 @@ export async function GET(request:Request){
     const publication=params.get("publication"),topic=params.get("topic");
     if(publication!==null){
       const id=requireId(publication);
-      const row=await db.prepare("SELECT "+baseColumns+",content FROM research_publications WHERE id=?").bind(id).first<PublicationRow>();
+      const row=await db.prepare("SELECT "+baseColumns+",content FROM research_publications WHERE id=? AND "+publicationVisible("research_publications")).bind(id,...publicationViewer(user.userId)).first<PublicationRow>();
       if(!row)throw notFound();
       return json(view(row,user.userId));
     }
     const offset=pageOffset(params.get("offset"));
     if(topic!==null){
       const id=requireId(topic);
-      const found=await db.prepare("SELECT id,title,description,created_at AS createdAt FROM research_topics WHERE id=?").bind(id).first();
+      const found=await db.prepare("SELECT id,title,description,created_at AS createdAt,owner_id AS ownerId FROM research_topics WHERE id=? AND "+visible("research_topics","topic")).bind(id,...viewer(user.userId)).first();
       if(!found)throw notFound();
-      const rows=await db.prepare("SELECT "+baseColumns+",substr(content,1,240) AS excerpt FROM research_publications WHERE topic_id=? ORDER BY updated_at DESC,id DESC LIMIT ? OFFSET ?").bind(id,pageSize+1,offset).all<PublicationRow>();
-      return json({topic:found,publications:rows.results.slice(0,pageSize).map(row=>view(row,user.userId)),nextOffset:rows.results.length>pageSize&&offset+pageSize<=10000?offset+pageSize:null});
+      const {ownerId,...topicView}=found as {ownerId:string;id:string;title:string;description:string;createdAt:string};
+      const rows=await db.prepare("SELECT "+baseColumns+",substr(content,1,240) AS excerpt FROM research_publications WHERE topic_id=? AND "+publicationVisible("research_publications")+" ORDER BY updated_at DESC,id DESC LIMIT ? OFFSET ?").bind(id,...publicationViewer(user.userId),pageSize+1,offset).all<PublicationRow>();
+      return json({topic:{...topicView,mine:ownerId===user.userId},publications:rows.results.slice(0,pageSize).map(row=>view(row,user.userId)),nextOffset:rows.results.length>pageSize&&offset+pageSize<=10000?offset+pageSize:null});
     }
     const q=field(params.get("q")??"",100,false);
-    const rows=await db.prepare("SELECT t.id,t.title,t.description,t.created_at AS createdAt,(SELECT count(*) FROM research_publications p WHERE p.topic_id=t.id) AS noteCount FROM research_topics t WHERE instr(lower(t.title||' '||t.description),lower(?))>0 ORDER BY t.created_at DESC,t.id DESC LIMIT ? OFFSET ?").bind(q,pageSize+1,offset).all();
+    const rows=await db.prepare("SELECT t.id,t.title,t.description,t.created_at AS createdAt,(SELECT count(*) FROM research_publications p WHERE p.topic_id=t.id AND "+visible("p","publication")+") AS noteCount FROM research_topics t WHERE instr(lower(t.title||' '||t.description),lower(?))>0 AND "+visible("t","topic")+" ORDER BY t.created_at DESC,t.id DESC LIMIT ? OFFSET ?").bind(...viewer(user.userId),q,...viewer(user.userId),pageSize+1,offset).all();
     return json({topics:rows.results.slice(0,pageSize),nextOffset:rows.results.length>pageSize&&offset+pageSize<=10000?offset+pageSize:null});
   }catch(error){return fail(error,"研究社区暂时不可用。");}
 }
@@ -65,24 +67,24 @@ export async function POST(request:Request){
       const title=field(body.title,160),description=field(body.description??"",2000,false),id=crypto.randomUUID();
       const result=await db.prepare("INSERT INTO research_topics(id,owner_id,title,description,created_at) SELECT ?,?,?,?,? WHERE (SELECT count(*) FROM research_topics WHERE owner_id=?)<30").bind(id,user.userId,title,description,now,user.userId).run();
       if(!result.meta.changes)throw new AccessError("每个账号最多创建30个议题。",429);
-      return json({id,title,description,createdAt:now,noteCount:0},201);
+      return json({id,title,description,createdAt:now,noteCount:0,mine:true},201);
     }
     if(body.action==="publish"){
       const topicId=requireId(body.topicId),entryId=requireId(body.entryId,entryPattern),version=field(body.sourceUpdatedAt,64);
       if(!Number.isFinite(Date.parse(version)))throw new AccessError("请先保存并重新读取笔记。",400);
       if(body.confirm!==true)throw new AccessError("请确认公开当前已保存版本。",400);
-      const topic=await db.prepare("SELECT id FROM research_topics WHERE id=?").bind(topicId).first();
+      const topic=await db.prepare("SELECT id FROM research_topics WHERE id=? AND "+visible("research_topics","topic")).bind(topicId,...viewer(user.userId)).first();
       if(!topic)throw notFound();
       // INSERT SELECT copies only the authenticated owner's exact saved version.
       // The copy is separate from private entries, and an upsert cannot touch another author's row.
       const id=crypto.randomUUID();
-      const result=await db.prepare("INSERT INTO research_publications(id,topic_id,owner_id,entry_id,title,content,language,source_language,discipline,source_updated_at,revision,created_at,updated_at) SELECT ?,?,e.user_id,e.id,e.title,e.content,e.language,e.source_language,e.discipline,e.updated_at,1,?,? FROM entries e WHERE e.user_id=? AND e.id=? AND e.updated_at=? AND length(trim(e.content))>0 AND EXISTS(SELECT 1 FROM research_topics WHERE id=?) AND ((SELECT count(*) FROM research_publications WHERE owner_id=?)<100 OR EXISTS(SELECT 1 FROM research_publications WHERE owner_id=? AND entry_id=? AND topic_id=?)) ON CONFLICT(owner_id,entry_id,topic_id) DO UPDATE SET title=excluded.title,content=excluded.content,language=excluded.language,source_language=excluded.source_language,discipline=excluded.discipline,source_updated_at=excluded.source_updated_at,revision=research_publications.revision+1,updated_at=excluded.updated_at").bind(id,topicId,now,now,user.userId,entryId,version,topicId,user.userId,user.userId,entryId,topicId).run();
+      const result=await db.prepare("INSERT INTO research_publications(id,topic_id,owner_id,entry_id,title,content,language,source_language,discipline,source_updated_at,revision,created_at,updated_at) SELECT ?,?,e.user_id,e.id,e.title,e.content,e.language,e.source_language,e.discipline,e.updated_at,1,?,? FROM entries e WHERE e.user_id=? AND e.id=? AND e.updated_at=? AND length(trim(e.content))>0 AND EXISTS(SELECT 1 FROM research_topics WHERE id=? AND "+visible("research_topics","topic")+") AND ((SELECT count(*) FROM research_publications WHERE owner_id=?)<100 OR EXISTS(SELECT 1 FROM research_publications WHERE owner_id=? AND entry_id=? AND topic_id=?)) ON CONFLICT(owner_id,entry_id,topic_id) DO UPDATE SET title=excluded.title,content=excluded.content,language=excluded.language,source_language=excluded.source_language,discipline=excluded.discipline,source_updated_at=excluded.source_updated_at,revision=research_publications.revision+1,updated_at=excluded.updated_at WHERE NOT EXISTS(SELECT 1 FROM research_hidden h WHERE h.target_kind='publication' AND h.target_id=research_publications.id)").bind(id,topicId,now,now,user.userId,entryId,version,topicId,...viewer(user.userId),user.userId,user.userId,entryId,topicId).run();
       if(!result.meta.changes){
         const source=await db.prepare("SELECT updated_at AS updatedAt,content FROM entries WHERE user_id=? AND id=?").bind(user.userId,entryId).first<{updatedAt:string;content:string}>();
         if(!source)throw notFound();
         if(source.updatedAt!==version)throw new AccessError("笔记已变化，请重新读取并确认公开内容。",409);
         if(!source.content.trim())throw new AccessError("请先填写并保存笔记正文。",400);
-        throw new AccessError("每个账号最多保留100条公开笔记。",429);
+        throw new AccessError("公开笔记数量达到上限，或该内容已被管理员隐藏。",409);
       }
       const row=await db.prepare("SELECT "+baseColumns+",content FROM research_publications WHERE owner_id=? AND entry_id=? AND topic_id=?").bind(user.userId,entryId,topicId).first<PublicationRow>();
       if(!row)throw notFound();

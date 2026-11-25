@@ -168,3 +168,12 @@ body{margin:0;background:var(--background);color:var(--foreground);font-family:A
 .research-community .primary{justify-self:start}
 .navigation{flex-wrap:wrap}
 @media(max-width:640px){.research-community .section-heading{flex-wrap:wrap}.community-panel{padding:12px}.community-controls{align-items:stretch}}
+
+.research-threads{display:grid;gap:12px;min-width:0}
+.research-paragraph{display:grid;gap:5px;padding:12px 0;border-bottom:1px solid #dce2ea;min-width:0}
+.research-paragraph .text-button,.research-threads .text-button{justify-self:start}
+.research-quote{border-left:3px solid #92a6bb;padding:8px 10px;background:#f4f6f9;white-space:pre-wrap;overflow-wrap:anywhere}
+.research-reply{border-left:2px solid #ccd5e0;padding:6px 12px;display:grid;gap:5px}
+.community-safety{font-size:14px;display:grid;gap:6px}
+.community-safety button{font-size:13px}
+.research-community details>summary{cursor:pointer;font-weight:600}

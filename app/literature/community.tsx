@@ -1,8 +1,9 @@
 "use client";
 import {useState,useEffect,useRef} from "react";
 import type {Entry} from "./notes";
+import {ResearchThreads,SafetyActions,CommunityManagement} from "./research-interactions";
 
-type Topic={id:string;title:string;description:string;createdAt:string;noteCount?:number};
+type Topic={id:string;title:string;description:string;createdAt:string;noteCount?:number;mine?:boolean};
 type Publication={id:string;topicId:string;title:string;content?:string;excerpt?:string;language:string|null;sourceLanguage:string|null;discipline:string|null;authorAlias:string;mine:boolean;entryId?:string;sourceUpdatedAt?:string;revision:number;updatedAt:string};
 const endpoint="/api/literature/community";
 async function request<T>(query="",body?:unknown):Promise<T>{
@@ -62,6 +63,7 @@ export function Community({entries,createNote,refreshNotes}:{entries:Entry[];cre
  return <section className="research-community">
   <div className="section-heading"><div><h2>研究议题与共享笔记</h2><p>围绕同一问题独立研究。仅登录用户可阅读共享内容，不自动公开私人笔记。</p></div><button type="button" className="primary" disabled={busy} onClick={()=>setCreating(v=>!v)}>{creating?"取消":"创建议题"}</button></div>
   <p className="community-privacy">请仅发布有权分享的学术内容，不要填写真实姓名、联系方式、个人档案或他人的私人信息。公开内容可能被其他用户复制；撤回不能收回已经复制的内容。</p>
+  <CommunityManagement onChange={()=>{if(topic)void openTopic(topic.id,noteOffset);else void browse(topicOffset);}}/>
   {error&&<p role="alert" className="form-error">{error}</p>}{notice&&<p role="status">{notice}</p>}
   {creating&&<form className="community-panel" onSubmit={e=>{e.preventDefault();void createTopic();}}><h3>创建站内公开议题</h3><label>议题名称<input required maxLength={160} value={title} onChange={e=>setTitle(e.target.value)}/></label><label>研究问题与范围<textarea maxLength={2000} rows={3} value={description} onChange={e=>setDescription(e.target.value)}/></label><button className="primary" disabled={busy} type="submit">确认公开创建</button></form>}
   {!topic?<><form className="community-controls" onSubmit={e=>{e.preventDefault();setSubmittedQuery(query);void browse(0,query);}}><label>搜索议题<input maxLength={100} value={query} onChange={e=>setQuery(e.target.value)} placeholder="文学、哲学、经济学…"/></label><button className="primary" disabled={busy} type="submit">搜索</button></form>
@@ -70,7 +72,7 @@ export function Community({entries,createNote,refreshNotes}:{entries:Entry[];cre
    <div className="community-controls"><button className="text-button" disabled={busy||topicOffset===0} onClick={()=>void browse(Math.max(0,topicOffset-20))}>上一页</button><button className="text-button" disabled={busy||topicNext===null} onClick={()=>topicNext!==null&&void browse(topicNext)}>下一页</button></div>
   </>:<>
    <button type="button" className="text-button" disabled={busy} onClick={()=>void browse(topicOffset)}>← 返回议题列表</button>
-   <div className="community-panel"><h3 dir="auto">{topic.title}</h3><p dir="auto" className="community-body">{topic.description}</p><div className="community-controls"><button type="button" className="primary" disabled={busy} onClick={()=>createNote(topic)}>撰写自己的独立笔记</button><button type="button" className="text-button" disabled={busy} onClick={()=>void openTopic(topic.id,noteOffset)}>刷新议题</button></div><p className="muted">独立笔记先在私人笔记库保存，然后在这里主动发布。同一篇笔记可发布到多个议题。</p></div>
+   <div className="community-panel"><h3 dir="auto">{topic.title}</h3><p dir="auto" className="community-body">{topic.description}</p>{!topic.mine&&<SafetyActions target={{targetKind:"topic",targetId:topic.id,revision:0}} onChange={()=>void browse(topicOffset)}/>}<div className="community-controls"><button type="button" className="primary" disabled={busy} onClick={()=>createNote(topic)}>撰写自己的独立笔记</button><button type="button" className="text-button" disabled={busy} onClick={()=>void openTopic(topic.id,noteOffset)}>刷新议题</button></div><p className="muted">独立笔记先在私人笔记库保存，然后在这里主动发布。同一篇笔记可发布到多个议题。</p></div>
    <div className="community-panel"><h3>发布或更新已保存的笔记</h3><label>选择我的私人笔记<select value={entryId} disabled={busy} onChange={e=>setEntryId(e.target.value)}><option value="">请选择已保存的笔记</option>{eligible.map(n=><option key={n.id} value={n.id}>{n.title} · {n.language||"未分类"}</option>)}</select></label>
    <button type="button" className="text-button" disabled={busy} onClick={()=>{setConfirmed(false);void refreshNotes();}}>刷新我的笔记</button>
    {selected&&<div className="community-preview"><h4>公开内容预览</h4><strong dir="auto">{selected.title}</strong><p className="muted">{meta(selected)}</p><p className="community-body" dir="auto">{selected.content}</p><label className="community-consent"><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>我确认将以上完整内容向本站登录用户公开；私人复习日期、作品编号和其他笔记不会公开。</label></div>}
@@ -78,7 +80,7 @@ export function Community({entries,createNote,refreshNotes}:{entries:Entry[];cre
    <h3>独立研究成果</h3><div className="grid">{publications.map(n=><article className="community-panel" key={n.id}><p className="muted">{n.mine?"我的公开笔记":n.authorAlias} · 第 {n.revision} 版</p><h3 dir="auto">{n.title}</h3><small>{meta(n)}</small><p dir="auto" className="community-excerpt">{n.excerpt}</p><div className="community-controls"><button className="text-button" disabled={busy} onClick={()=>void openNote(n.id)}>阅读全文</button>{n.mine&&<button className="danger-link" disabled={busy} onClick={()=>void withdraw(n)}>撤回公开</button>}</div></article>)}</div>
    {!publications.length&&!busy&&<p className="empty">暂时没有公开笔记，可以成为第一位研究者。</p>}
    <div className="community-controls"><button className="text-button" disabled={busy||noteOffset===0} onClick={()=>void openTopic(topic.id,Math.max(0,noteOffset-20))}>上一页</button><button className="text-button" disabled={busy||noteNext===null} onClick={()=>noteNext!==null&&void openTopic(topic.id,noteNext)}>下一页</button></div>
-   {detail&&<article className="community-panel" aria-label="公开笔记全文"><div className="community-controls"><h3 dir="auto">{detail.title}</h3><button className="text-button" onClick={()=>setDetail(null)}>关闭全文</button></div><p className="muted">{detail.mine?"我的公开笔记":detail.authorAlias} · {meta(detail)} · 第 {detail.revision} 版</p><p className="community-body" dir="auto">{detail.content}</p>{detail.mine&&<button className="danger-link" disabled={busy} onClick={()=>void withdraw(detail)}>撤回公开</button>}</article>}
+   {detail&&<article className="community-panel" aria-label="公开笔记全文"><div className="community-controls"><h3 dir="auto">{detail.title}</h3><button className="text-button" onClick={()=>setDetail(null)}>关闭全文</button></div><p className="muted">{detail.mine?"我的公开笔记":detail.authorAlias} · {meta(detail)} · 第 {detail.revision} 版</p><ResearchThreads key={detail.id+":"+detail.revision} publication={detail} onBlocked={()=>void openTopic(topic.id,noteOffset)}/>{detail.mine&&<button className="danger-link" disabled={busy} onClick={()=>void withdraw(detail)}>撤回公开</button>}</article>}
   </>}
   {busy&&<p role="status">正在处理…</p>}
  </section>;
