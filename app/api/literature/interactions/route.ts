@@ -1,6 +1,6 @@
+import {requireCommunity} from "../../../../lib/community-access";
 import {getChatGPTUser} from "../../../chatgpt-auth";
 import {storage} from "../../../../db/store";
-import {isAdmin,adminPrincipal} from "../../../../lib/admin-access";
 import {AccessError,fail,privateHeaders,readLimitedText,sameOrigin} from "../../../../lib/user-access";
 import {visible,viewer,publicationVisible,publicationViewer,referenceVisible,paragraphs,type TargetKind} from "../../../../lib/research-community";
 
@@ -48,12 +48,13 @@ export async function GET(request:Request){
  try{
   const user=await getChatGPTUser();if(!user)throw new AccessError("请先登录。",401);
   const uid=user.userId,db=storage(),params=new URL(request.url).searchParams;
-  if(params.has("capabilities"))return json({admin:isAdmin(request)});
+  const access=await requireCommunity(request,uid);
+  if(params.has("capabilities"))return json({admin:access.moderate});
   if(params.has("blocks")){
    const rows=await db.prepare("SELECT id,label,created_at AS createdAt FROM research_blocks WHERE blocker_id=? ORDER BY created_at DESC LIMIT 200").bind(uid).all();return json({blocks:rows.results});
   }
   if(params.has("admin")){
-   adminPrincipal(request);
+   await requireCommunity(request,uid,"moderate");
    const status=params.get("status")==="handled"?"handled":"pending";
    const offset=number(Number(params.get("offset")??"0"),10000);
    const rows=await db.prepare("SELECT id,target_kind AS targetKind,target_id AS targetId,target_revision AS targetRevision,category,snapshot,status,created_at AS createdAt,resolved_at AS resolvedAt FROM research_reports WHERE status"+(status==="handled"?"<>":"=")+"'pending' ORDER BY created_at DESC,id DESC LIMIT 21 OFFSET ?").bind(offset).all();
@@ -73,6 +74,7 @@ export async function POST(request:Request){
   try{body=JSON.parse(await readLimitedText(request,16000));}catch(error){if(error instanceof AccessError)throw error;throw new AccessError("提交格式无效。",400);}
   if(!body||typeof body!=="object"||Array.isArray(body))throw new AccessError("提交格式无效。",400);
   const uid=user.userId,db=storage(),now=new Date().toISOString(),newId=crypto.randomUUID(),day=new Date(Date.now()-86400000).toISOString();
+  await requireCommunity(request,uid,body.action==="moderate"?"moderate":body.action==="annotate"||body.action==="reply"?"write":"read");
   if(body.action==="annotate"){
    const pid=id(body.publicationId),rev=number(body.revision),index=number(body.paragraphIndex),content=text(body.body,2000);
    const p=await publication(db,pid,uid);if(p.revision!==rev)throw new AccessError("版本已更新，请重新阅读。",409);
@@ -107,19 +109,21 @@ export async function POST(request:Request){
    const result=await db.prepare("DELETE FROM research_blocks WHERE id=? AND blocker_id=?").bind(id(body.id),uid).run();if(!result.meta.changes)throw notFound();return json({ok:true});
   }
   if(body.action==="moderate"){
-   adminPrincipal(request);
+   await requireCommunity(request,uid,"moderate");
    const reportId=id(body.id),decision=body.decision;
    if(decision!=="hide"&&decision!=="dismiss"&&decision!=="restore")throw new AccessError("处理方式无效。",400);
    const report=await db.prepare("SELECT target_kind AS targetKind,target_id AS targetId,target_revision AS targetRevision,status FROM research_reports WHERE id=?").bind(reportId).first<{targetKind:TargetKind;targetId:string;targetRevision:number;status:string}>();
    if(!report)throw notFound();
    const k=kind(report.targetKind);
+   const why=typeof body.reason==="string"&&body.reason.trim()&&body.reason.length<=500?body.reason.trim():"按社区规则人工审核："+decision;
+   const logged=(status:string)=>db.prepare("INSERT INTO research_governance_audit(id,actor_id,action,target_id,reason,created_at) SELECT ?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM research_reports WHERE id=? AND status=? AND resolved_by=? AND resolved_at=?)").bind(crypto.randomUUID(),uid,"report-"+decision,reportId,why,now,reportId,status,uid,now);
    if(decision==="dismiss"){
-    const result=await db.prepare("UPDATE research_reports SET status='dismissed',resolved_by=?,resolved_at=? WHERE id=? AND status='pending'").bind(uid,now,reportId).run();if(!result.meta.changes)throw new AccessError("举报已被处理。",409);return json({ok:true});
+    const [result]=await db.batch([db.prepare("UPDATE research_reports SET status='dismissed',resolved_by=?,resolved_at=? WHERE id=? AND status='pending'").bind(uid,now,reportId),logged("dismissed")]);if(!result.meta.changes)throw new AccessError("举报已被处理。",409);return json({ok:true});
    }
    if(decision==="restore"){
     const results=await db.batch([
      db.prepare("DELETE FROM research_hidden WHERE report_id=? AND EXISTS(SELECT 1 FROM research_reports WHERE id=? AND status='hidden')").bind(reportId,reportId),
-     db.prepare("UPDATE research_reports SET status='restored',resolved_by=?,resolved_at=? WHERE id=? AND status='hidden' AND NOT EXISTS(SELECT 1 FROM research_hidden WHERE report_id=?)").bind(uid,now,reportId,reportId)
+     db.prepare("UPDATE research_reports SET status='restored',resolved_by=?,resolved_at=? WHERE id=? AND status='hidden' AND NOT EXISTS(SELECT 1 FROM research_hidden WHERE report_id=?)").bind(uid,now,reportId,reportId),logged("restored")
     ]);
     if(!results[0].meta.changes)throw new AccessError("该隐藏记录已不存在。",409);return json({ok:true});
    }
@@ -127,7 +131,7 @@ export async function POST(request:Request){
    const args=k==="publication"?[report.targetId,report.targetRevision]:[report.targetId];
    const results=await db.batch([
     db.prepare("INSERT INTO research_hidden(target_kind,target_id,report_id,created_at) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM research_reports WHERE id=? AND status='pending') AND "+exists+" ON CONFLICT(target_kind,target_id) DO NOTHING").bind(k,report.targetId,reportId,now,reportId,...args),
-    db.prepare("UPDATE research_reports SET status='hidden',resolved_by=?,resolved_at=? WHERE id=? AND status='pending' AND EXISTS(SELECT 1 FROM research_hidden WHERE report_id=?)").bind(uid,now,reportId,reportId)
+    db.prepare("UPDATE research_reports SET status='hidden',resolved_by=?,resolved_at=? WHERE id=? AND status='pending' AND EXISTS(SELECT 1 FROM research_hidden WHERE report_id=?)").bind(uid,now,reportId,reportId),logged("hidden")
    ]);
    if(!results[0].meta.changes)throw new AccessError("对象已变化、已隐藏或已被处理；请核对后关闭举报。",409);return json({ok:true});
   }

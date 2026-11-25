@@ -1,3 +1,4 @@
+import {requireCommunity} from "../../../../lib/community-access";
 import {getChatGPTUser} from "../../../chatgpt-auth";
 import {storage} from "../../../../db/store";
 import {AccessError,fail,privateHeaders,readLimitedText,sameOrigin,principal} from "../../../../lib/user-access";
@@ -62,6 +63,7 @@ export async function POST(request:Request){
   const db=storage(),uid=user.userId;
   if(body.action==="search"){
    const s=validate(()=>scope(body.scope)),keywords=validate(()=>terms(body.terms)),tid=s==="public"?topicId(body.topicId):"";
+   if(s==="public")await requireCommunity(request,uid);
    return json({hits:await search(db,uid,s,tid,keywords),method:"local-keyword",limit:30});
   }
   if(body.action==="expand"){
@@ -76,6 +78,7 @@ export async function POST(request:Request){
   }
   if(body.action==="preview"||body.action==="analyze"){
    const s=validate(()=>scope(body.scope)),t=validate(()=>task(body.task)),question=validate(()=>clean(body.question,1000)),language=validate(()=>clean(body.language,80)),selection=validate(()=>sourceSelection(body.sources,s)),tid=s==="public"?topicId(body.topicId):"";
+   if(s==="public")await requireCommunity(request,uid);
    const sources=await evidence(db,uid,s,tid,selection);
    const target=await studyAIProvider(),destination={host:new URL(target.url).hostname,model:target.provider.model};
    // Bind exact excerpts, selected versions, account, task and configured provider revision to confirmation.
@@ -89,6 +92,7 @@ export async function POST(request:Request){
     {role:"user",content:JSON.stringify({question,language,sources})}
    ],text=>parseResearch(text,sources),quota());
    // Recheck access and exact source versions after a slow provider call, before returning any result.
+   if(s==="public")await requireCommunity(request,uid);
    const current=await evidence(db,uid,s,tid,selection);
    if(await digest(current)!==await digest(sources))throw new AccessError("分析期间材料发生变化，请重新预览。",409);
    return json({result,sources:sources.map(({key,title,kind,version,truncated})=>({key,title,kind,version,truncated})),model:target.provider.model,reviewStatus:"unverified"});

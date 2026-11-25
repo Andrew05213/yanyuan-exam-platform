@@ -23,6 +23,8 @@ try{
   for(const statement of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();
  }
  const a='qa-owner-A',b='qa-owner-B',c='qa-owner-C';
+ for(const uid of [a,b,c])await db.prepare("INSERT INTO research_memberships(user_id,id,role,state,change_id,created_at,updated_at) VALUES(?,?,'member','active',?,?,?)").bind(uid,'fixture-'+uid,'fixture-'+uid,new Date().toISOString(),new Date().toISOString()).run();
+
  const va=await save(a,'Original A');const vb=await save(b,'Independent B');
  assert.equal((await get(null)).status,401);
  assert.equal((await post(null,{action:'createTopic',title:'x'})).status,401);
