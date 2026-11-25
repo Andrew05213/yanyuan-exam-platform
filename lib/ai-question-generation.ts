@@ -26,6 +26,12 @@ export const AI_COUNTS: Record<string, { min: number; max: number; options: numb
   oral: { min: 1, max: 5, options: [1, 2, 3] },
 };
 
+const difficultyRules = {
+  基础: {reading:"350–500", skill:"直接定位一处证据或应用一条常见规则。题干只考一个知识点，干扰项对应常见误解。", oral:"解释一个概念，用一个具体例子说明，追问聚焦原论点。"},
+  进阶: {reading:"550–800", skill:"整合两处信息、跨句推断，或比较两个易混概念。干扰项在局部成立，但可用完整语境排除。", oral:"比较两个文本细节或观点，用具体证据解释差异，追问要求补充依据。"},
+  挑战: {reading:"800–1000", skill:"检验隐含假设、论证边界或多步推断。干扰项应有合理表象，解析必须说明决定性区别。", oral:"评估竞争性解释，引用具体依据并回应反例，追问要求说明论点的适用边界。"},
+} satisfies Record<AiDifficulty,{reading:string;skill:string;oral:string}>;
+
 export type GenerationPlan = {
   subject: AiSubject;
   type: { id: string; label: string; section: string };
@@ -61,9 +67,10 @@ export function generationPlan(body: unknown): GenerationPlan {
 
 export function promptFor(plan: GenerationPlan): string {
   const constraints: string[] = [];
+  const rubric = difficultyRules[plan.difficulty];
   if (plan.section === "reading") {
     constraints.push(
-      `生成 1 篇 ${plan.words || "550–800"} 词的英语文章，主题为“${plan.topic}”；再围绕文章出 ${plan.count} 道单选题，考查主旨、细节、推断、词义与作者态度。`,
+      `生成 1 篇 ${plan.words || rubric.reading} 词的英语文章，主题为“${plan.topic}”；围绕文章生成 ${plan.count} 道单选题，考查项目应与本档标准一致。`,
       "原文放在 text（纯文本，段落之间用空行分隔），也可同时给出 paragraphs 数组；题干与选项用英文，解析用中文。",
       "每题只能有一个正确答案，干扰项不得也能由原文推出；不得使用“以上都对 / 以上都不对 / all of the above / none of the above”。",
       "解析必须引用原文中的具体词句或段落作为依据，不能只写“根据文章”。",
@@ -91,6 +98,8 @@ export function promptFor(plan: GenerationPlan): string {
   return [
     "你是日本留学保送考试的中文命题老师。只输出一个 JSON 对象，不要 Markdown 代码块，不要解释。",
     `所有题目使用${plan.subject === "英语" ? "英文题干与中文解析" : "中文题干与中文解析"}，除非题目本身需要引用外文术语。`,
+    `难度要求（${plan.difficulty}）：${plan.type.id==="oral"?rubric.oral:rubric.skill}`,
+    "难度由理解与推理要求区分，不以生僻字词、题干长度或冷僻事实代替难度。",
     'JSON 结构：{"items":[{"title":"题组标题","text":"阅读原文或空串","paragraphs":["自然段"],"sourceNote":"AI 生成；非官方真题，未经人工审核。","questions":[{"stem":"题干","options":["A项","B项","C项","D项"],"answer":"B","analysis":"中文解析","tag":"考点"}]}]}',
     "客观题必须正好 4 个互不相同的选项，answer 只能是 A/B/C/D；口试题把 options 写为空数组、answer 写空串，并使用 reference、guide、followups 字段。",
     "所有文字必须是纯文本，不得包含 HTML 标签、脚本、答案以外的多余字段；不得杜撰真实考试真题来源。",

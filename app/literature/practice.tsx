@@ -3,10 +3,10 @@ import {Dictation} from "./dictation";
 import type {Entry} from "./notes";
 import {useEffect,useState} from 'react';
 import type {Material} from './materials';
-type Note={id:string;workId:string;title:string;content:string;status:string;tags?:string};
-export function Practice({work,save,enabled,previous,owner}:{owner:string;previous:Entry[];work:Material;save:(n:Note)=>Promise<boolean>;enabled:boolean}){
+export function Practice({work,save,enabled,previous,owner}:{owner:string;previous:Entry[];work:Material;save:(n:Entry)=>Promise<Entry|null>;enabled:boolean}){
   const [evidence,setEvidence]=useState(''),[answer,setAnswer]=useState(''),[feedback,setFeedback]=useState(''),[revision,setRevision]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[id,setId]=useState(()=> 'note_'+crypto.randomUUID());
   const key="hezhi:oral:"+owner+":"+work.id;
+  const [noteVersion,setNoteVersion]=useState(0);
   const [ready,setReady]=useState(false);
   useEffect(()=>{
     if(!owner)return;
@@ -14,6 +14,7 @@ export function Practice({work,save,enabled,previous,owner}:{owner:string;previo
       const old=JSON.parse(localStorage.getItem(key)||"null");
       if(old&&old.question===work.question&&[old.evidence,old.answer,old.feedback,old.revision,old.id].every(x=>typeof x==="string")){
         setEvidence(old.evidence);setAnswer(old.answer);setFeedback(old.feedback);setRevision(old.revision);setId(old.id);
+        setNoteVersion(Number.isSafeInteger(old.noteVersion)&&old.noteVersion>=0?old.noteVersion:0);
         setNotice("已恢复这道题的本机作答。");
       }
     }catch{setNotice("本机草稿读取失败，可手动保存作答。");}
@@ -21,9 +22,9 @@ export function Practice({work,save,enabled,previous,owner}:{owner:string;previo
   },[key,work.question,owner]);
   useEffect(()=>{
     if(!owner||!ready||!(evidence||answer||feedback||revision))return;
-    try{localStorage.setItem(key,JSON.stringify({question:work.question,evidence,answer,feedback,revision,id}));}
+    try{localStorage.setItem(key,JSON.stringify({question:work.question,evidence,answer,feedback,revision,id,noteVersion}));}
     catch{setNotice("本机草稿写入失败，请保存到学习档案。");}
-  },[key,ready,owner,work.question,evidence,answer,feedback,revision,id]);
+  },[key,ready,owner,work.question,evidence,answer,feedback,revision,id,noteVersion]);
   async function review(){
     setBusy(true);setNotice('');
     try{
@@ -34,7 +35,10 @@ export function Practice({work,save,enabled,previous,owner}:{owner:string;previo
   }
   async function archive(){
     setBusy(true);
-    try{const ok=await save({id,workId:work.id,title:'面试复练 · '+work.title,content:[work.question,'资料来源：'+work.source,'我的依据：'+evidence,'首次回答：'+answer,feedback&&'AI 反馈：'+feedback,revision&&'复练回答：'+revision].filter(Boolean).join('\n\n'),status:'在读',tags:'面试复练'});if(ok){try{localStorage.removeItem(key)}catch{}setNotice('已保存两稿。继续修改会更新本条记录，另起一轮可重新打开作品。')}}finally{setBusy(false)}
+    try{
+      const saved=await save({id,revision:noteVersion,workId:work.id,title:'面试复练 · '+work.title,content:[work.question,'资料来源：'+work.source,'我的依据：'+evidence,'首次回答：'+answer,feedback&&'AI 反馈：'+feedback,revision&&'复练回答：'+revision].filter(Boolean).join('\n\n'),status:'在读',tags:'面试复练'});
+      if(saved){setNoteVersion(saved.revision??0);setNotice('已保存到读书笔记。');}
+    }finally{setBusy(false)}
   }
   return <details className="practice"><summary>开始专题面试训练</summary><fieldset disabled={busy}>{previous.length>0&&<details><summary>对照上一次保存的回答</summary><p style={{whiteSpace:"pre-wrap"}}>{previous[0].content}</p></details>}<button type="button" disabled={!enabled} onClick={()=>{
       const body=document.getElementById("note-body") as HTMLTextAreaElement|null;

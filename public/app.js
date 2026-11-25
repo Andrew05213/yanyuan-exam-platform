@@ -7,7 +7,7 @@ const $=s=>document.querySelector(s);
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const allQuestions=p=>p.sections.flatMap(s=>s.blocks.flatMap(b=>b.questions));
 const allPapers=()=>[...bank.papers,...(bank.archivedPapers||[])];
-const names={community:'共享题库',schools:'学校中心',studio:'组卷工作台',oral:'口试训练',saved:'学习档案',mistakes:'错题库',writing:'作文与翻译',library:'三科模拟卷',sources:'原始样卷',blueprint:'题型蓝图',records:'旧版本机记录'};
+const names={today:'今日学习',community:'共享题库',schools:'学校中心',studio:'组卷工作台',oral:'口试训练',saved:'学习档案',mistakes:'错题库',writing:'作文与翻译',library:'三科模拟卷',sources:'原始样卷',blueprint:'题型蓝图',records:'旧版本机记录'};
 let toastTimer;
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3200)}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(practice))}catch(e){storageAvailable=false;toast('当前浏览器无法保存，请导出练习记录备份。')}}
@@ -60,12 +60,14 @@ function route(){
   navigate(names[hash]?hash:'schools',false);
 }
 function navigate(view,setHash=true){
+  if(typeof Today!=='undefined')Today.leave();
   if(typeof Hub!=='undefined')Hub.leave();
   if(currentPaper)pauseAll();currentPaper=null;currentView=view;showAnswers=false;wrongOnly=false;
   if(setHash&&location.hash!=='#'+view){history.pushState(null,'','#'+view)}
   document.querySelectorAll('[data-view]').forEach(el=>{el.classList.toggle('active',el.dataset.view===(['report','feedback'].includes(view)?'saved':view));el.setAttribute('aria-current',el.dataset.view===view?'page':'false')});
   setBreadcrumb(['report','feedback'].includes(view)?'saved':view,names[view]);
-  if(['schools','studio','oral','saved','mistakes','writing','community','standards','report','feedback'].includes(view))Hub.render(view);
+  if(view==='today'&&typeof Today!=='undefined')Today.render();
+  else if(['schools','studio','oral','saved','mistakes','writing','community','standards','report','feedback'].includes(view))Hub.render(view);
   else ({library:renderLibrary,sources:renderSources,blueprint:renderBlueprint,records:renderRecords}[view]||renderLibrary)();
   window.scrollTo({top:0,behavior:'instant'});
 }
@@ -155,7 +157,7 @@ async function reset(){
 function exportBackup(){
   // Save the actual elapsed time, never the live timestamp that would keep running on another device.
   const copy=structuredClone(practice);for(const [id,s] of Object.entries(copy.papers)){s.elapsed=elapsed(practice.papers[id]);s.startAt=null}
-  const blob=new Blob([JSON.stringify(copy,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='燕园备考_练习记录_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('已导出当前选项、用时与提交记录。');
+  const blob=new Blob([JSON.stringify(copy,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='博雅怀石_练习记录_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('已导出当前选项、用时与提交记录。');
 }
 async function importBackup(e){
   const file=e.target.files[0];if(!file)return;

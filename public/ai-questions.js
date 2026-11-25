@@ -22,6 +22,7 @@ const AIStudio = {
     bank: [],
     bankLoaded: false,
     bankBusy: false,
+    bankTier: "",
     requestId: null,
     requestKey: null,
     cooldownUntil: 0,
@@ -30,22 +31,6 @@ const AIStudio = {
 
   init(data) {
     this.data = data;
-    // Community materials refresh replaces TierStudio.data.items wholesale.
-    // Re-merge the personal bank after it resolves so saved AI items stay in
-    // the standard paper catalog.
-    if (typeof PublicApp !== 'undefined' && !PublicApp.__aiBankPatched) {
-      PublicApp.__aiBankPatched = true;
-      const baseRefresh = PublicApp.refresh.bind(PublicApp);
-      PublicApp.refresh = async (...args) => {
-        const result = await baseRefresh(...args);
-        try {
-          AIStudio.mergeBankIntoStudio();
-        } catch {
-          /* Catalog merge is best effort. */
-        }
-        return result;
-      };
-    }
     document.addEventListener('click', (event) => this.click(event));
     document.addEventListener('submit', (event) => {
       if (event.target.id === 'ai-form') {
@@ -54,6 +39,7 @@ const AIStudio = {
       }
     });
     document.addEventListener('change', (event) => {
+      if(event.target.id==='ai-bank-difficulty'){this.state.bankTier=event.target.value;this.renderBank();return;}
       const box = event.target.closest('[data-ai-select]');
       if (box) {
         const id = box.dataset.aiSelect;
@@ -103,7 +89,7 @@ const AIStudio = {
           <label>题型<select id="ai-type" name="type"></select></label>
           <label>数量<select id="ai-count" name="count"></select></label>
           <label>重点考查<input name="focus" maxlength="100" placeholder="如：用文本细节比较两部作品"></label>
-          <label id="ai-length" hidden>目标词数<select name="words"><option>550–800</option><option>350–500</option><option>800–1000</option></select></label>
+          <label id="ai-length" hidden>目标词数<select name="words"><option value="">按难度推荐</option><option>350–500</option><option>550–800</option><option>800–1000</option></select></label>
           <label>限时（分钟）<input id="ai-minutes" name="minutes" type="number" min="5" max="240" value="40"></label>
         </div>
         <div class="studio-actions">
@@ -209,61 +195,12 @@ const AIStudio = {
       const response = await this.request('/api/question-bank', { method: 'GET', timeout: 20000 });
       this.state.bank = (response.items || []).filter((entry) => entry.item);
       this.state.bankLoaded = true;
-      this.mergeBankIntoStudio();
     } catch (error) {
       this.state.bankError = error.message;
       this.state.bankLoaded = true;
     } finally {
       this.state.bankBusy = false;
       this.renderBank();
-    }
-  },
-
-  mergeBankIntoStudio() {
-    // TierStudio is a top-level lexical binding (classic script), so it is not
-    // always exposed as window.TierStudio.
-    const studio = typeof TierStudio !== 'undefined' ? TierStudio : window.TierStudio;
-    if (!studio?.data?.items) return;
-    const base = studio.data.items.filter((unit) => !String(unit.id || '').startsWith('ai-bank:'));
-    const units = [];
-    for (const record of this.state.bank) {
-      if (record.item.subject !== '英语' || !record.item.questions.length) continue;
-      const section = record.item.section === 'reading' ? 'reading' : 'mc';
-      if (!studio.data.sections?.英语?.some((entry) => entry.id === section)) continue;
-      const tier = studio.data.tiers?.英语?.[0]?.id || 'any';
-      units.push({
-        id: 'ai-bank:' + record.item.id,
-        subject: '英语',
-        section,
-        tier,
-        classificationStatus: record.reviewStatus === 'approved' ? '我的题库 · 已人工审核' : '我的题库 · AI 生成待审核',
-        reason: '来自个人题库；' + record.item.sourceNote,
-        title: record.item.title,
-        text: record.item.text || '',
-        paragraphs: record.item.paragraphs || [],
-        source: record.item.sourceNote,
-        sourceUrl: '',
-        questions: record.item.questions.map((question) => ({
-          id: question.id,
-          sourceNumber: question.id,
-          kind: 'mc',
-          stem: question.stem,
-          options: question.options,
-          answer: question.answer,
-          analysis: question.analysis,
-          tag: question.tag,
-          sourceId: question.id,
-          level: record.item.difficulty,
-        })),
-      });
-    }
-    studio.data.items = [...base, ...units];
-    if (studio.config) {
-      try {
-        studio.updateStocks?.();
-      } catch {
-        /* Stock refresh is best effort. */
-      }
     }
   },
 
@@ -396,17 +333,18 @@ const AIStudio = {
 
   async compose(source) {
     const subjectEl = document.getElementById('ai-subject');
-    const subject = subjectEl?.value || '英语';
+    const fresh = this.state.items.filter(item=>this.state.selected.has(item.id));
+    const subject = (source==='ai'?fresh[0]?.subject:subjectEl?.value) || '英语';
+    const bank = this.state.bank.filter(({item})=>item.subject===subject&&(!this.state.bankTier||item.difficulty===this.state.bankTier)).map(({item})=>item);
     let items = [];
     if (source === 'ai') {
-      items = this.state.items.filter((item) => this.state.selected.has(item.id));
+      items = fresh;
     } else if (source === 'bank') {
-      items = this.state.bank.filter((record) => record.item.subject === subject).map((record) => record.item);
+      items = bank;
     } else {
-      const fresh = this.state.items.filter((item) => this.state.selected.has(item.id));
-      const existing = this.state.bank.filter((record) => record.item.subject === subject).map((record) => record.item);
-      const seen = new Set(fresh.map((item) => item.id));
-      items = [...fresh, ...existing.filter((item) => !seen.has(item.id))];
+      const matching = fresh.filter(item=>item.subject===subject&&(!this.state.bankTier||item.difficulty===this.state.bankTier));
+      const seen = new Set(matching.map(item=>item.id));
+      items = [...matching,...bank.filter(item=>!seen.has(item.id))];
     }
     if (!items.length) {
       this.showError('当前没有可组卷的题目。请先生成并保存，或在“我的题库”中保存题目。');
@@ -610,14 +548,14 @@ const AIStudio = {
       return;
     }
     if (!this.state.bank.length) {
-      box.innerHTML = '<div class="empty-state ai-empty"><h3>我的题库还是空的</h3><p>生成后勾选并“保存选中到我的题库”，题目就会出现在这里，并进入组卷库存。</p></div>';
+      box.innerHTML = '<div class="empty-state ai-empty"><h3>我的题库还是空的</h3><p>生成后勾选并“保存选中到我的题库”，题目就会出现在这里，可从个人题库组卷。</p></div>';
       return;
     }
     const counts = {};
     for (const record of this.state.bank) counts[record.item.subject] = (counts[record.item.subject] || 0) + 1;
-    box.innerHTML = `<div class="ai-bank-head"><p class="hub-form-note">共 ${this.state.bank.length} 组：${Object.entries(counts).map(([subject, n]) => `${this.escape(subject)} ${n}`).join(' · ')}。英语题已并入常规组卷库存。</p>
-      <div class="studio-actions"><button class="btn primary" type="button" data-ai-action="compose-bank">用我的题库组卷</button><button class="btn secondary" type="button" data-ai-action="compose-mixed">我的题库 + 本次 AI 新题混合组卷</button><button class="btn secondary" type="button" data-ai-action="reload-bank">刷新</button></div></div>
-      <div class="ai-bank-list">${this.state.bank.map((record) => this.bankRow(record)).join('')}</div>`;
+    box.innerHTML = `<div class="ai-bank-head"><p class="hub-form-note">共 ${this.state.bank.length} 组：${Object.entries(counts).map(([subject, n]) => `${this.escape(subject)} ${n}`).join(' · ')}。英语题由个人题库单独组卷。</p>
+      <div class="studio-actions"><label>题库难度<select id="ai-bank-difficulty"><option value="">全部难度</option>${["基础","进阶","挑战"].map(value=>`<option ${this.state.bankTier===value?"selected":""}>${value}</option>`).join("")}</select></label><button class="btn primary" type="button" data-ai-action="compose-bank">用我的题库组卷</button><button class="btn secondary" type="button" data-ai-action="compose-mixed">我的题库 + 本次 AI 新题混合组卷</button><button class="btn secondary" type="button" data-ai-action="reload-bank">刷新</button></div></div>
+      <div class="ai-bank-list">${this.state.bank.filter(record=>!this.state.bankTier||record.item.difficulty===this.state.bankTier).map(record=>this.bankRow(record)).join('')||'<p>当前档位暂无题目。</p>'}</div>`;
   },
 
   bankRow(record) {

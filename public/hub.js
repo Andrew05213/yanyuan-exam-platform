@@ -60,8 +60,27 @@ const Hub={
   levelOptions(){return '<option value="all">全部层级</option><option value="基础">基础</option><option value="进阶">进阶</option><option value="挑战">挑战</option>';},
   typesFor(schoolId){return Object.keys(this.data.types).filter(type=>HubEngine.oralPool(this.data,schoolId,this.languageFor(schoolId)).some(q=>q.type===type));},
   renderSchools(){
-    const total=bank.papers.reduce((n,p)=>n+p.count,0)+this.data.writtenExtra.length;
-    $('#screen').innerHTML=`<section class="home-intro"><div class="home-intro-copy"><h1>学校中心</h1><p class="page-lead">选择目标学校，查看公开要求与训练配置，进入笔试或口试练习。</p></div><div class="home-index"><div class="stats"><div class="stat"><strong>${String(this.data.schools.length).padStart(2,'0')}</strong><small>所学校</small></div><div class="stat"><strong>${this.data.oralItems.length}</strong><small>项口试</small></div><div class="stat"><strong>${total}</strong><small>道笔试</small></div><div class="stat"><strong>${String(bank.sources.length).padStart(2,'0')}</strong><small>份样卷</small></div></div></div></section><div class="section-top"><div><h2>目标学校</h2></div></div><div class="hub-school-grid">${this.data.schools.map((s,i)=>`<article class="hub-school-card" style="--school-color:${s.color}"><div class="hub-school-top"><span class="hub-region">${this.e(s.region)}方向</span></div><h3><a href="#school/${s.id}" aria-label="进入${this.e(s.short)}${s.id==='speit'?'':this.e(s.track)}专区">${this.e(s.name)}</a></h3><p class="hub-track">${this.e(s.track)}</p><div class="hub-tags">${s.focus.map(t=>`<span>${this.e(t)}</span>`).join('')}</div><div class="hub-school-footer"><span>${s.subjects.join(' / ')} · ${HubEngine.oralPool(this.data,s.id,this.languageFor(s.id)).length} 项口试</span><a href="#school/${s.id}" aria-label="进入${this.e(s.short)}专区">进入</a></div></article>`).join('')}</div><details class="help-note"><summary>资料与招生参考</summary><p>${this.e(this.data.policyNote)}</p><p>本站提供非官方训练材料。</p></details>`;
+    $('#screen').innerHTML=`<section class="home-intro wash-hero" aria-labelledby="home-title">
+      <div class="home-intro-copy">
+        <h1 id="home-title">博雅怀石</h1>
+        <p class="page-lead">日本文学研习、读书笔记与高校保送训练。</p>
+        <div class="wash-actions">
+          <a class="btn primary" href="/reading-notes">进入日本读书笔记 <span aria-hidden="true">↗</span></a>
+          <a class="btn secondary" href="/literature">浏览文学研习</a>
+        </div>
+      </div>
+      <img class="wash-landscape" src="/assets/sansui-study.webp" width="1440" height="960" alt="" fetchpriority="high">
+    </section>
+    <section aria-labelledby="school-directory" class="home-directory">
+      <div class="section-top"><h2 id="school-directory">学校中心</h2><span>${this.data.schools.length} 所院校 · ${this.data.oralItems.length} 项口试</span></div>
+      <div class="hub-school-grid">${this.data.schools.map(s=>`<article class="hub-school-card" style="--school-color:${s.color}">
+        <div class="hub-school-top"><span class="hub-region">${this.e(s.region)}方向</span></div>
+        <h3><a href="#school/${s.id}" aria-label="进入${this.e(s.short)}${s.id==='speit'?'':this.e(s.track)}专区">${this.e(s.name)}</a></h3>
+        <div class="hub-school-footer"><span>${s.subjects.join(' / ')} · ${HubEngine.oralPool(this.data,s.id,this.languageFor(s.id)).length} 项口试</span>
+          <a href="#school/${s.id}" aria-label="进入${this.e(s.short)}专区">进入</a></div>
+      </article>`).join('')}</div>
+      <details class="help-note"><summary>资料与招生参考</summary><p>${this.e(this.data.policyNote)}</p><p>本站提供非官方训练材料。</p></details>
+    </section>`;
   },
   renderSchool(s){
     const items=HubEngine.oralPool(this.data,s.id,this.languageFor(s.id));
@@ -117,7 +136,7 @@ const Hub={
   packetTools(){return `<div class="hub-packet-tools no-print"><button class="btn secondary" data-hub="packet-json">导出试卷与作答</button><button class="btn secondary" data-hub="import-packet">导入试卷</button><button class="btn secondary" data-hub="packet-markdown">导出题目与参考</button><button class="btn secondary" data-hub="print">打印 / 存为 PDF</button><a class="text-link" href="#saved">学习档案</a></div>`;},
   renderPacket(){
     const p=this.packet;if(!p)return;this.school=p.schoolId;const isWritten=p.kind==='written';
-    $('#screen').innerHTML=`<a class="back-link" href="#school/${this.e(p.schoolId)}">← 学校专区</a><header class="exam-header"><div><span class="eyebrow">训练卷 · ${isWritten?'笔试':'口试'}</span><h1>${this.e(p.title)}</h1><div class="meta">${this.e(p.schoolName)} · ${p.count} ${isWritten?'题 · 100 分 · '+p.minutes+' 分钟':'项口试任务'} · ${this.dateText(p.createdAt)}</div></div><span class="hub-cloud-state ${this.packetMeta?.revision?'saved':'unsaved'}">${this.packetMeta?.revision?'已保存':'未保存'}</span></header>${this.saveError?`<div class="notice no-print">${this.e(this.saveError)} <button class="text-link" data-hub="retry-packet-save">重试保存</button></div>`:''}${this.packetTools()}<details class="help-note"><summary>试卷说明</summary><p>${this.e(p.note)}</p></details>${isWritten?this.writtenPacketHTML():this.oralPacketHTML()}<div class="hub-print-footer">燕园备考 · 非官方训练材料 · ${this.e(p.schoolName)} · ${this.e(p.createdAt.slice(0,10))}</div>`;
+    $('#screen').innerHTML=`<a class="back-link" href="#school/${this.e(p.schoolId)}">← 学校专区</a><header class="exam-header"><div><span class="eyebrow">训练卷 · ${isWritten?'笔试':'口试'}</span><h1>${this.e(p.title)}</h1><div class="meta">${this.e(p.schoolName)} · ${p.count} ${isWritten?'题 · 100 分 · '+p.minutes+' 分钟':'项口试任务'} · ${this.dateText(p.createdAt)}</div></div><span class="hub-cloud-state ${this.packetMeta?.revision?'saved':'unsaved'}">${this.packetMeta?.revision?'已保存':'未保存'}</span></header>${this.saveError?`<div class="notice no-print">${this.e(this.saveError)} <button class="text-link" data-hub="retry-packet-save">重试保存</button></div>`:''}${this.packetTools()}<details class="help-note"><summary>试卷说明</summary><p>${this.e(p.note)}</p></details>${isWritten?this.writtenPacketHTML():this.oralPacketHTML()}<div class="hub-print-footer">博雅怀石 · 非官方训练材料 · ${this.e(p.schoolName)} · ${this.e(p.createdAt.slice(0,10))}</div>`;
     if(isWritten)this.restoreWrittenTimer();
   },
   writtenPacketHTML(){
@@ -258,7 +277,7 @@ const Hub={
     if(action==='refresh-saved'){if(currentView!=='saved')navigate('saved');else this.renderSaved();}
     if(action==='import-packet')$('#hub-import-file').click();
     if(action==='backup-legacy'){button.disabled=true;try{const copy=structuredClone(practice);for(const [id,state] of Object.entries(copy.papers)){state.elapsed=elapsed(practice.papers[id]);state.startAt=null;}await this.store('legacy-backup','legacy','旧版三科练习备份',copy,null);toast('旧版练习副本已保存云端。');this.renderSaved();}catch(error){toast(error.message);button.disabled=false;}}
-    if(action==='download-legacy')this.download('燕园备考_旧版练习备份.json',JSON.stringify(this.loadedLegacy.payload,null,2));
+    if(action==='download-legacy')this.download('博雅怀石_旧版练习备份.json',JSON.stringify(this.loadedLegacy.payload,null,2));
   },
 
 async startOralRecording(){

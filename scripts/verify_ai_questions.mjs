@@ -3,6 +3,8 @@
 // normalization/rejection. Run with:
 //   node --experimental-strip-types scripts/verify_ai_questions.mjs
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {runInNewContext} from "node:vm";
 import {
   AI_COUNTS,
   AI_TYPES,
@@ -103,6 +105,18 @@ function oralFixture(count = 2) {
 }
 
 const readingPlan = generationPlan({ subject: "英语", type: "reading", difficulty: "进阶", topic: "城市热浪", count: 3 });
+ok("reading, country and oral difficulty change the task requirements", ()=>{
+ const bands=["基础","进阶","挑战"];
+ const reading=bands.map(difficulty=>promptFor(generationPlan({subject:"英语",type:"reading",difficulty,topic:"城市热浪",count:3})));
+ for(const [i,[range,skill]] of [["350–500","直接定位"],["550–800","整合两处"],["800–1000","多步推断"]].entries()){
+  assert.ok(reading[i].includes(range)&&reading[i].includes(skill));
+ }
+ for(const [subject,type,count,rules] of [["日本国别","mc",3,["直接定位","易混概念","决定性区别"]],["文学口试","oral",2,["具体例子","补充依据","回应反例"]]]){
+  for(const [i,difficulty] of bands.entries()){
+   assert.ok(promptFor(generationPlan({subject,type,difficulty,topic:"同一专题",count})).includes(rules[i]));
+  }
+ }
+});
 ok("reading plan is accepted", () => assert.equal(readingPlan.section, "reading"));
 ok("reading prompt keeps passage and count constraints", () => {
   const prompt = promptFor(readingPlan);
@@ -276,5 +290,22 @@ ok("物哀 five-question set accepts 日本文学 and 日本文化", () => {
 for (const stem of ["根据上文，作者怎样理解日本文化？", "本文如何解读物哀？", "文中哪一处体现了物哀？"]) {
   rejects(stem, () => parseGeneration(awareFixture(stem), awarePlan), /不存在的上文/);
 }
+
+let packet;
+const studio=runInNewContext(readFileSync(new URL("../public/ai-questions.js",import.meta.url),"utf8")+"\nAIStudio",{
+  document:{getElementById:id=>({value:id==="ai-subject"?"英语":40})},
+  Hub:{createPacket:value=>{packet=value;}},
+});
+const basic={id:"basic",subject:"英语",difficulty:"基础"};
+const advanced={id:"advanced",subject:"英语",difficulty:"挑战"};
+studio.state.bank=[{item:basic},{item:advanced},{item:{id:"other",subject:"日本国别",difficulty:"挑战"}}];
+studio.state.items=[basic,{id:"new",subject:"英语",difficulty:"挑战"}];
+studio.state.selected=new Set(["basic","new"]);
+studio.state.bankTier="挑战";
+studio.writtenPacket=items=>Array.from(items,item=>item.id);
+await studio.compose("bank");
+ok("personal-bank composition uses the chosen subject and difficulty",()=>assert.deepEqual(packet,["advanced"]));
+await studio.compose("mixed");
+ok("mixed personal-bank composition retains the chosen difficulty",()=>assert.deepEqual(packet,["new","advanced"]));
 
 console.log(`\n${passed} checks passed${process.exitCode ? ", with failures" : ""}.`);

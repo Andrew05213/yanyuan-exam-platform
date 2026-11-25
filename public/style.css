@@ -1,14 +1,14 @@
 /* ==========================================================================
-   燕园备考 · 学生端设计体系
+   博雅怀石 · 学生端设计体系
    视觉方向：温润纸色、墨色正文、朱砂标记、宋体标题与细线分隔。
    ========================================================================== */
 
 :root {
-  --paper: #f4f0e7;
-  --paper-deep: #ede7dc;
-  --surface: #fbf8f2;
-  --surface-raised: #fffdf8;
-  --surface-2: #ebe4d8;
+  --paper: #f7f5ec;
+  --paper-deep: #ebe8dd;
+  --surface: #fbf9f1;
+  --surface-raised: #fffdf7;
+  --surface-2: #eeebdf;
   --ink: #1c2721;
   --ink-soft: #3b473f;
   --muted: #666d64;
@@ -16,10 +16,10 @@
   --line: #d9d1c2;
   --line-soft: #e7e0d4;
   --line-strong: #bdb19e;
-  --accent: #9b4248;
-  --accent-deep: #7c3339;
+  --accent: #903e33;
+  --accent-deep: #743127;
   --accent-soft: #f1e4e0;
-  --green: #365d4f;
+  --green: #3c5c4d;
   --green-soft: #e7ede7;
   --danger: #963d36;
   --danger-soft: #f3e5e1;
@@ -3172,3 +3172,111 @@ dialog p { color: var(--muted-strong); font-size: 12px; line-height: 1.8; }
   .ai-bank-row { flex-direction: column; align-items: flex-start; }
   .ai-studio { padding: 16px; }
 }
+
+/* 博雅怀石首页 */
+.nav-item.nav-notebook {
+  padding-inline: 14px;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  font-weight: 650;
+}
+.wash-hero.home-intro {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(345px, 1fr) minmax(0, 1.22fr);
+  gap: 0;
+  align-items: center;
+  min-height: 376px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #f1ede1;
+}
+.wash-hero .home-intro-copy {
+  padding: clamp(28px, 5vw, 78px);
+  padding-right: 0;
+}
+.wash-hero #home-title {
+  margin: 0 0 18px;
+  color: #202c24;
+  font-size: clamp(50px, 6.3vw, 92px);
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: .08em;
+}
+.wash-hero .page-lead {
+  color: var(--ink-soft);
+  font-size: clamp(15px, 1.6vw, 19px);
+}
+.wash-landscape {
+  position: absolute;
+  z-index: -1;
+  right: 0;
+  inset-block: 0;
+  width: 64%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 54%;
+  mix-blend-mode: multiply;
+  mask-image: linear-gradient(to right, transparent 0%, #000 32%);
+}
+.wash-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+.wash-actions .btn { min-height: 46px; }
+.wash-actions .primary { background: var(--accent-deep); border-color: var(--accent-deep); }
+.wash-actions .primary:hover { background: #5e3026; border-color: #5e3026; }
+.wash-actions .primary span { margin-left: 6px; }
+.wash-actions .secondary { background: var(--surface-raised); }
+.home-directory > .section-top {
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--line-strong);
+  align-items: baseline;
+}
+.home-directory > .section-top span { color: var(--muted-strong); font-size: 14px; }
+.home-directory .hub-school-card { min-height: 150px; padding-block: 16px; }
+.home-directory .hub-school-card h3 { margin-block: 10px 14px; }
+.home-directory .hub-school-footer { padding-top: 12px; }
+@media(max-width: 700px) {
+  .wash-hero.home-intro { display: flex; flex-direction: column; align-items: stretch; }
+  .wash-hero .home-intro-copy { padding: 28px 22px 8px; }
+  .wash-hero #home-title { font-size: clamp(45px, 10vw, 66px); }
+  .wash-landscape {
+    position: static;
+    width: 100%;
+    height: clamp(135px, 44vw, 235px);
+    mask-image: linear-gradient(to bottom, transparent, #000 36%);
+  }
+  .wash-actions { margin-top: 18px; }
+  .wash-actions .btn { padding-inline: 12px; }
+}
+@media print { .wash-actions, .wash-landscape { display: none; } }
+
+.today-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;border-bottom:1px solid var(--line);padding:8px 0 24px;margin-bottom:24px}
+.today-heading h1{font-family:var(--serif);font-size:clamp(32px,4vw,46px);line-height:1.2;margin:8px 0}
+.today-heading p,.today-section-heading p,.today-panel p{color:var(--muted);font-size:14px}
+.today-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:32px}
+.today-shortcuts a{display:flex;flex-direction:column;gap:5px;min-width:0;padding:18px;border:1px solid var(--line);background:var(--surface-raised);border-radius:var(--radius-lg)}
+.today-shortcuts a:hover{border-color:var(--green);background:var(--green-soft)}
+.today-shortcuts strong{font-size:18px;font-weight:650}
+.today-personal{display:grid;gap:16px;min-width:0}
+.today-section-heading{display:flex;justify-content:space-between;align-items:center}
+.today-section-heading h2{font-family:var(--serif);font-size:24px}
+.today-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.today-metrics>div{padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);min-width:0}
+.today-metrics strong{display:block;color:var(--green);font-size:28px;font-variant-numeric:tabular-nums}
+.today-metrics span{font-size:13px;color:var(--muted)}
+.today-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.today-panel{padding:18px;border:1px solid var(--line);background:var(--surface-raised);border-radius:var(--radius-lg);min-width:0}
+.today-panel-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:14px;flex-wrap:wrap}
+.today-panel-head a{color:var(--green);font-size:12px;text-decoration:underline}
+.today-record{display:flex;flex-direction:column;gap:3px;min-height:48px;padding:10px 0;border-top:1px solid var(--line-soft);overflow-wrap:anywhere}
+.today-record:hover strong{text-decoration:underline}
+.today-record strong{font-weight:550;font-size:14px}
+.today-record small{color:var(--muted);font-size:12px}
+@media(max-width:900px){.today-columns{grid-template-columns:1fr}.today-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:550px){.today-heading{align-items:flex-start;flex-direction:column}.today-shortcuts{gap:8px}.today-shortcuts a{padding:12px}.today-shortcuts strong{font-size:16px}.today-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.today-panel{padding:14px}.today-heading .btn{min-height:44px}}
