@@ -2,7 +2,7 @@ import {getChatGPTUser} from "../../../chatgpt-auth";
 import {storage} from "../../../../db/store";
 import {isAdmin,adminPrincipal} from "../../../../lib/admin-access";
 import {AccessError,fail,privateHeaders,readLimitedText,sameOrigin} from "../../../../lib/user-access";
-import {visible,viewer,publicationVisible,publicationViewer,paragraphs,type TargetKind} from "../../../../lib/research-community";
+import {visible,viewer,publicationVisible,publicationViewer,referenceVisible,paragraphs,type TargetKind} from "../../../../lib/research-community";
 
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const notFound=()=>new AccessError("内容不存在、已撤回或不可访问。",404);
@@ -10,13 +10,13 @@ const json=(value:unknown,status=200)=>Response.json(value,{status,headers:priva
 function id(value:unknown){if(typeof value!=="string"||!uuid.test(value))throw new AccessError("编号无效。",400);return value;}
 function number(value:unknown,max=100000){if(typeof value!=="number"||!Number.isInteger(value)||value<0||value>max)throw new AccessError("版本或段落编号无效。",400);return value;}
 function text(value:unknown,max:number){if(typeof value!=="string"||!value.trim()||value.length>max)throw new AccessError("请检查文字及长度。",400);return value.trim();}
-function kind(value:unknown):TargetKind{if(value!=="topic"&&value!=="publication"&&value!=="annotation"&&value!=="reply")throw new AccessError("对象类型无效。",400);return value;}
+function kind(value:unknown):TargetKind{if(value!=="topic"&&value!=="publication"&&value!=="annotation"&&value!=="reply"&&value!=="reference")throw new AccessError("对象类型无效。",400);return value;}
 type Pub={id:string;ownerId:string;revision:number;content:string;title:string};
 type Target={id:string;ownerId:string;revision:number;body:string};
 type Thread={id:string;ownerId:string;revision:number;paragraphIndex:number;quote:string;body:string;createdAt:string};
 type Reply={id:string;ownerId:string;body:string;createdAt:string};
 const alias=(value:string)=>"研究者-"+value.slice(0,8);
-const tableFor={topic:"research_topics",publication:"research_publications",annotation:"research_annotations",reply:"research_replies"} as const;
+const tableFor={topic:"research_topics",publication:"research_publications",annotation:"research_annotations",reply:"research_replies",reference:"research_references"} as const;
 async function publication(db:ReturnType<typeof storage>,pid:string,user:string){
  const row=await db.prepare("SELECT id,owner_id AS ownerId,revision,content,title FROM research_publications p WHERE id=? AND "+publicationVisible("p")).bind(pid,...publicationViewer(user)).first<Pub>();
  if(!row)throw notFound();return row;
@@ -27,6 +27,7 @@ async function target(db:ReturnType<typeof storage>,k:TargetKind,targetId:string
  else if(k==="publication"){
   const p=await publication(db,targetId,user);row={id:p.id,ownerId:p.ownerId,revision:p.revision,body:p.title+"\n"+p.content};
  }else if(k==="annotation")row=await db.prepare("SELECT a.id,a.owner_id AS ownerId,a.revision,a.body FROM research_annotations a JOIN research_publications p ON p.id=a.publication_id AND p.revision=a.revision WHERE a.id=? AND "+visible("a","annotation")+" AND "+publicationVisible("p")).bind(targetId,...viewer(user),...publicationViewer(user)).first<Target>();
+ else if(k==="reference")row=await db.prepare("SELECT r.id,r.owner_id AS ownerId,0 AS revision,r.title||char(10)||r.authors||char(10)||r.year||char(10)||r.identifier AS body FROM research_references r WHERE r.id=? AND "+referenceVisible("r")).bind(targetId,...publicationViewer(user)).first<Target>();
  else row=await db.prepare("SELECT r.id,r.owner_id AS ownerId,a.revision,r.body FROM research_replies r JOIN research_annotations a ON a.id=r.annotation_id JOIN research_publications p ON p.id=a.publication_id AND p.revision=a.revision WHERE r.id=? AND "+visible("r","reply")+" AND "+visible("a","annotation")+" AND "+publicationVisible("p")).bind(targetId,...viewer(user),...viewer(user),...publicationViewer(user)).first<Target>();
  if(!row)throw notFound();return row;
 }

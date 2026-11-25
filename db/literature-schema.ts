@@ -41,3 +41,10 @@ export const researchReports=sqliteTable("research_reports",{
 export const researchHidden=sqliteTable("research_hidden",{
  targetKind:text("target_kind").notNull(),targetId:text("target_id").notNull(),reportId:text("report_id").notNull(),createdAt:text("created_at").notNull(),
 },t=>[primaryKey({columns:[t.targetKind,t.targetId]})]);
+
+export const researchLinks=sqliteTable("research_links",{
+ id:text("id").primaryKey(),sourceId:text("source_id").notNull().references(()=>researchPublications.id,{onDelete:"cascade"}),targetId:text("target_id").notNull().references(()=>researchPublications.id,{onDelete:"cascade"}),sourceRevision:integer("source_revision").notNull(),targetRevision:integer("target_revision").notNull(),kind:text("kind").notNull(),createdAt:text("created_at").notNull(),
+},t=>[uniqueIndex("research_links_unique_idx").on(t.sourceId,t.targetId,t.sourceRevision,t.targetRevision,t.kind),index("research_links_target_idx").on(t.targetId,t.targetRevision)]);
+export const researchReferences=sqliteTable("research_references",{
+ id:text("id").primaryKey(),topicId:text("topic_id").notNull().references(()=>researchTopics.id,{onDelete:"cascade"}),ownerId:text("owner_id").notNull(),title:text("title").notNull(),authors:text("authors").notNull(),year:text("year").notNull(),identifier:text("identifier").notNull(),createdAt:text("created_at").notNull(),
+},t=>[index("research_references_topic_idx").on(t.topicId,t.createdAt),index("research_references_owner_idx").on(t.ownerId)]);

@@ -177,3 +177,8 @@ body{margin:0;background:var(--background);color:var(--foreground);font-family:A
 .community-safety{font-size:14px;display:grid;gap:6px}
 .community-safety button{font-size:13px}
 .research-community details>summary{cursor:pointer;font-weight:600}
+
+.research-comparison{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px;align-items:start}
+.research-compare-body{max-height:560px;overflow:auto;min-width:0}
+.research-threads summary,.research-community summary{cursor:pointer}
+.research-community .community-body{overflow-wrap:anywhere}

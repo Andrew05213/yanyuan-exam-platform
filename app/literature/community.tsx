@@ -2,6 +2,7 @@
 import {useState,useEffect,useRef} from "react";
 import type {Entry} from "./notes";
 import {ResearchThreads,SafetyActions,CommunityManagement} from "./research-interactions";
+import {TopicNetwork,NoteNetwork} from "./research-network";
 
 type Topic={id:string;title:string;description:string;createdAt:string;noteCount?:number;mine?:boolean};
 type Publication={id:string;topicId:string;title:string;content?:string;excerpt?:string;language:string|null;sourceLanguage:string|null;discipline:string|null;authorAlias:string;mine:boolean;entryId?:string;sourceUpdatedAt?:string;revision:number;updatedAt:string};
@@ -16,7 +17,7 @@ const message=(error:unknown)=>error instanceof Error?error.message:"操作未�
 function meta(n:{language?:string|null;sourceLanguage?:string|null;discipline?:string|null}){
  return [n.language,n.sourceLanguage&&"原文："+n.sourceLanguage,n.discipline].filter(Boolean).join(" · ")||"未分类";
 }
-export function Community({entries,createNote,refreshNotes}:{entries:Entry[];createNote:(topic:Topic)=>void;refreshNotes:()=>Promise<void>}){
+export function Community({entries,createNote,refreshNotes}:{entries:Entry[];createNote:(topic:Topic,source?:Publication)=>void;refreshNotes:()=>Promise<void>}){
  const [topics,setTopics]=useState<Topic[]>([]),[topic,setTopic]=useState<Topic|null>(null),[publications,setPublications]=useState<Publication[]>([]),[detail,setDetail]=useState<Publication|null>(null);
  const [query,setQuery]=useState(""),[submittedQuery,setSubmittedQuery]=useState(""),[topicOffset,setTopicOffset]=useState(0),[topicNext,setTopicNext]=useState<number|null>(null),[noteOffset,setNoteOffset]=useState(0),[noteNext,setNoteNext]=useState<number|null>(null);
  const [title,setTitle]=useState(""),[description,setDescription]=useState(""),[creating,setCreating]=useState(false),[entryId,setEntryId]=useState(""),[confirmed,setConfirmed]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
@@ -77,10 +78,10 @@ export function Community({entries,createNote,refreshNotes}:{entries:Entry[];cre
    <button type="button" className="text-button" disabled={busy} onClick={()=>{setConfirmed(false);void refreshNotes();}}>刷新我的笔记</button>
    {selected&&<div className="community-preview"><h4>公开内容预览</h4><strong dir="auto">{selected.title}</strong><p className="muted">{meta(selected)}</p><p className="community-body" dir="auto">{selected.content}</p><label className="community-consent"><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>我确认将以上完整内容向本站登录用户公开；私人复习日期、作品编号和其他笔记不会公开。</label></div>}
    <button type="button" className="primary" disabled={busy||!selected||!confirmed} onClick={()=>void publish()}>公开当前已保存版本</button></div>
-   <h3>独立研究成果</h3><div className="grid">{publications.map(n=><article className="community-panel" key={n.id}><p className="muted">{n.mine?"我的公开笔记":n.authorAlias} · 第 {n.revision} 版</p><h3 dir="auto">{n.title}</h3><small>{meta(n)}</small><p dir="auto" className="community-excerpt">{n.excerpt}</p><div className="community-controls"><button className="text-button" disabled={busy} onClick={()=>void openNote(n.id)}>阅读全文</button>{n.mine&&<button className="danger-link" disabled={busy} onClick={()=>void withdraw(n)}>撤回公开</button>}</div></article>)}</div>
+   <TopicNetwork key={topic.id} topicId={topic.id} notes={publications}/><h3>独立研究成果</h3><div className="grid">{publications.map(n=><article className="community-panel" key={n.id}><p className="muted">{n.mine?"我的公开笔记":n.authorAlias} · 第 {n.revision} 版</p><h3 dir="auto">{n.title}</h3><small>{meta(n)}</small><p dir="auto" className="community-excerpt">{n.excerpt}</p><div className="community-controls"><button className="text-button" disabled={busy} onClick={()=>void openNote(n.id)}>阅读全文</button>{n.mine&&<button className="danger-link" disabled={busy} onClick={()=>void withdraw(n)}>撤回公开</button>}</div></article>)}</div>
    {!publications.length&&!busy&&<p className="empty">暂时没有公开笔记，可以成为第一位研究者。</p>}
    <div className="community-controls"><button className="text-button" disabled={busy||noteOffset===0} onClick={()=>void openTopic(topic.id,Math.max(0,noteOffset-20))}>上一页</button><button className="text-button" disabled={busy||noteNext===null} onClick={()=>noteNext!==null&&void openTopic(topic.id,noteNext)}>下一页</button></div>
-   {detail&&<article className="community-panel" aria-label="公开笔记全文"><div className="community-controls"><h3 dir="auto">{detail.title}</h3><button className="text-button" onClick={()=>setDetail(null)}>关闭全文</button></div><p className="muted">{detail.mine?"我的公开笔记":detail.authorAlias} · {meta(detail)} · 第 {detail.revision} 版</p><ResearchThreads key={detail.id+":"+detail.revision} publication={detail} onBlocked={()=>void openTopic(topic.id,noteOffset)}/>{detail.mine&&<button className="danger-link" disabled={busy} onClick={()=>void withdraw(detail)}>撤回公开</button>}</article>}
+   {detail&&<article className="community-panel" aria-label="公开笔记全文"><div className="community-controls"><h3 dir="auto">{detail.title}</h3><button className="text-button" onClick={()=>setDetail(null)}>关闭全文</button></div><p className="muted">{detail.mine?"我的公开笔记":detail.authorAlias} · {meta(detail)} · 第 {detail.revision} 版</p><NoteNetwork key={"network:"+detail.id+":"+detail.revision} note={detail} notes={publications} onOpen={id=>void openNote(id)} onDerive={()=>createNote(topic,detail)}/><ResearchThreads key={detail.id+":"+detail.revision} publication={detail} onBlocked={()=>void openTopic(topic.id,noteOffset)}/>{detail.mine&&<button className="danger-link" disabled={busy} onClick={()=>void withdraw(detail)}>撤回公开</button>}</article>}
   </>}
   {busy&&<p role="status">正在处理…</p>}
  </section>;
