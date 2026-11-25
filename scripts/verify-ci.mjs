@@ -13,6 +13,8 @@ const suites=[
  'verify_learning_report.mjs',
  'verify_reviews.mjs',
  'verify_multilingual_notes.mjs',
+ 'verify_registration_policy.mjs',
+ 'verify_research_governance.mjs',
  'verify_research_community.mjs',
  'verify_research_interactions.mjs',
  'verify_research_network.mjs',

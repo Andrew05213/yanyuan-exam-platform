@@ -5,10 +5,10 @@ type Member={id:string;role:string;state:string;muteUntil:string|null;reason:str
 export async function communityAccess(request:Request,uid:string){
  if(isAdmin(request))return {role:"admin",state:"active",read:true,write:true,moderate:true,member:null as Member|null};
  const member=await storage().prepare("SELECT id,role,state,mute_until AS muteUntil,reason,revision FROM research_memberships WHERE user_id=?").bind(uid).first<Member>();
- const valid=!!member&&["member","moderator"].includes(member.role);
- const read=valid&&member.state==="active";
+ if(!member||!["member","moderator"].includes(member.role))return {role:"student",state:"not-invited",read:false,write:false,moderate:false,member:null as Member|null};
+ const read=member.state==="active";
  const write=read&&(!member.muteUntil||member.muteUntil<=new Date().toISOString());
- return {role:valid?member.role:"student",state:valid?member.state:"not-invited",read,write,moderate:write&&member.role==="moderator",member};
+ return {role:member.role,state:member.state,read,write,moderate:write&&member.role==="moderator",member};
 }
 export async function requireCommunity(request:Request,uid:string,mode:"read"|"write"|"moderate"="read"){
  const access=await communityAccess(request,uid);

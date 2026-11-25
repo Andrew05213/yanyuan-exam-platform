@@ -307,3 +307,6 @@ h1,h2,h3,h4{color:var(--hezhi-navy)}
 }
 @media(prefers-reduced-motion:reduce){.work-card,.material-card{transition:none}}
 @media print{.masthead,.navigation,.literature-mobile-dock{display:none!important}.shell{padding:0;max-width:none}}
+
+/* Community governance: the C visual system, readable at mobile widths. */
+.governance-status form,.governance-manager{display:grid;gap:12px}.governance-status h2{font-size:22px}.governance-row{display:grid;gap:8px;border-top:1px solid var(--border);padding:12px 0;overflow-wrap:anywhere}.governance-row button,.governance-manager button:not(.primary){border:1px solid var(--border);border-radius:7px;padding:8px 12px;min-height:40px;background:#fffefa;color:var(--foreground)}.governance-code{background:#f3e8d4;padding:14px;overflow-wrap:anywhere}.governance-status .text-button{justify-self:start}.governance-manager summary{cursor:pointer;font-weight:650}.governance-status form button{justify-self:start}
