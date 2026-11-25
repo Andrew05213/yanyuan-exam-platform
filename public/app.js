@@ -7,7 +7,7 @@ const $=s=>document.querySelector(s);
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const allQuestions=p=>p.sections.flatMap(s=>s.blocks.flatMap(b=>b.questions));
 const allPapers=()=>[...bank.papers,...(bank.archivedPapers||[])];
-const names={community:'共享题库',schools:'学校中心',studio:'组卷工作台',oral:'口试训练',saved:'学习档案',mistakes:'错题库',writing:'作文与翻译',library:'三科模拟卷',sources:'原始样卷',blueprint:'题型蓝图',records:'旧版本机记录'};
+const names={today:'今日学习',community:'共享题库',schools:'学校中心',studio:'组卷工作台',oral:'口试训练',saved:'学习档案',mistakes:'错题库',writing:'作文与翻译',library:'三科模拟卷',sources:'原始样卷',blueprint:'题型蓝图',records:'旧版本机记录'};
 let toastTimer;
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3200)}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(practice))}catch(e){storageAvailable=false;toast('当前浏览器无法保存，请导出练习记录备份。')}}
@@ -57,15 +57,17 @@ function route(){
   const hash=location.hash.slice(1);
   if(typeof Hub!=='undefined'&&Hub.route(hash))return;
   if(hash.startsWith('paper/')){const id=hash.slice(6);if(allPapers().some(p=>p.id===id)){openPaper(id);return}}
-  navigate(names[hash]?hash:'schools',false);
+  navigate(names[hash]?hash:'today',false);
 }
 function navigate(view,setHash=true){
+  if(typeof Today!=='undefined')Today.leave();
   if(typeof Hub!=='undefined')Hub.leave();
   if(currentPaper)pauseAll();currentPaper=null;currentView=view;showAnswers=false;wrongOnly=false;
   if(setHash&&location.hash!=='#'+view){history.pushState(null,'','#'+view)}
   document.querySelectorAll('[data-view]').forEach(el=>{el.classList.toggle('active',el.dataset.view===(['report','feedback'].includes(view)?'saved':view));el.setAttribute('aria-current',el.dataset.view===view?'page':'false')});
   setBreadcrumb(['report','feedback'].includes(view)?'saved':view,names[view]);
-  if(['schools','studio','oral','saved','mistakes','writing','community','standards','report','feedback'].includes(view))Hub.render(view);
+  if(view==='today')Today.render();
+  else if(['schools','studio','oral','saved','mistakes','writing','community','standards','report','feedback'].includes(view))Hub.render(view);
   else ({library:renderLibrary,sources:renderSources,blueprint:renderBlueprint,records:renderRecords}[view]||renderLibrary)();
   window.scrollTo({top:0,behavior:'instant'});
 }
@@ -196,7 +198,7 @@ function handleAction(e){
 }
 function setBreadcrumb(view,title){
   const parent=names[view]||title;
-  $('#breadcrumb').innerHTML='<a href="#schools">备考空间</a><i aria-hidden="true">/</i>'+(title!==parent?'<a href="#'+escapeHTML(view)+'">'+escapeHTML(parent)+'</a><i aria-hidden="true">/</i>':'')+'<span aria-current="page">'+escapeHTML(title)+'</span>';
+  $('#breadcrumb').innerHTML='<a href="#today">和知 AI</a><i aria-hidden="true">/</i>'+(title!==parent?'<a href="#'+escapeHTML(view)+'">'+escapeHTML(parent)+'</a><i aria-hidden="true">/</i>':'')+'<span aria-current="page">'+escapeHTML(title)+'</span>';
 }
 function setupNavigation(){
   const toggle=$('#nav-toggle'),close=$('#nav-close'),nav=$('#primary-nav'),backdrop=$('#nav-backdrop');

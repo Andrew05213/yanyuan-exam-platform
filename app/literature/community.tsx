@@ -65,10 +65,12 @@ export function Community({entries,createNote,refreshNotes}:{entries:Entry[];cre
  return <section className="research-community">
   <div className="section-heading"><div><h2>研究议题与共享笔记</h2><p>围绕同一问题独立研究。仅登录用户可阅读共享内容，不自动公开私人笔记。</p></div><button type="button" className="primary" disabled={busy} onClick={()=>setCreating(v=>!v)}>{creating?"取消":"创建议题"}</button></div>
   <p className="community-privacy">请仅发布有权分享的学术内容，不要填写真实姓名、联系方式、个人档案或他人的私人信息。公开内容可能被其他用户复制；撤回不能收回已经复制的内容。</p>
-  <ResearchAssistant key={(topic?.id||'all')+':'+publications.map(n=>n.id+':'+n.revision).join(',')} topicId={topic?.id}/>
+  <div className="research-guide"><h3>研究工作台</h3><p>先选择或创建议题，再撰写私人笔记；主动发布后可批注、引用、比较观点并整理共享书目。AI 分析须逐次确认材料。</p><div className="community-controls"><a href="#research-ideas">浏览研究议题</a><a href="#research-ai-panel" onClick={e=>{e.preventDefault();const panel=document.getElementById("research-ai-panel");const details=panel?.querySelector("details");if(details)details.open=true;panel?.scrollIntoView({block:"start"});}}>AI 学术助手</a></div></div>
+  <div id="research-ai-panel"><ResearchAssistant key={(topic?.id||'all')+':'+publications.map(n=>n.id+':'+n.revision).join(',')} topicId={topic?.id}/></div>
   <CommunityManagement onChange={()=>{if(topic)void openTopic(topic.id,noteOffset);else void browse(topicOffset);}}/>
   {error&&<p role="alert" className="form-error">{error}</p>}{notice&&<p role="status">{notice}</p>}
   {creating&&<form className="community-panel" onSubmit={e=>{e.preventDefault();void createTopic();}}><h3>创建站内公开议题</h3><label>议题名称<input required maxLength={160} value={title} onChange={e=>setTitle(e.target.value)}/></label><label>研究问题与范围<textarea maxLength={2000} rows={3} value={description} onChange={e=>setDescription(e.target.value)}/></label><button className="primary" disabled={busy} type="submit">确认公开创建</button></form>}
+  <div id="research-ideas" tabIndex={-1}/>
   {!topic?<><form className="community-controls" onSubmit={e=>{e.preventDefault();setSubmittedQuery(query);void browse(0,query);}}><label>搜索议题<input maxLength={100} value={query} onChange={e=>setQuery(e.target.value)} placeholder="文学、哲学、经济学…"/></label><button className="primary" disabled={busy} type="submit">搜索</button></form>
    <div className="grid">{topics.map(t=><button type="button" disabled={busy} className="work-card" key={t.id} onClick={()=>{setNotice("");void openTopic(t.id);}}><h3 dir="auto">{t.title}</h3><p dir="auto" className="community-excerpt">{t.description||"暂无说明"}</p><span className="muted">{t.noteCount??0} 篇独立研究笔记</span></button>)}</div>
    {!topics.length&&!busy&&<p className="empty">暂无符合条件的研究议题。</p>}

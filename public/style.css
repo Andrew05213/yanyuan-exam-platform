@@ -3172,3 +3172,33 @@ dialog p { color: var(--muted-strong); font-size: 12px; line-height: 1.8; }
   .ai-bank-row { flex-direction: column; align-items: flex-start; }
   .ai-studio { padding: 16px; }
 }
+
+/* Unified Hezhi workspace, without changing exam-specific layouts. */
+.brand-copy small{display:block;font-size:11px;color:var(--muted);letter-spacing:.04em}
+.today-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;border-bottom:1px solid var(--line);padding:8px 0 24px;margin-bottom:24px}
+.today-heading h1{font-family:var(--serif);font-size:clamp(32px,4vw,46px);line-height:1.2;margin:8px 0}
+.today-heading p,.today-section-heading p,.today-panel p,.today-footnote{color:var(--muted);font-size:14px}
+.today-kicker{letter-spacing:.12em;color:var(--green)!important;font-size:12px!important}
+.today-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:32px}
+.today-shortcuts a{display:flex;flex-direction:column;gap:5px;min-width:0;padding:18px;border:1px solid var(--line);background:var(--surface-raised);border-radius:var(--radius-lg)}
+.today-shortcuts a:hover{border-color:var(--green);background:var(--green-soft)}
+.today-shortcuts small{font-size:11px;color:var(--green);letter-spacing:.08em}
+.today-shortcuts strong{font-size:18px;font-weight:650}
+.today-shortcuts span{color:var(--muted);font-size:13px}
+.today-personal{display:grid;gap:16px;min-width:0}
+.today-section-heading{display:flex;justify-content:space-between;align-items:center}
+.today-section-heading h2{font-family:var(--serif);font-size:24px}
+.today-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.today-metrics>div{padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);min-width:0}
+.today-metrics strong{display:block;color:var(--green);font-size:28px;font-variant-numeric:tabular-nums}
+.today-metrics span{font-size:13px;color:var(--muted)}
+.today-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.today-panel{padding:18px;border:1px solid var(--line);background:var(--surface-raised);border-radius:var(--radius-lg);min-width:0}
+.today-panel-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:14px;flex-wrap:wrap}
+.today-panel-head a{color:var(--green);font-size:12px;text-decoration:underline}
+.today-record{display:flex;flex-direction:column;gap:3px;min-height:48px;padding:10px 0;border-top:1px solid var(--line-soft);overflow-wrap:anywhere}
+.today-record:hover strong{text-decoration:underline}
+.today-record strong{font-weight:550;font-size:14px}
+.today-record small{color:var(--muted);font-size:12px}
+@media(max-width:900px){.today-columns{grid-template-columns:1fr}.today-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:550px){.today-heading{align-items:flex-start;flex-direction:column}.today-shortcuts{gap:8px}.today-shortcuts a{padding:12px}.today-shortcuts strong{font-size:16px}.today-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.today-panel{padding:14px}.today-heading .btn{min-height:44px}}

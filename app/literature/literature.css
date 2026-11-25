@@ -188,3 +188,34 @@ body{margin:0;background:var(--background);color:var(--foreground);font-family:A
 .research-hit>span{min-width:0;display:grid;gap:4px}
 .research-hit small{color:#66778b}
 .research-preview-body{max-height:300px;overflow:auto}
+
+/* Shared paper-and-ink visual language, scoped to literature and research. */
+:root{--background:#f4f0e7;--foreground:#1c2721;--primary:#365d4f;--primary-foreground:#fffdf8;--border:#d9d1c2;--muted:#ebe4d8;--muted-foreground:#596257}
+.masthead{height:auto;min-height:84px;gap:18px;padding-block:16px;background:#fffdf8;border-bottom-color:#d9d1c2}
+.module-links{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:14px}
+.module-links a{color:#365d4f;white-space:nowrap}
+.shell{padding-top:28px}
+.research-guide{background:#fffdf8;border:1px solid #d9d1c2;border-radius:8px;display:grid;gap:8px;padding:16px;min-width:0}
+.research-guide p{font-size:14px;color:#596257}
+.research-guide a{color:#365d4f;font-size:14px}
+.research-community .community-panel{border-color:#d9d1c2;background:#fffdf8}
+.research-community .community-privacy{border-left-color:#365d4f;background:#e7ede7}
+.research-community .community-controls button,.research-community .primary{min-height:40px;padding:8px 12px}
+.research-community .community-controls a{padding:6px 0}
+.research-community textarea,.research-community input:not([type=checkbox]),.research-community select{font-size:16px}
+.research-community input[type=checkbox]{width:19px;height:19px;flex:none;accent-color:#365d4f}
+.research-community [id]{scroll-margin-top:16px}
+.research-community summary{min-height:36px;line-height:1.6}
+.research-community .grid,.research-community .field-pair{min-width:0}
+.research-community h3,.research-community h4{overflow-wrap:anywhere}
+@media(max-width:650px){
+ .masthead{padding:12px 16px;display:grid;grid-template-columns:1fr;gap:8px}.masthead .brand{min-width:0}.module-links{gap:12px}.module-links a{min-height:36px;display:flex;align-items:center}
+ .shell{padding:20px 14px}.navigation{flex-wrap:nowrap;gap:16px!important;justify-content:flex-start;overflow-x:auto;scrollbar-width:thin}
+ .navigation [role=tab]{flex:0 0 auto;min-height:44px;padding:10px 2px}
+ .research-community .community-controls button,.research-community .primary,.research-community .danger-link{min-height:44px}
+ .research-community .community-controls{gap:8px}.research-community .field-pair{grid-template-columns:1fr}
+ .research-comparison{grid-template-columns:1fr}.research-compare-body{max-height:380px}
+ .research-community .section-heading{gap:10px}.research-community .community-panel{padding:12px}
+ .research-community .work-card{min-height:0;padding:16px}
+ .notebook-editor textarea.note-body{height:52dvh;min-height:240px;line-height:1.75}
+}
