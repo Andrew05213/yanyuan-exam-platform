@@ -150,3 +150,21 @@ body{margin:0;background:var(--background);color:var(--foreground);font-family:A
 .editor textarea.note-body { background-color: #fffefa; border-color: #aebdb0; caret-color: #914537; }
 .editor textarea.note-body:focus-visible { outline: 2px solid #4d7369; outline-offset: 2px; }
 @media(max-width:650px) { .intro .reading-summary { margin-top: 16px; } }
+
+/* Shared research is a separate, explicitly published notebook space. */
+.research-community{display:grid;gap:16px}
+.community-panel{background:white;border:1px solid #dce2ea;border-radius:8px;padding:18px;display:grid;gap:12px;min-width:0}
+.community-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.community-controls label{flex:1;min-width:150px}
+.research-community label:not(.community-consent){display:grid;gap:5px}
+.research-community input:not([type=checkbox]),.research-community select,.research-community textarea{background:#fff;color:var(--foreground);border:1px solid #ccd5e0;border-radius:4px;padding:9px;max-width:100%;width:100%;min-width:0}
+.community-preview{display:grid;gap:8px;border:1px solid #ccd5e0;padding:12px;border-radius:5px}
+.community-preview .community-body{max-height:320px;overflow:auto}
+.community-body{white-space:pre-wrap;overflow-wrap:anywhere}
+.community-excerpt{overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.community-consent{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.community-consent input{margin-top:6px}
+.community-privacy{padding:10px 14px;border-left:3px solid #244a75;background:#edf2f8;font-size:14px}
+.research-community .primary{justify-self:start}
+.navigation{flex-wrap:wrap}
+@media(max-width:640px){.research-community .section-heading{flex-wrap:wrap}.community-panel{padding:12px}.community-controls{align-items:stretch}}
