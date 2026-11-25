@@ -21,7 +21,7 @@ async function save(user,id,content){const r=await call('/api/literature/entries
 let requests=0;
 function stub(result,inspect){
  mock.get('https://api.deepseek.com').intercept({path:'/chat/completions',method:'POST'}).reply(opts=>{
-  requests++;if(inspect)inspect(JSON.stringify(opts.body));
+  requests++;if(inspect){const raw=opts.body;const text=typeof raw==="string"?raw:Buffer.isBuffer(raw)||raw instanceof Uint8Array?Buffer.from(raw).toString("utf8"):raw instanceof ArrayBuffer?Buffer.from(raw).toString("utf8"):JSON.stringify(raw);inspect(text);}
   return {statusCode:200,data:JSON.stringify({choices:[{finish_reason:'stop',message:{content:JSON.stringify(result)}}],usage:{prompt_tokens:100,prompt_cache_hit_tokens:40,completion_tokens:20}})};
  });
 }
