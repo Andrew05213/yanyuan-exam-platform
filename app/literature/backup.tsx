@@ -31,5 +31,5 @@ export function Backup({entries,materials,reload}:{entries:Entry[];materials:Mat
   }catch(e){setMessage("本次已导入 "+count+" 条。"+(e instanceof Error?e.message:"导入失败"));}
   finally{await reload();setBusy(false);}
  }
- return <details className="notebook-tools"><summary>备份与恢复</summary><p>备份自建与修改过的资料、已保存的笔记、作品关联、阅读状态和复习日期。导入时保留账号中已有的同编号笔记。</p><button onClick={download}>下载 JSON 备份</button><label>导入笔记备份 <input type="file" accept=".json,application/json" disabled={busy} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file)void restore(file)}}/></label><p role="status">{busy?"正在导入…":message}</p></details>;
+ return <details className="notebook-tools"><summary>备份与恢复</summary><p>备份自建与修改过的资料、已保存的笔记、作品关联、语种、学科、阅读状态和复习日期。导入时保留账号中已有的同编号笔记。</p><button onClick={download}>下载 JSON 备份</button><label>导入笔记备份 <input type="file" accept=".json,application/json" disabled={busy} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file)void restore(file)}}/></label><p role="status">{busy?"正在导入…":message}</p></details>;
 }
