@@ -16,6 +16,7 @@ const suites=[
  'verify_research_community.mjs',
  'verify_research_interactions.mjs',
  'verify_research_network.mjs',
+ 'verify_research_assistant.mjs',
  'verify_admin_contracts.mjs',
  'verify_ai_contracts.mjs',
  'verify_provider_models.mjs',

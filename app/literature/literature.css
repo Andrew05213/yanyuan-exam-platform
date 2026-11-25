@@ -182,3 +182,9 @@ body{margin:0;background:var(--background);color:var(--foreground);font-family:A
 .research-compare-body{max-height:560px;overflow:auto;min-width:0}
 .research-threads summary,.research-community summary{cursor:pointer}
 .research-community .community-body{overflow-wrap:anywhere}
+
+.research-assistant-fields{border:0;padding:0;margin:0;display:grid;gap:12px;min-width:0}
+.research-hit{padding:10px;border:1px solid #dce2ea;border-radius:5px;overflow-wrap:anywhere}
+.research-hit>span{min-width:0;display:grid;gap:4px}
+.research-hit small{color:#66778b}
+.research-preview-body{max-height:300px;overflow:auto}

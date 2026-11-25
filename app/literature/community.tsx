@@ -3,6 +3,7 @@ import {useState,useEffect,useRef} from "react";
 import type {Entry} from "./notes";
 import {ResearchThreads,SafetyActions,CommunityManagement} from "./research-interactions";
 import {TopicNetwork,NoteNetwork} from "./research-network";
+import {ResearchAssistant} from "./research-assistant";
 
 type Topic={id:string;title:string;description:string;createdAt:string;noteCount?:number;mine?:boolean};
 type Publication={id:string;topicId:string;title:string;content?:string;excerpt?:string;language:string|null;sourceLanguage:string|null;discipline:string|null;authorAlias:string;mine:boolean;entryId?:string;sourceUpdatedAt?:string;revision:number;updatedAt:string};
@@ -64,6 +65,7 @@ export function Community({entries,createNote,refreshNotes}:{entries:Entry[];cre
  return <section className="research-community">
   <div className="section-heading"><div><h2>研究议题与共享笔记</h2><p>围绕同一问题独立研究。仅登录用户可阅读共享内容，不自动公开私人笔记。</p></div><button type="button" className="primary" disabled={busy} onClick={()=>setCreating(v=>!v)}>{creating?"取消":"创建议题"}</button></div>
   <p className="community-privacy">请仅发布有权分享的学术内容，不要填写真实姓名、联系方式、个人档案或他人的私人信息。公开内容可能被其他用户复制；撤回不能收回已经复制的内容。</p>
+  <ResearchAssistant key={(topic?.id||'all')+':'+publications.map(n=>n.id+':'+n.revision).join(',')} topicId={topic?.id}/>
   <CommunityManagement onChange={()=>{if(topic)void openTopic(topic.id,noteOffset);else void browse(topicOffset);}}/>
   {error&&<p role="alert" className="form-error">{error}</p>}{notice&&<p role="status">{notice}</p>}
   {creating&&<form className="community-panel" onSubmit={e=>{e.preventDefault();void createTopic();}}><h3>创建站内公开议题</h3><label>议题名称<input required maxLength={160} value={title} onChange={e=>setTitle(e.target.value)}/></label><label>研究问题与范围<textarea maxLength={2000} rows={3} value={description} onChange={e=>setDescription(e.target.value)}/></label><button className="primary" disabled={busy} type="submit">确认公开创建</button></form>}
