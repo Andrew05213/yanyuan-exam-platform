@@ -8,7 +8,7 @@ const endpoint="/api/literature/community";
 async function request<T>(query="",body?:unknown):Promise<T>{
  const response=await fetch(endpoint+query,{cache:"no-store",...(body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{})});
  const result=await response.json();
- if(!response.ok)throw Error(result.error||"操作未完成，请重试。");
+ if(!response.ok)throw Error((result as {error?:string}|null)?.error||"操作未完成，请重试。");
  return result as T;
 }
 const message=(error:unknown)=>error instanceof Error?error.message:"操作未完成，请重试。";
