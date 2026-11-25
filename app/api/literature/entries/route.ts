@@ -7,11 +7,11 @@ export async function GET(){
   const user=await getChatGPTUser();
   if(!user)return fail("请先登录",401);
   try{
-    const rows=await storage().prepare("SELECT id,work_id AS workId,title,content,status,tags,locator,review_on AS reviewOn,updated_at FROM entries WHERE user_id=? ORDER BY updated_at DESC").bind(user.userId).all();
+    const rows=await storage().prepare("SELECT id,work_id AS workId,title,content,status,tags,locator,review_on AS reviewOn,language,source_language AS sourceLanguage,discipline,updated_at FROM entries WHERE user_id=? ORDER BY updated_at DESC").bind(user.userId).all();
     return Response.json(rows.results,{headers:{"Cache-Control":"private, no-store","X-Draft-Owner":encodeURIComponent(user.userId)}});
   }catch{return fail("暂时无法读取笔记",503);}
 }
-const insert="INSERT INTO entries(user_id,id,title,content,status,updated_at,work_id,tags,locator,review_on) VALUES(?,?,?,?,?,?,?,?,?,?)";
+const insert="INSERT INTO entries(user_id,id,title,content,status,updated_at,work_id,tags,locator,review_on,language,source_language,discipline) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)";
 async function write(request:Request, importing:boolean){
   const user=await getChatGPTUser();
   if(!user)return fail("请先登录",401);
@@ -21,12 +21,12 @@ async function write(request:Request, importing:boolean){
   const rows:unknown=importing?(body as {entries?:unknown}|null)?.entries:[body];
   if(!Array.isArray(rows)||!rows.length||rows.length>40||!rows.every(validEntry))return fail("请检查笔记格式与长度",400);
   const updated_at=new Date().toISOString();
-  const sql=insert+(importing?" ON CONFLICT(user_id,id) DO NOTHING":" ON CONFLICT(user_id,id) DO UPDATE SET title=excluded.title,content=excluded.content,status=excluded.status,updated_at=excluded.updated_at,work_id=COALESCE(excluded.work_id,entries.work_id),tags=COALESCE(excluded.tags,entries.tags),locator=COALESCE(excluded.locator,entries.locator),review_on=COALESCE(excluded.review_on,entries.review_on)");
+  const sql=insert+(importing?" ON CONFLICT(user_id,id) DO NOTHING":" ON CONFLICT(user_id,id) DO UPDATE SET title=excluded.title,content=excluded.content,status=excluded.status,updated_at=excluded.updated_at,work_id=COALESCE(excluded.work_id,entries.work_id),tags=COALESCE(excluded.tags,entries.tags),locator=COALESCE(excluded.locator,entries.locator),review_on=COALESCE(excluded.review_on,entries.review_on),language=COALESCE(excluded.language,entries.language),source_language=COALESCE(excluded.source_language,entries.source_language),discipline=COALESCE(excluded.discipline,entries.discipline)");
   try{
     const db=storage();
     const batch=rows.map(e=>{
       const time=importing&&e.updated_at&&Number.isFinite(Date.parse(e.updated_at))?new Date(e.updated_at).toISOString():updated_at;
-      return db.prepare(sql).bind(user.userId,e.id,e.title.trim(),e.content,e.status,time,e.workId??(e.id.startsWith("note_")?("workId" in e?"":null):e.id),e.tags??null,e.locator??null,e.reviewOn??null);
+      return db.prepare(sql).bind(user.userId,e.id,e.title.trim(),e.content,e.status,time,e.workId??(e.id.startsWith("note_")?("workId" in e?"":null):e.id),e.tags??null,e.locator??null,e.reviewOn??null,e.language?.trim()??null,e.sourceLanguage?.trim()??null,e.discipline?.trim()??null);
     });
     const results=await db.batch(batch);
     return Response.json({ok:true,updated_at,changed:results.reduce((n,r)=>n+r.meta.changes,0)});

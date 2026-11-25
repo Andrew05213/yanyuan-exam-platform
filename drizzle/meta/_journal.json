@@ -85,6 +85,34 @@
       "when": 1795094747002,
       "tag": "0011_tan_micromax",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1795610000000,
+      "tag": "0012_multilingual_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1795610000001,
+      "tag": "0013_research_community",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1795610000002,
+      "tag": "0014_research_interactions",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1795610000003,
+      "tag": "0015_research_network",
+      "breakpoints": true
     }
   ]
 }

@@ -31,7 +31,7 @@ const lanPrefix=process.env.YANYUAN_LAN_PREFIX||'192.168.100.';
 if(!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.$/.test(lanPrefix))throw Error('Invalid LAN prefix.');
 const publicRoot=realpathSync(join(process.cwd(),'public'));
 const servePublicAsset=createPublicAssetHandler(publicRoot);
-const apiPaths=new Set(['/literature','/api/literature/entries','/api/literature/materials','/api/literature/feedback','/api/ai-questions','/api/question-bank','/api/session','/api/archive','/api/attachments','/api/essays/review','/api/materials','/api/material-files','/api/study-state','/api/oral-audio','/api/oral-analysis','/api/feedback','/api/learning-report','/api/ai-grading','/api/admin/session','/api/admin/providers','/api/admin/usage','/api/admin/models','/api/admin/oral-audio']);
+const apiPaths=new Set(['/literature','/api/literature/entries','/api/literature/community','/api/literature/interactions','/api/literature/network','/api/literature/research-ai','/api/literature/materials','/api/literature/feedback','/api/ai-questions','/api/question-bank','/api/session','/api/archive','/api/attachments','/api/essays/review','/api/materials','/api/material-files','/api/study-state','/api/oral-audio','/api/oral-analysis','/api/feedback','/api/learning-report','/api/today','/api/ai-grading','/api/admin/session','/api/admin/providers','/api/admin/usage','/api/admin/models','/api/admin/oral-audio']);
 function permittedPath(path){
  if(path==='/'||path==='/admin'||path==='/mcp'||apiPaths.has(path))return true;
  try{const decoded=decodeURIComponent(path);if(decoded.includes('\\')||decoded.split('/').some(x=>x.startsWith('.')))return false;const file=realpathSync(join(publicRoot,decoded));return file.startsWith(publicRoot+'/')&&statSync(file).isFile();}catch{return false;}
