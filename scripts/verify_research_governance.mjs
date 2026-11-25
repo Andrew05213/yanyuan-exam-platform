@@ -12,7 +12,7 @@ async function call(route,user,body,method=body?'POST':'GET',extra={}){const r=a
 const post=(u,body)=>call(gov,u,body);
 try{
  const db=await mf.getD1Database('DB');for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const sql of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(sql).run();
- assert.equal((await call(gov,null)).status,401);assert.equal((await call(gov,a)).data.read,false);assert.equal((await call(community,a)).status,403);assert.equal((await call(network,a)).status,403);assert.equal((await call(interactions,a)).status,403);
+ assert.equal((await call(gov,null)).status,401);assert.equal((await call(gov,a)).data.read,false);assert.equal((await call(community,a)).status,403);assert.equal((await call('/api/materials?catalog=1',a)).data.restricted,true);assert.equal((await call(network,a)).status,403);assert.equal((await call(interactions,a)).status,403);
  assert.equal((await call(ai,a,{action:'search',scope:'public',terms:['test']})).status,403);
  assert.equal((await call('/api/literature/entries',a,{id:'private_note',title:'Private A',content:'private evidence',status:'在读'},'PUT')).status,200);
  assert.equal((await call(ai,a,{action:'search',scope:'private',terms:['private']})).data.hits.length,1);
@@ -25,6 +25,18 @@ try{
  const revoke=(await post(admin,{action:'createInvite'})).data;assert.equal((await post(admin,{action:'revokeInvite',id:revoke.id,reason:'test'})).status,200);assert.equal((await post(c,{action:'redeem',code:revoke.code})).status,409);
  const expired=(await post(admin,{action:'createInvite'})).data;await db.prepare('UPDATE research_invites SET expires_at=? WHERE id=?').bind('2000-01-01T00:00:00.000Z',expired.id).run();assert.equal((await post(c,{action:'redeem',code:expired.code})).status,409);
  const w=(await call(gov,winner)).data.member,o=(await call(gov,other)).data.member;
+ const mid='material-'+crypto.randomUUID(),date=new Date().toISOString(),payload=JSON.stringify({text:'synthetic shared content',questions:[],fileIds:[],source:'QA'});
+ await db.prepare("INSERT INTO community_materials(id,owner_id,title,subject,section,tier,payload,author_alias,active,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,1,1,?,?)").bind(mid,winner,'Test material','英语','mc','cet4',payload,'private-alias-fixture',date,date).run();
+ assert.equal((await call('/api/materials?id='+mid,c)).status,404);
+ const material=await call('/api/materials?id='+mid,other);assert.equal(material.status,200);assert.ok(!JSON.stringify(material.data).includes('private-alias-fixture'));
+ assert.equal((await call(interactions,other,{action:'report',targetKind:'material',targetId:mid,revision:1,category:'privacy'})).status,201);
+ const report=(await call(interactions+'?admin=1',admin)).data.reports.find(r=>r.targetId===mid);
+ assert.equal(report.targetMemberId,w.id);
+ assert.equal((await call(interactions,admin,{action:'moderate',id:report.id,decision:'hide',reason:'test hide'})).status,200);
+ assert.equal((await call('/api/materials?id='+mid,other)).status,404);
+ assert.equal((await call('/api/materials?id='+mid+'&mine=1',winner)).status,200);
+ assert.equal((await call(interactions,admin,{action:'moderate',id:report.id,decision:'restore',reason:'test restore'})).status,200);
+ assert.equal((await call('/api/materials?id='+mid,other)).status,200);
  assert.equal((await call(community,winner,{action:'createTopic',title:'QA'})).status,201);
  assert.equal((await post(winner,{action:'member',id:o.id,revision:o.revision,decision:'promote',reason:'x'})).status,403);
  assert.equal((await post(admin,{action:'member',id:w.id,revision:w.revision,decision:'promote',reason:'test appointment'})).status,200);

@@ -55,8 +55,8 @@ export async function POST(request:Request){try{
    await d.batch([d.prepare("INSERT INTO research_invites(id,code_hash,created_by,created_at,expires_at) VALUES(?,?,?,?,?)").bind(invite,await hash(raw),uid,date,expires),audit(d,uid,"invite-create",invite,"单次社区邀请",date)]);
    return json({id:invite,code:raw,expiresAt:expires},201);
   }
-  const invite=id(b.id),why=reason(b.reason),log=crypto.randomUUID();
-  const r=await d.batch([d.prepare("UPDATE research_invites SET revoked_at=? WHERE id=? AND used_at IS NULL AND revoked_at IS NULL").bind(date,invite),d.prepare("INSERT INTO research_governance_audit(id,actor_id,action,target_id,reason,created_at) SELECT ?,?,'invite-revoke',?,?,? WHERE EXISTS(SELECT 1 FROM research_invites WHERE id=? AND revoked_at=?)").bind(log,uid,invite,why,date,invite,date)]);
+  const invite=id(b.id),why=reason(b.reason),log=crypto.randomUUID(),claim=crypto.randomUUID();
+  const r=await d.batch([d.prepare("UPDATE research_invites SET revoked_at=?,claim_id=? WHERE id=? AND used_at IS NULL AND revoked_at IS NULL").bind(date,claim,invite),d.prepare("INSERT INTO research_governance_audit(id,actor_id,action,target_id,reason,created_at) SELECT ?,?,'invite-revoke',?,?,? WHERE EXISTS(SELECT 1 FROM research_invites WHERE id=? AND claim_id=?)").bind(log,uid,invite,why,date,invite,claim)]);
   if(!r[0].meta.changes)throw new AccessError("邀请不可撤销或已使用。",409);return json({ok:true});
  }
  await requireCommunity(request,uid,"moderate");
