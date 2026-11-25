@@ -18,10 +18,10 @@ async function call(route,user,body,method=body?'POST':'GET',extra={}){
 }
 const ai=(user,body)=>call(endpoint,user,body);
 async function save(user,id,content){const r=await call('/api/literature/entries',user,{id,title:'研究 '+id,content,status:'在读',language:'日语'},'PUT');assert.equal(r.status,200,JSON.stringify(r.data));return r.data.updated_at;}
-let requests=0;
+let requests=0;const inspectionErrors=[];
 function stub(result,inspect){
  mock.get('https://api.deepseek.com').intercept({path:'/chat/completions',method:'POST'}).reply(opts=>{
-  requests++;if(inspect){const raw=opts.body;const text=typeof raw==="string"?raw:Buffer.isBuffer(raw)||raw instanceof Uint8Array?Buffer.from(raw).toString("utf8"):raw instanceof ArrayBuffer?Buffer.from(raw).toString("utf8"):JSON.stringify(raw);inspect(text);}
+  requests++;if(inspect){try{const raw=opts.body;const text=typeof raw==="string"?raw:Buffer.isBuffer(raw)||ArrayBuffer.isView(raw)?Buffer.from(raw.buffer,raw.byteOffset,raw.byteLength).toString("utf8"):raw instanceof ArrayBuffer?Buffer.from(raw).toString("utf8"):Array.isArray(raw)?Buffer.from(raw).toString("utf8"):raw?.type==="Buffer"&&Array.isArray(raw.data)?Buffer.from(raw.data).toString("utf8"):JSON.stringify(raw);inspect(text);}catch(e){inspectionErrors.push({message:e.message,bodyType:typeof opts.body,bodyClass:opts.body?.constructor?.name,bodyKeys:opts.body&&typeof opts.body==="object"?Object.keys(opts.body).slice(0,8):[]});}}
   return {statusCode:200,data:JSON.stringify({choices:[{finish_reason:'stop',message:{content:JSON.stringify(result)}}],usage:{prompt_tokens:100,prompt_cache_hit_tokens:40,completion_tokens:20}})};
  });
 }
@@ -71,6 +71,6 @@ try{
  assert.throws(()=>parseResearch(JSON.stringify({...answer,findings:[{statement:'x',evidence:[{source:'S2',quote:'物哀'}]}]}),evidence));
  assert.throws(()=>sourceSelection([{kind:'publication',id:p,version:'1'}],'private'));
  assert.deepEqual(parseExpansion('{"terms":["物哀","mono no aware"]}'),['物哀','mono no aware']);
- assert.equal(requests,4);mock.assertNoPendingInterceptors();
+ assert.equal(requests,4);assert.deepEqual(inspectionErrors,[], 'Mock provider request privacy assertions');mock.assertNoPendingInterceptors();
  console.log('PASS: local multilingual search, private owner scope, public visibility, explicit exact preview, model reuse, quote verification, keyword expansion and metered isolated calls.');
 }finally{await mf.dispose();await mock.close();}
