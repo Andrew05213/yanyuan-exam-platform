@@ -31,8 +31,8 @@ try{
  const b=await call('B');assert.equal(b.body.due[0].title,'Title B');
  const empty=await call('C');assert.equal(empty.body.dueCount,0);assert.deepEqual(empty.body.recentNotes,[]);
  const html=read('public/index.html'),app=read('public/app.js'),study=read('app/literature/study.tsx'),gateway=read('lan/gateway.mjs');
- assert.match(html,/data-view="today"/);assert.match(html,/today\.js\?v=1/);assert.match(html,/href="\/reading-notes"/);
- assert.match(app,/view==='today'/);assert.ok(study.includes('location.replace("/reading-notes"'));assert.match(gateway,/'\/api\/today'/);
+ assert.match(html,/data-view="today"/);assert.match(html,/today\.js\?v=2/);assert.match(html,/href="\/reading-notes"/);
+ assert.match(html,/academic-mobile-dock/);assert.match(app,/view==='today'/);assert.ok(study.includes('location.replace("/reading-notes"'));assert.match(gateway,/'\/api\/today'/);
  const ctx=vm.createContext({escapeHTML:s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),encodeURIComponent});
  vm.runInContext(read('public/today.js'),ctx);ctx.fixture={...a.body,due:[{id:'note_test',title:'<script>bad</script>',reviewOn:today}]};
  const rendered=vm.runInContext('Today.summary(fixture)',ctx);assert.ok(rendered.includes('&lt;script&gt;'));assert.ok(!rendered.includes('<script>'));assert.ok(rendered.includes('/reading-notes#note/note_test'));

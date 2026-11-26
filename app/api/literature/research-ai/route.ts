@@ -1,4 +1,4 @@
-import {requireResearchCommunity} from "../../../../lib/research-access";
+import {requireCommunity} from "../../../../lib/community-access";
 import {getChatGPTUser} from "../../../chatgpt-auth";
 import {storage} from "../../../../db/store";
 import {AccessError,fail,privateHeaders,readLimitedText,sameOrigin,principal} from "../../../../lib/user-access";
@@ -61,7 +61,7 @@ export async function POST(request:Request){
   try{body=JSON.parse(await readLimitedText(request,16000));}catch(e){if(e instanceof AccessError)throw e;throw new AccessError("提交格式无效。",400);}
   if(!body||typeof body!=="object"||Array.isArray(body))throw new AccessError("提交格式无效。",400);
   const uid=user.userId;
-  if(body.scope==="public")requireResearchCommunity(uid);
+  if(body.scope==="public")await requireCommunity(request,uid);
   const db=storage();
   if(body.action==="search"){
    const s=validate(()=>scope(body.scope)),keywords=validate(()=>terms(body.terms)),tid=s==="public"?topicId(body.topicId):"";

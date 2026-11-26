@@ -1,4 +1,4 @@
-import {canAccessResearchCommunity,requireResearchCommunity} from "../../../../lib/research-access";
+import {requireCommunity} from "../../../../lib/community-access";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { storage } from "../../../../db/store";
 import { visible, viewer, publicationVisible, publicationViewer } from "../../../../lib/research-community";
@@ -34,8 +34,7 @@ export async function GET(request:Request){
   try{
     const user=await getChatGPTUser();if(!user)throw new AccessError("请先登录。",401);
     const params=new URL(request.url).searchParams;
-    if(params.has("capabilities"))return json({available:canAccessResearchCommunity(user.userId)});
-    requireResearchCommunity(user.userId);
+    await requireCommunity(request,user.userId);
     const db=storage();
     const publication=params.get("publication"),topic=params.get("topic");
     if(publication!==null){
@@ -61,13 +60,14 @@ export async function GET(request:Request){
 export async function POST(request:Request){
   try{
     const user=await getChatGPTUser();if(!user)throw new AccessError("请先登录。",401);
-    requireResearchCommunity(user.userId);
+    await requireCommunity(request,user.userId);
     sameOrigin(request);
     let body:Record<string,unknown>;
     try{body=JSON.parse(await readLimitedText(request,16_000));}
     catch(error){if(error instanceof AccessError)throw error;throw new AccessError("提交格式无效。",400);}
     if(!body||typeof body!=="object"||Array.isArray(body))throw new AccessError("提交格式无效。",400);
     const db=storage(),now=new Date().toISOString();
+    if(body.action!=="withdraw")await requireCommunity(request,user.userId,"write");
     if(body.action==="createTopic"){
       const title=field(body.title,160),description=field(body.description??"",2000,false),id=crypto.randomUUID();
       const result=await db.prepare("INSERT INTO research_topics(id,owner_id,title,description,created_at) SELECT ?,?,?,?,? WHERE (SELECT count(*) FROM research_topics WHERE owner_id=?)<30").bind(id,user.userId,title,description,now,user.userId).run();

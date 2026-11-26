@@ -3,5 +3,5 @@ import Study from './study';
 import './literature.css';
 
 const notebook=location.pathname.replace(/\/$/,"")==="/reading-notes";
-document.title=notebook?"日本读书笔记 · 博雅怀石":"日本文学研习 · 博雅怀石";
+document.title=notebook?"日本读书笔记 · 和知 AI":"日本文学研习 · 和知 AI";
 createRoot(document.getElementById('literature-root')!).render(<Study notebook={notebook}/>);

@@ -47,3 +47,49 @@ export const researchLinks=sqliteTable("research_links",{
 export const researchReferences=sqliteTable("research_references",{
  id:text("id").primaryKey(),topicId:text("topic_id").notNull().references(()=>researchTopics.id,{onDelete:"cascade"}),ownerId:text("owner_id").notNull(),title:text("title").notNull(),authors:text("authors").notNull(),year:text("year").notNull(),identifier:text("identifier").notNull(),createdAt:text("created_at").notNull(),
 },t=>[index("research_references_topic_idx").on(t.topicId,t.createdAt),index("research_references_owner_idx").on(t.ownerId)]);
+
+export const researchMemberships=sqliteTable("research_memberships",{
+ userId:text("user_id").primaryKey().notNull(),
+ id:text("id").notNull(),
+ role:text("role").notNull().default("member"),
+ state:text("state").notNull().default("active"),
+ muteUntil:text("mute_until"),
+ reason:text("reason").notNull().default(""),
+ revision:integer("revision").notNull().default(1),
+ changeId:text("change_id").notNull(),
+ createdAt:text("created_at").notNull(),
+ updatedAt:text("updated_at").notNull()
+},t=>[uniqueIndex("research_memberships_id_idx").on(t.id)]);
+
+export const researchInvites=sqliteTable("research_invites",{
+ id:text("id").primaryKey().notNull(),
+ codeHash:text("code_hash").notNull(),
+ createdBy:text("created_by").notNull(),
+ createdAt:text("created_at").notNull(),
+ expiresAt:text("expires_at").notNull(),
+ revokedAt:text("revoked_at"),
+ usedBy:text("used_by"),
+ usedAt:text("used_at"),
+ claimId:text("claim_id")
+},t=>[uniqueIndex("research_invites_hash_idx").on(t.codeHash)]);
+
+export const researchGovernanceAudit=sqliteTable("research_governance_audit",{
+ id:text("id").primaryKey().notNull(),
+ actorId:text("actor_id").notNull(),
+ action:text("action").notNull(),
+ targetId:text("target_id").notNull(),
+ reason:text("reason").notNull(),
+ createdAt:text("created_at").notNull()
+},t=>[index("research_governance_audit_created_idx").on(t.createdAt)]);
+
+export const researchAppeals=sqliteTable("research_appeals",{
+ id:text("id").primaryKey().notNull(),
+ userId:text("user_id").notNull(),
+ memberRevision:integer("member_revision").notNull(),
+ body:text("body").notNull(),
+ status:text("status").notNull().default("pending"),
+ resolution:text("resolution"),
+ resolvedBy:text("resolved_by"),
+ createdAt:text("created_at").notNull(),
+ resolvedAt:text("resolved_at")
+},t=>[uniqueIndex("research_appeals_revision_idx").on(t.userId,t.memberRevision),index("research_appeals_status_idx").on(t.status,t.createdAt)]);

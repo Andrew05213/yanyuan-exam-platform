@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="日本文学研习、读书笔记与高校保送训练。">
-  <meta name="theme-color" content="#f3efe6">
-  <title>博雅怀石</title>
-  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=17">
+  <meta name="description" content="六所高校保送考试训练：组卷、客观题判分、口试、作文、错题与学习档案。">
+  <meta name="theme-color" content="#0F2742">
+  <title>和知 AI · 学习与研究</title>
+  <link rel="icon" href="assets/mark.svg?v=2" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css?v=18">
   <link rel="preload" href="bank.json" as="fetch" crossorigin>
   <link rel="preload" href="schools.json" as="fetch" crossorigin>
   <link rel="preload" href="workflows.json" as="fetch" crossorigin>
@@ -18,11 +18,11 @@
   <a class="skip-link" href="#screen">跳到主要内容</a>
   <header class="app-header">
     <div class="topbar" inert>
-      <a href="#schools" class="brand" aria-label="博雅怀石首页">
-        <img src="assets/mark.svg" alt="">
-        <span class="brand-copy"><strong>博雅怀石</strong></span>
+      <a href="#today" class="brand" aria-label="和知 AI 今日学习">
+        <img src="assets/mark.svg?v=2" alt="">
+        <span class="brand-copy"><strong>和知 AI</strong><small>Learning &amp; Research</small></span>
       </a>
-      <nav class="breadcrumb" id="breadcrumb" aria-label="当前位置">备考空间 <i>/</i> 学校中心</nav>
+      <nav class="breadcrumb" id="breadcrumb" aria-label="当前位置">和知 AI <i>/</i> 今日学习</nav>
       <div class="search-wrap">
         <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg>
         <input id="search" type="search" placeholder="搜索学校、口试与题目" aria-label="搜索学校与训练题目" autocomplete="off">
@@ -39,12 +39,9 @@
         <span>导航</span>
         <button class="nav-close" id="nav-close" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg><span class="visually-hidden">关闭导航</span></button>
       </div>
+      <a class="academic-sidebar-brand" href="#today" aria-label="和知 AI 今日学习"><img src="assets/mark.svg?v=2" alt=""><span><strong>和知 AI</strong><small>Learning &amp; Research</small></span></a>
       <nav class="nav-track" aria-label="主学习导航">
-<a class="nav-item nav-notebook" href="/reading-notes"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 7h8m-8 4h8m-8 4h5"/></svg><span>日本读书笔记</span></a>
-<div class="nav-group" role="group" aria-label="首页"><button class="nav-item" data-view="today">
-          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-7 9 7v11H3zM9 21v-8h6v8"/></svg><span>今日学习</span>
-        </button></div>
-<div class="nav-group" role="group" aria-label="练习"><span class="nav-group-label">练习</span><button class="nav-item active" data-view="schools">
+<div class="nav-group" role="group" aria-label="今日学习"><span class="nav-group-label">学习首页</span><button class="nav-item active" data-view="today"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-7 9 7v11H3zM9 21v-8h6v8"/></svg><span>今日学习</span></button></div><div class="nav-group" role="group" aria-label="练习"><span class="nav-group-label">练习</span><button class="nav-item" data-view="schools">
           <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M6 20V9l6-4 6 4v11M9.5 20v-6h5v6"/></svg><span>学校中心</span>
         </button>
 <button class="nav-item" data-view="studio">
@@ -62,7 +59,7 @@
           <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>学习档案</span>
         </button></div><div class="nav-group" role="group" aria-label="资料"><span class="nav-group-label">资料</span><button class="nav-item" data-view="community">
           <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v11M4 19h16M8 11h8M8 15h5"/></svg><span>共享题库</span>
-        </button><a class="nav-item" href="/literature"><span>文学研习</span></a><details class="resource-nav" id="resource-nav"><summary class="nav-item nav-more"><span>参考资料</span><span aria-hidden="true">⌄</span></summary><div class="resource-menu"><button class="nav-item" data-view="standards"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h4"/></svg><span>考试标准</span></button><button class="nav-item" data-view="library">
+        </button><a class="nav-item" href="/literature"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h7l2 2 2-2h7v14h-7l-2 2-2-2H3zM12 7v14"/></svg><span>文学与研究资料</span></a><a class="nav-item" href="/reading-notes"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12v18H5zM8 8h6M8 12h6M8 16h4M17 6h3"/></svg><span>日本读书笔记</span></a><a class="nav-item" href="/literature#community"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></svg><span>研究社区 · AI 助手</span></a><details class="resource-nav" id="resource-nav"><summary class="nav-item nav-more"><span>参考资料</span><span aria-hidden="true">⌄</span></summary><div class="resource-menu"><button class="nav-item" data-view="standards"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h4"/></svg><span>考试标准</span></button><button class="nav-item" data-view="library">
           <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h5v16H5zM14 4h5v16h-5zM10 8h4M10 12h4"/></svg><span>三科模拟卷</span>
         </button>
 <button class="nav-item" data-view="sources">
@@ -75,6 +72,7 @@
           <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2M4 5v4h4"/></svg><span>旧版本机记录</span>
         </button></div></details></div>
 </nav>
+      <div class="academic-sidebar-footer" aria-hidden="true"><span>知 · 学 · 研</span><small>Learning with purpose</small></div>
     </aside>
   </header>
   <div id="nav-backdrop" class="nav-backdrop" hidden></div>
@@ -83,6 +81,7 @@
     <main id="screen" tabindex="-1"><div class="loading-state"><span class="loading-rule"></span>正在打开资料库…</div></main>
   </div>
 
+  <nav class="academic-mobile-dock" aria-label="快捷导航"><a href="#today"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-7 9 7v11H3zM9 21v-8h6v8"/></svg>首页</a><a href="#schools"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M6 20V9l6-4 6 4v11M10 20v-6h4v6"/></svg>学习</a><a href="/reading-notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5"/></svg>笔记</a><a href="/literature#community"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v12h-9l-5 4v-4H3zM7 10h10M7 13h6"/></svg>研究</a><a href="#saved"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 2h9v12H3z"/></svg>档案</a></nav>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <input id="import-file" type="file" accept="application/json,.json" hidden>
   <input id="hub-import-file" type="file" accept="application/json,.json" hidden>
@@ -96,21 +95,21 @@
   </dialog>
 
   <script src="hub-engine.js?v=13" defer></script>
-  <script src="hub.js?v=16" defer></script>
+  <script src="hub.js?v=17" defer></script>
   <script src="oral-audio-analysis.js?v=13" defer></script>
   <script src="ai-grading.js?v=13" defer></script>
   <script src="workflows-engine.js?v=13" defer></script>
-  <script src="workflow-app.js?v=16" defer></script>
+  <script src="workflow-app.js?v=17" defer></script>
   <script src="mistakes.js?v=13" defer></script>
   <script src="writing.js?v=13" defer></script>
   <script src="difficulty-engine.js?v=13" defer></script>
   <script src="difficulty-ui.js?v=13" defer></script>
   <script src="ai-questions.js?v=2" defer></script>
-  <script src="community.js?v=13" defer></script>
+  <script src="community.js?v=14" defer></script>
   <script src="exam-standards.js?v=13" defer></script>
   <script src="school-tracks.js?v=14" defer></script>
   <script src="quality.js?v=13" defer></script>
-  <script src="today.js?v=1" defer></script>
-  <script src="app.js?v=17" defer></script>
+  <script src="today.js?v=2" defer></script>
+  <script src="app.js?v=18" defer></script>
 </body>
 </html>

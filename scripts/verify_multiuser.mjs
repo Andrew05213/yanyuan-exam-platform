@@ -20,6 +20,7 @@ async function rpc(name,args,user){return call('/mcp',user,{jsonrpc:'2.0',id:1,m
 try{
  const db=await mf.getD1Database('DB');
  for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const statement of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();
+ for(const uid of ['A','B'])await db.prepare("INSERT INTO research_memberships(user_id,id,role,state,change_id,created_at,updated_at) VALUES(?,?,'member','active',?,?,?)").bind(uid,'fixture-'+uid,'fixture-'+uid,new Date().toISOString(),new Date().toISOString()).run();
  check((await call('/api/session')).authenticated,false);
  check((await call('/api/session','A')).userId,'A');
  const aiResponse=await mf.dispatchFetch('https://study.test/api/ai-grading');check(aiResponse.status,200);const ai=await aiResponse.json();check(ai.status,'not_configured');check(ai.enabled,false);check(ai.score,null);
@@ -92,8 +93,18 @@ try{
  check((await call('/api/materials?mine=1','B')).materials.length,0);
  check((await call('/api/materials?mine=1')).status,401);
  check((await call('/api/materials','B',{...material,id:m.id,expectedRevision:m.revision})).status,404);
- const publicList=await call('/api/materials?catalog=1');check(publicList.items.length,1);
- check((await mf.dispatchFetch('https://study.test/api/material-files?id='+file.id)).status,200);
+ check((await call('/api/materials?catalog=1')).restricted,true);check((await call('/api/materials?catalog=1')).items.length,0);
+ const publicList=await call('/api/materials?catalog=1','B');check(publicList.items.length,1);
+ await db.prepare("UPDATE research_memberships SET state='suspended' WHERE user_id='A'").run();
+ const ownCatalog=await call('/api/materials?catalog=1','A');check(ownCatalog.restricted,true);check(ownCatalog.items[0]?.id,publicList.items[0].id);
+ const materialFeedback={source:'material',sourceId:m.id,kind:'question',questionId:m.questions[0].id,category:'format',comment:'核对题目格式'};
+ check((await call('/api/feedback','A',materialFeedback)).status,200);
+ check((await call('/api/feedback','B',materialFeedback)).status,200);
+ await db.prepare("UPDATE research_memberships SET state='suspended' WHERE user_id='B'").run();
+ check((await call('/api/feedback','B',materialFeedback)).status,404);
+ await db.prepare("UPDATE research_memberships SET state='active' WHERE user_id='B'").run();
+ await db.prepare("UPDATE research_memberships SET state='active' WHERE user_id='A'").run();
+ check((await mf.dispatchFetch('https://study.test/api/material-files?id='+file.id)).status,404);check((await mf.dispatchFetch('https://study.test/api/material-files?id='+file.id,{headers:actor('B')})).status,200);
  const box={console,crypto,structuredClone};vm.createContext(box);for(const f of ['hub-engine.js','workflows-engine.js','difficulty-engine.js'])vm.runInContext(readFileSync(path.join(root,'public',f),'utf8'),box);
  const catalog=JSON.parse(readFileSync(path.join(root,'public/difficulty.json')));catalog.items=publicList.items;
  const hub=JSON.parse(readFileSync(path.join(root,'public/schools.json')));
@@ -101,7 +112,7 @@ try{
  const sharedPacket=box.DifficultyEngine.makePacket(catalog,config,hub);
  check(sharedPacket.count,1);check(sharedPacket.blocks[0].questions[0].difficulty.status,'上传者自标，未审核');
  const revised=await call('/api/materials','A',{...material,id:m.id,expectedRevision:m.revision,title:'Revised'});check(revised.status,200);
- check((await call('/api/materials?catalog=1')).items[0].id===publicList.items[0].id,false);
+ check((await call('/api/materials?catalog=1','B')).items[0].id===publicList.items[0].id,false);
  check((await call('/api/materials','A',{id:m.id,expectedRevision:revised.material.revision,action:'withdraw'})).status,200);
  check((await call('/api/materials?id='+m.id)).status,404);
  check((await call('/api/materials?catalog=1')).items.length,0);
@@ -109,7 +120,7 @@ try{
  check((await mf.dispatchFetch('https://study.test/api/material-files?id='+file.id,{headers:actor('A')})).status,200);
  check((await call('/api/materials','A',{...material,fileIds:[],questions:[]})).status,201);
  const batch=await call('/api/materials','A',{...material,fileIds:[],questions:[material.questions[0],material.questions[0]]});check(batch.status,201);
- const batchList=await call('/api/materials?catalog=1');check(batchList.items.length,2);
+ const batchList=await call('/api/materials?catalog=1','B');check(batchList.items.length,2);
  const both=box.DifficultyEngine.makePacket({...catalog,items:batchList.items},{...config,rows:[{section:'mc',tier:'cet4',count:2}]},hub);check(both.count,2);
  check((await call('/api/materials','A',{...material,fileIds:[],section:'fill'})).status,400);
  check((await call('/api/materials','A',material,{'Origin':'https://other.test','Sec-Fetch-Site':'cross-site'})).status,403);
