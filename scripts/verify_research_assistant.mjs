@@ -30,12 +30,12 @@ async function decodeBody(raw){
  if(raw instanceof ArrayBuffer)return Buffer.from(raw).toString("utf8");
  throw Error("Unexpected mock body type: "+raw?.constructor?.name);
 }
-function stub(result,inspect){
- mock.get('https://api.deepseek.com').intercept({path:'/chat/completions',method:'POST'}).reply(opts=>{
-  requests++;
+function stub(result,inspect,delay=0,onRequest){
+ const response=mock.get('https://api.deepseek.com').intercept({path:'/chat/completions',method:'POST'}).reply(opts=>{
+  requests++;if(onRequest)onRequest();
   if(inspect)inspections.push(decodeBody(opts.body).then(text=>{inspect(text);return null;}).catch(e=>e.message));
   return {statusCode:200,data:JSON.stringify({choices:[{finish_reason:'stop',message:{content:JSON.stringify(result)}}],usage:{prompt_tokens:100,prompt_cache_hit_tokens:40,completion_tokens:20}})};
- });
+ });if(delay)response.delay(delay);
 }
 const answer={findings:[{statement:'材料支持一个观点。',evidence:[{source:'S1',quote:'物哀'}]}],limitations:['仅有片段，不能核验全文。'],questions:['如何比较语境？']};
 try{
@@ -74,16 +74,25 @@ try{
  assert.equal((await ai('B',{action:'expand',query:'物哀',languages:'日语、英语',confirm:true})).data.terms.length,3);
  stub({...answer,findings:[{statement:'bad',evidence:[{source:'S1',quote:'invented'}]}]});
  assert.equal((await ai('B',{action:'analyze',...base,fingerprint:f,confirm:true})).status,502);
+ // Suspend a community member while a synthetic provider request is in flight.
+ let entered;const started=new Promise(resolve=>{entered=resolve;});
+ stub(answer,undefined,1200,entered);
+ const pending=ai('B',{action:'analyze',...base,fingerprint:f,confirm:true});
+ await Promise.race([started,pending.then(r=>{throw Error('Request ended before provider mock: '+JSON.stringify(r));})]);
+ await db.prepare("UPDATE research_memberships SET state='suspended',revision=revision+1 WHERE user_id='B'").run();
+ const denied=await pending;assert.equal(denied.status,403,JSON.stringify(denied.data));assert.equal(denied.data.result,undefined);
+ assert.equal((await ai('B',{action:'search',scope:'private',terms:['物哀']})).status,200);
+ await db.prepare("UPDATE research_memberships SET state='active',revision=revision+1 WHERE user_id='B'").run();
  assert.equal((await call(interactions,'B',{action:'block',targetKind:'publication',targetId:p})).status,201);
  assert.equal((await ai('B',{action:'analyze',...base,fingerprint:f,confirm:true})).status,404);
  assert.equal((await ai('B',{action:'search',scope:'public',terms:['物哀']})).data.hits.length,0);
  assert.equal((await call(community,'A',{action:'withdraw',id:p})).status,200);
  assert.equal((await ai('C',{action:'preview',...base})).status,404);
- const rows=(await db.prepare("SELECT task,status,pricing_snapshot FROM ai_usage_events WHERE task='research-assistant'").all()).results;assert.equal(rows.length,4);assert.equal(rows.filter(r=>r.status==='error').length,1);assert.ok(!JSON.stringify(rows).includes('PRIVATE_'));
+ const rows=(await db.prepare("SELECT task,status,pricing_snapshot FROM ai_usage_events WHERE task='research-assistant'").all()).results;assert.equal(rows.length,5);assert.equal(rows.filter(r=>r.status==='error').length,1);assert.ok(!JSON.stringify(rows).includes('PRIVATE_'));
  const evidence=[makeEvidence('S1','publication','t','物哀', '1')];assert.equal(parseResearch(JSON.stringify(answer),evidence).findings.length,1);
  assert.throws(()=>parseResearch(JSON.stringify({...answer,findings:[{statement:'x',evidence:[{source:'S2',quote:'物哀'}]}]}),evidence));
  assert.throws(()=>sourceSelection([{kind:'publication',id:p,version:'1'}],'private'));
  assert.deepEqual(parseExpansion('{"terms":["物哀","mono no aware"]}'),['物哀','mono no aware']);
- assert.equal(requests,4);assert.deepEqual((await Promise.all(inspections)).filter(Boolean),[], 'Mock provider request privacy assertions');mock.assertNoPendingInterceptors();
+ assert.equal(requests,5);assert.deepEqual((await Promise.all(inspections)).filter(Boolean),[], 'Mock provider request privacy assertions');mock.assertNoPendingInterceptors();
  console.log('PASS: local multilingual search, private owner scope, public visibility, explicit exact preview, model reuse, quote verification, keyword expansion and metered isolated calls.');
 }finally{await mf.dispose();await mock.close();}
