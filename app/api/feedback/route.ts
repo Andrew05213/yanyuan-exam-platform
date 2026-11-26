@@ -3,6 +3,8 @@ import {getDb} from '../../../db/index';
 import {qualityFeedback,adminAccessLog,archiveRecords,communityMaterials} from '../../../db/schema';
 import {principal,sameOrigin,readLimitedText,AccessError,fail,privateHeaders,owned} from '../../../lib/user-access';
 import {adminPrincipal as requireAdmin} from '../../../lib/admin-access';
+import {communityAccess} from '../../../lib/community-access';
+import {sharedMaterialVisible} from '../../../lib/shared-material-access';
 import bank from '../../../public/bank.json';
 export const dynamic='force-dynamic';
 export async function GET(request:Request){try{
@@ -35,7 +37,10 @@ export async function POST(request:Request){try{
   packet={title:paper.title,blocks:paper.sections.flatMap((s:any)=>s.blocks)};version=paper.version;
  }else if(b.source==='material'){
   if(b.kind!=='question')throw new AccessError('共享资料请逐题反馈。',400);
-  const m=await db.select().from(communityMaterials).where(and(eq(communityMaterials.id,b.sourceId),or(eq(communityMaterials.active,1),eq(communityMaterials.ownerId,user.id)))).get();if(!m)throw new AccessError('资料不存在。',404);
+  const owner=eq(communityMaterials.ownerId,user.id);
+  const access=await communityAccess(request,user.id);
+  const visible=access.read?or(owner,and(eq(communityMaterials.active,1),sharedMaterialVisible(user.id))):owner;
+  const m=await db.select().from(communityMaterials).where(and(eq(communityMaterials.id,b.sourceId),visible)).get();if(!m)throw new AccessError('资料不存在。',404);
   packet={title:m.title,blocks:[{questions:JSON.parse(m.payload).questions}]};version=String(m.revision);
  }else{
   const r=await db.select().from(archiveRecords).where(and(eq(archiveRecords.id,b.sourceId),owned(archiveRecords.ownerId,user))).get();if(!r||!['packet','written-attempt','oral-attempt'].includes(r.kind))throw new AccessError('练习不存在。',404);

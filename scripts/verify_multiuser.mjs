@@ -97,6 +97,12 @@ try{
  const publicList=await call('/api/materials?catalog=1','B');check(publicList.items.length,1);
  await db.prepare("UPDATE research_memberships SET state='suspended' WHERE user_id='A'").run();
  const ownCatalog=await call('/api/materials?catalog=1','A');check(ownCatalog.restricted,true);check(ownCatalog.items[0]?.id,publicList.items[0].id);
+ const materialFeedback={source:'material',sourceId:m.id,kind:'question',questionId:m.questions[0].id,category:'format',comment:'核对题目格式'};
+ check((await call('/api/feedback','A',materialFeedback)).status,200);
+ check((await call('/api/feedback','B',materialFeedback)).status,200);
+ await db.prepare("UPDATE research_memberships SET state='suspended' WHERE user_id='B'").run();
+ check((await call('/api/feedback','B',materialFeedback)).status,404);
+ await db.prepare("UPDATE research_memberships SET state='active' WHERE user_id='B'").run();
  await db.prepare("UPDATE research_memberships SET state='active' WHERE user_id='A'").run();
  check((await mf.dispatchFetch('https://study.test/api/material-files?id='+file.id)).status,404);check((await mf.dispatchFetch('https://study.test/api/material-files?id='+file.id,{headers:actor('B')})).status,200);
  const box={console,crypto,structuredClone};vm.createContext(box);for(const f of ['hub-engine.js','workflows-engine.js','difficulty-engine.js'])vm.runInContext(readFileSync(path.join(root,'public',f),'utf8'),box);
