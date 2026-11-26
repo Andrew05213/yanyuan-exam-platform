@@ -6,7 +6,7 @@ import path from 'node:path';
 const require=createRequire(import.meta.url),{Miniflare}=require(createRequire(require.resolve('wrangler')).resolve('miniflare'));
 const root=path.resolve(import.meta.dirname,'..'),serverRoot=path.join(root,'dist/server');
 const modules=readdirSync(serverRoot,{recursive:true}).filter(f=>/\.(m?js)$/.test(f)&&f!=='index.js');
-const mf=new Miniflare({modules:[{type:'ESModule',path:path.join(serverRoot,'index.js')},...modules.map(f=>({type:'ESModule',path:path.join(serverRoot,f)}))],modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{ADMIN_USER_IDS:'qa-admin',RESEARCH_COMMUNITY_USER_IDS:'qa-A,qa-B,qa-C,qa-admin'},d1Databases:['DB'],r2Buckets:['BUCKET']});
+const mf=new Miniflare({modules:[{type:'ESModule',path:path.join(serverRoot,'index.js')},...modules.map(f=>({type:'ESModule',path:path.join(serverRoot,f)}))],modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{ADMIN_USER_IDS:'qa-admin',},d1Databases:['DB'],r2Buckets:['BUCKET']});
 const community='/api/literature/community',interactions='/api/literature/interactions',a='qa-A',b='qa-B',c='qa-C',admin='qa-admin';
 async function call(route,user,method='GET',body,extra={}){
  const response=await mf.dispatchFetch('https://study.test'+route,{method,headers:{...(user?{'oai-authenticated-user-id':user,'oai-authenticated-user-email':user+'@qa.invalid'}:{}),...(body?{'Content-Type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined});
@@ -19,6 +19,7 @@ async function save(user,content,revision=0){const r=await call('/api/literature
 try{
  const db=await mf.getD1Database('DB');
  for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const statement of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();
+ for(const uid of [a,b,c])await db.prepare("INSERT INTO research_memberships(user_id,id,role,state,change_id,created_at,updated_at) VALUES(?,?,'member','active',?,?,?)").bind(uid,'fixture-'+uid,'fixture-'+uid,new Date().toISOString(),new Date().toISOString()).run();
  const v=await save(a,'First paragraph.\n\nSecond paragraph.');
  const topic=(await cpost(a,{action:'createTopic',title:'QA research'})).data.id;
  const publish=async version=>cpost(a,{action:'publish',topicId:topic,entryId:'note_qa',sourceUpdatedAt:version,confirm:true});

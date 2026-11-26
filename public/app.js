@@ -57,7 +57,7 @@ function route(){
   const hash=location.hash.slice(1);
   if(typeof Hub!=='undefined'&&Hub.route(hash))return;
   if(hash.startsWith('paper/')){const id=hash.slice(6);if(allPapers().some(p=>p.id===id)){openPaper(id);return}}
-  navigate(names[hash]?hash:'schools',false);
+  navigate(names[hash]?hash:'today',false);
 }
 function navigate(view,setHash=true){
   if(typeof Today!=='undefined')Today.leave();
@@ -157,7 +157,7 @@ async function reset(){
 function exportBackup(){
   // Save the actual elapsed time, never the live timestamp that would keep running on another device.
   const copy=structuredClone(practice);for(const [id,s] of Object.entries(copy.papers)){s.elapsed=elapsed(practice.papers[id]);s.startAt=null}
-  const blob=new Blob([JSON.stringify(copy,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='博雅怀石_练习记录_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('已导出当前选项、用时与提交记录。');
+  const blob=new Blob([JSON.stringify(copy,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='和知 AI_练习记录_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('已导出当前选项、用时与提交记录。');
 }
 async function importBackup(e){
   const file=e.target.files[0];if(!file)return;

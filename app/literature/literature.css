@@ -151,7 +151,7 @@ body{margin:0;background:var(--background);color:var(--foreground);font-family:A
 .editor textarea.note-body:focus-visible { outline: 2px solid #4d7369; outline-offset: 2px; }
 @media(max-width:650px) { .intro .reading-summary { margin-top: 16px; } }
 
-/* 博雅怀石的文学与笔记模块 */
+/* 和知 AI的文学与笔记模块 */
 :root {
   --background: #f7f5ec;
   --foreground: #202c24;
@@ -312,3 +312,94 @@ body{margin:0;background:var(--background);color:var(--foreground);font-family:A
  .research-community .work-card{min-height:0;padding:16px}
  .notebook-editor textarea.note-body{height:52dvh;min-height:240px;line-height:1.75}
 }
+
+/* Hezhi Academic visual identity — no change to data or authorisation. */
+:root{
+ --hezhi-navy:#0f2742;--hezhi-ivory:#f9f6ee;--hezhi-gold:#c6a774;--hezhi-gold-dark:#755524;--hezhi-sage:#5a6b62;
+ --background:#f9f6ee;--foreground:#172d43;--card:#fffefa;--card-foreground:#172d43;--popover:#fffefa;--popover-foreground:#172d43;--primary:#0f2742;--primary-foreground:#fffefa;--secondary:#f1ece1;--secondary-foreground:#172d43;--muted:#f1ece1;--muted-foreground:#5b6872;--accent:#f3e8d4;--accent-foreground:#172d43;--border:#e0d8c9;--input:#c9bfaf;--ring:#8d692f;--radius:.65rem;
+}
+body{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",Arial,sans-serif}
+h1,h2,h3,h4{color:var(--hezhi-navy)}
+.masthead{background:var(--hezhi-navy);border-color:#0f2742;color:#fffefa;gap:22px;padding-inline:max(24px,5vw)}
+.masthead .brand{color:#fffefa;text-decoration:none}
+.academic-brand-mark{width:46px;height:46px;border:1px solid #c6a77466;border-radius:10px}
+.brand strong{font-family:"Songti SC","Noto Serif SC",Georgia,serif;font-size:22px;letter-spacing:.04em}
+.brand small{font:12px/1.5 Georgia,serif;color:#e0c799;letter-spacing:.015em}
+.masthead .module-links a,.masthead .private{color:#e6e9ed}
+.masthead .module-links a:hover{color:#eed5a5}
+.masthead :focus-visible{outline-color:#eed5a5}
+.shell{max-width:1440px;padding:28px 32px 64px}
+.intro{background:linear-gradient(100deg,#fffefa 40%,#f9f6eeaf),url('/assets/hezhi-campus.svg?v=1') right bottom/auto 130px no-repeat;border:1px solid var(--border);border-radius:12px;padding:clamp(18px,3vw,32px);box-shadow:0 12px 30px -23px #10294142}
+.intro h1,.section-heading h2,.work-card h3{color:var(--hezhi-navy)}
+.intro .eyebrow{color:var(--hezhi-gold-dark);font:600 11px/1.5 Arial,sans-serif;letter-spacing:.15em}
+.intro .sub{color:#4c5a66}
+.reading-summary{background:var(--hezhi-navy);color:#e3e8eb;border:0;border-radius:9px;padding:16px;width:190px}
+.reading-summary strong{color:#eed5a5}.reading-summary [data-slot=progress]{background:#ffffff30}.reading-summary [data-slot=progress-indicator]{background:#c6a774}
+.navigation{background:#fffefa!important;border:1px solid var(--border);border-radius:10px;padding:5px 10px!important;gap:10px!important;box-shadow:0 9px 20px -18px #10294155}
+.navigation [data-slot=tabs-trigger]{min-height:44px;padding:9px 12px;color:#52616c;border-radius:6px}
+.navigation [data-slot=tabs-trigger][data-state=active]{color:var(--hezhi-navy);background:#f3e8d4;font-weight:650}
+.navigation [data-slot=tabs-trigger]::after{background:var(--hezhi-gold-dark)}
+.section-heading{margin:24px 0 18px}
+.section-heading p,.muted,.card-top,.source-line{color:#5b6872}
+.work-card,.material-card,.literary-period,.questions article,.timeline,.desk section,.notebook-tools,.note-fields,.empty{background:#fffefa;border-color:var(--border);border-radius:10px}
+.work-card,.material-card,.questions article,.desk section{box-shadow:0 10px 25px -22px #10294150}
+.material-card .work-card{box-shadow:none;border-radius:0}
+.work-card:hover,.material-card .work-card:hover{background:#f6efe2;border-color:#bba477;transform:none}
+.work-card h3{font-size:21px;overflow-wrap:anywhere}
+.work-card p,.timeline p,.reading-guide p{color:#374759}
+.status{background:#e8eff5;color:#234f73}
+.card-foot,.material-actions{border-color:var(--border)}
+.card-foot,.question-number,.text-button,a,.material-actions button,.research-guide a{color:var(--hezhi-gold-dark)}
+.primary{background:var(--hezhi-navy);color:#fffefa;border-radius:8px;min-height:40px}
+.primary:hover:not(:disabled){background:#193b5b}
+.danger-link,.material-actions .danger-link{color:#963d36}
+.research-community .community-panel{background:#fffefa;border-color:var(--border);border-radius:10px;box-shadow:0 9px 24px -21px #1029414f}
+.research-community .community-privacy{background:#edf1f4;border-left-color:#345a7b;color:#273e53}
+.research-guide{background:linear-gradient(110deg,#0f2742f7,#193b5bf0),url('/assets/hezhi-campus.svg?v=1') right bottom/auto 140px no-repeat;color:#fffefa;padding:23px;border:0;border-radius:12px}
+.research-guide h3{color:#fffefa;font-size:24px}
+.research-guide p{color:#e3e8eb;max-width:78ch}
+.research-guide-kicker{color:#e0c799;font-size:11px;letter-spacing:.13em}
+.research-guide a{display:inline-flex;align-items:center;min-height:38px;border:1px solid #ffffff45;padding:5px 12px!important;border-radius:7px;color:#fffefa;text-decoration:none}
+.research-guide a:last-child{background:#c6a774;border-color:#c6a774;color:#0f2742;font-weight:650}
+.research-community .academic-topic-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.academic-topic-list .work-card{min-height:160px;padding:19px;border-top:2px solid #c6a774}
+.academic-topic-list .work-card h3{margin:0 0 7px;font-size:21px}
+.academic-topic-list .work-card .muted{margin-top:auto;padding-top:15px}
+.research-community .academic-publications{grid-template-columns:repeat(2,minmax(0,1fr))}
+.research-community .community-panel h3{font-size:20px}
+.research-community .community-panel summary{color:var(--hezhi-navy);font-family:"Songti SC","Noto Serif SC",Georgia,serif;font-size:18px}
+.research-community #research-ai-panel>.research-assistant{border-top:3px solid #c6a774}
+.research-community input:not([type=checkbox]),.research-community textarea,.research-community select,.editor input,.editor textarea,.editor select{background:#fffefa;border-color:#c9bfaf;color:var(--foreground);border-radius:7px}
+.research-community input[type=checkbox]{accent-color:#0f2742}
+.research-quote{background:#f3eee3;border-color:#c6a774}
+.research-reply{border-color:#c6a774}
+.research-comparison>article{border-top:3px solid #345a7b}
+.research-comparison>article:nth-child(2){border-top-color:#b59760}
+.research-comparison>article:nth-child(3){border-top-color:#5a6b62}
+.editor{background:#fffefa;border-radius:12px}
+.editor.notebook-editor{max-width:1080px!important}
+.editor textarea.note-body{background:#fffefa;border-color:#c9bfaf;caret-color:#755524}
+.editor textarea.note-body:focus-visible{outline-color:#8d692f}
+.notebook-editor .save-row{background:#fffefa;border-top:1px solid var(--border)}
+.literature-mobile-dock{display:none}
+@media(max-width:900px){.shell{padding:22px 20px 75px}.navigation{overflow-x:auto!important;flex-wrap:nowrap!important;justify-content:flex-start!important}}
+@media(max-width:650px){
+ .masthead{padding:14px 16px;gap:8px}.masthead .brand{gap:10px}.academic-brand-mark{width:38px;height:38px}.brand strong{font-size:19px}.brand small{font-size:10px}
+ .shell{padding:16px 14px calc(82px + env(safe-area-inset-bottom))}
+ .intro{padding:17px;background-size:auto,auto 85px}
+ .intro .reading-summary{width:100%;max-width:none;padding:12px;border-radius:8px}
+ .navigation{padding:4px 7px!important;gap:5px!important}
+ .navigation [data-slot=tabs-trigger]{padding:8px 10px}
+ .research-community .academic-topic-list,.research-community .academic-publications{grid-template-columns:minmax(0,1fr)}
+ .research-guide{padding:17px}
+ .editor.notebook-editor{max-height:96dvh;width:calc(100vw - 12px)!important}
+ .literature-mobile-dock{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;z-index:20;inset:auto 0 0;padding:6px 5px calc(5px + env(safe-area-inset-bottom));background:#fffefa;border-top:1px solid var(--border);box-shadow:0 -5px 20px #0f274212}
+ .literature-mobile-dock a{display:grid;place-items:center;min-height:44px;color:var(--hezhi-navy);font-size:13px;text-decoration:none}
+ .literature-mobile-dock a[aria-current=page]{background:#f3e8d4;border-radius:6px;font-weight:650}
+ body:has([data-slot=dialog-content]) .literature-mobile-dock{visibility:hidden}
+}
+@media(prefers-reduced-motion:reduce){.work-card,.material-card{transition:none}}
+@media print{.masthead,.navigation,.literature-mobile-dock{display:none!important}.shell{padding:0;max-width:none}}
+
+/* Community governance: the C visual system, readable at mobile widths. */
+.governance-status form,.governance-manager{display:grid;gap:12px}.governance-status h2{font-size:22px}.governance-row{display:grid;gap:8px;border-top:1px solid var(--border);padding:12px 0;overflow-wrap:anywhere}.governance-row button,.governance-manager button:not(.primary){border:1px solid var(--border);border-radius:7px;padding:8px 12px;min-height:40px;background:#fffefa;color:var(--foreground)}.governance-code{background:#f3e8d4;padding:14px;overflow-wrap:anywhere}.governance-status .text-button{justify-self:start}.governance-manager summary{cursor:pointer;font-weight:650}.governance-status form button{justify-self:start}

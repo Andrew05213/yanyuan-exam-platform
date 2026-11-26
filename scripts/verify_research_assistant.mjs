@@ -10,7 +10,7 @@ const {Miniflare}=require(wr.resolve('miniflare')),{MockAgent}=require(wr.resolv
 const root=path.resolve(import.meta.dirname,'..'),server=path.join(root,'dist/server');
 const modules=readdirSync(server,{recursive:true}).filter(x=>/\.(m?js)$/.test(x)&&x!=='index.js');
 const mock=new MockAgent();mock.disableNetConnect();
-const mf=new Miniflare({modules:[{type:'ESModule',path:path.join(server,'index.js')},...modules.map(x=>({type:'ESModule',path:path.join(server,x)}))],modulesRoot:server,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{ADMIN_USER_IDS:'admin',RESEARCH_COMMUNITY_USER_IDS:'A,B,C,admin',AI_CREDENTIALS_ENCRYPTION_KEY:randomBytes(32).toString('base64')},d1Databases:['DB'],r2Buckets:['BUCKET'],fetchMock:mock});
+const mf=new Miniflare({modules:[{type:'ESModule',path:path.join(server,'index.js')},...modules.map(x=>({type:'ESModule',path:path.join(server,x)}))],modulesRoot:server,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{ADMIN_USER_IDS:'admin',AI_CREDENTIALS_ENCRYPTION_KEY:randomBytes(32).toString('base64')},d1Databases:['DB'],r2Buckets:['BUCKET'],fetchMock:mock});
 const endpoint='/api/literature/research-ai',community='/api/literature/community',network='/api/literature/network',interactions='/api/literature/interactions',secret='qa-provider-secret-only';
 async function call(route,user,body,method=body?'POST':'GET',extra={}){
  const response=await mf.dispatchFetch('https://study.test'+route,{method,headers:{...(user?{'oai-authenticated-user-id':user,'oai-authenticated-user-email':user+'@qa.invalid'}:{}),...(body?{'Content-Type':'application/json','Origin':'https://study.test'}:{}),...extra},body:body?JSON.stringify(body):undefined});
@@ -41,6 +41,7 @@ const answer={findings:[{statement:'材料支持一个观点。',evidence:[{sour
 try{
  const db=await mf.getD1Database('DB');
  for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const sql of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(sql).run();
+ for(const uid of ['A','B','C'])await db.prepare("INSERT INTO research_memberships(user_id,id,role,state,change_id,created_at,updated_at) VALUES(?,?,'member','active',?,?,?)").bind(uid,'fixture-'+uid,'fixture-'+uid,new Date().toISOString(),new Date().toISOString()).run();
  const version=await save('A','note_shared','物哀 mono no aware もののあはれ');
  await save('A','note_hidden','PRIVATE_A 物哀');
  const vb=await save('B','note_shared','PRIVATE_B 物哀');

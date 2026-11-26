@@ -51,7 +51,7 @@ try {
   const notes='/api/literature/entries',bank='/api/question-bank',questions='/api/ai-questions',review='/api/literature/feedback';
   const legacy=(await call(notes,'migration-check')).body[0];
   assert.deepEqual([legacy.id,legacy.content,legacy.folder,legacy.revision,legacy.language],['legacy-note','原正文','active',1,null]);
-  assert.deepEqual((await call('/api/literature/community?capabilities=1','A')).body,{available:false});
+  assert.equal((await call('/api/literature/governance','A')).body.read,false);
   assert.equal((await call('/api/literature/community','A')).status,403);
   assert.equal((await call(notes,null)).status,401);
   assert.equal((await call(notes,'A','PUT',{id:'test_note',title:'研究笔记',content:'文本依据',status:'在读',language:'日语',sourceLanguage:'日本語',discipline:'文学'})).status,200);

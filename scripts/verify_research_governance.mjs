@@ -1,0 +1,58 @@
+// Synthetic Worker/D1 only; no production accounts, keys or model requests.
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {readFileSync,readdirSync} from 'node:fs';
+import path from 'node:path';
+const require=createRequire(import.meta.url),{Miniflare}=require(createRequire(require.resolve('wrangler')).resolve('miniflare'));
+const root=path.resolve(import.meta.dirname,'..'),serverRoot=path.join(root,'dist/server');
+const modules=readdirSync(serverRoot,{recursive:true}).filter(f=>/\.(m?js)$/.test(f)&&f!=='index.js');
+const mf=new Miniflare({modules:[{type:'ESModule',path:path.join(serverRoot,'index.js')},...modules.map(f=>({type:'ESModule',path:path.join(serverRoot,f)}))],modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{ADMIN_USER_IDS:'qa-admin'},d1Databases:['DB'],r2Buckets:['BUCKET']});
+const gov='/api/literature/governance',community='/api/literature/community',ai='/api/literature/research-ai',interactions='/api/literature/interactions',network='/api/literature/network',admin='qa-admin',a='qa-A',b='qa-B',c='qa-C';
+async function call(route,user,body,method=body?'POST':'GET',extra={}){const r=await mf.dispatchFetch('https://study.test'+route,{method,headers:{...(user?{'oai-authenticated-user-id':user,'oai-authenticated-user-email':user+'@qa.invalid'}:{}),...(body?{'Content-Type':'application/json','Origin':'https://study.test'}:{}),...extra},body:body?JSON.stringify(body):undefined});return {status:r.status,data:await r.json(),cache:r.headers.get('cache-control')};}
+const post=(u,body)=>call(gov,u,body);
+try{
+ const db=await mf.getD1Database('DB');for(const f of readdirSync(path.join(root,'drizzle')).filter(f=>f.endsWith('.sql')).sort())for(const sql of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(sql).run();
+ assert.equal((await call(gov,null)).status,401);assert.equal((await call(gov,a)).data.read,false);assert.equal((await call(community,a)).status,403);assert.equal((await call('/api/materials?catalog=1',a)).data.restricted,true);assert.equal((await call(network,a)).status,403);assert.equal((await call(interactions,a)).status,403);
+ assert.equal((await call(ai,a,{action:'search',scope:'public',terms:['test']})).status,403);
+ assert.equal((await call('/api/literature/entries',a,{id:'private_note',title:'Private A',content:'private evidence',status:'在读'},'PUT')).status,200);
+ assert.equal((await call(ai,a,{action:'search',scope:'private',terms:['private']})).data.hits.length,1);
+ assert.equal((await post(a,{action:'createInvite'})).status,403);assert.equal((await call(gov,admin,{action:'createInvite'},'POST',{Origin:'https://other.test'})).status,403);
+ const invite=await post(admin,{action:'createInvite',days:7});assert.equal(invite.status,201,JSON.stringify(invite.data));const code=invite.data.code;assert.match(code,/^[a-f0-9]{64}$/);
+ assert.ok(!JSON.stringify((await call(gov+'?manage=1',admin)).data).includes(code));assert.notEqual((await db.prepare('SELECT code_hash FROM research_invites WHERE id=?').bind(invite.data.id).first()).code_hash,code);
+ const results=await Promise.all([post(a,{action:'redeem',code}),post(b,{action:'redeem',code})]);assert.equal(results.filter(x=>x.status===200).length,1);assert.equal(results.filter(x=>x.status===409).length,1);
+ const winner=results[0].status===200?a:b,other=winner===a?b:a;
+ const second=(await post(admin,{action:'createInvite'})).data;assert.equal((await post(other,{action:'redeem',code:second.code})).status,200);assert.equal((await post(winner,{action:'redeem',code:second.code})).status,409);
+ const revoke=(await post(admin,{action:'createInvite'})).data;assert.equal((await post(admin,{action:'revokeInvite',id:revoke.id,reason:'test'})).status,200);assert.equal((await post(c,{action:'redeem',code:revoke.code})).status,409);
+ const expired=(await post(admin,{action:'createInvite'})).data;await db.prepare('UPDATE research_invites SET expires_at=? WHERE id=?').bind('2000-01-01T00:00:00.000Z',expired.id).run();assert.equal((await post(c,{action:'redeem',code:expired.code})).status,409);
+ const w=(await call(gov,winner)).data.member,o=(await call(gov,other)).data.member;
+ const mid='material-'+crypto.randomUUID(),date=new Date().toISOString(),payload=JSON.stringify({text:'synthetic shared content',questions:[],fileIds:[],source:'QA'});
+ await db.prepare("INSERT INTO community_materials(id,owner_id,title,subject,section,tier,payload,author_alias,active,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,1,1,?,?)").bind(mid,winner,'Test material','英语','mc','cet4',payload,'private-alias-fixture',date,date).run();
+ assert.equal((await call('/api/materials?id='+mid,c)).status,404);
+ const material=await call('/api/materials?id='+mid,other);assert.equal(material.status,200);assert.ok(!JSON.stringify(material.data).includes('private-alias-fixture'));
+ assert.equal((await call(interactions,other,{action:'report',targetKind:'material',targetId:mid,revision:1,category:'privacy'})).status,201);
+ const report=(await call(interactions+'?admin=1',admin)).data.reports.find(r=>r.targetId===mid);
+ assert.equal(report.targetMemberId,w.id);
+ assert.equal((await call(interactions,admin,{action:'moderate',id:report.id,decision:'hide',reason:'test hide'})).status,200);
+ assert.equal((await call('/api/materials?id='+mid,other)).status,404);
+ assert.equal((await call('/api/materials?id='+mid+'&mine=1',winner)).status,200);
+ assert.equal((await call(interactions,admin,{action:'moderate',id:report.id,decision:'restore',reason:'test restore'})).status,200);
+ assert.equal((await call('/api/materials?id='+mid,other)).status,200);
+ assert.equal((await call(community,winner,{action:'createTopic',title:'QA'})).status,201);
+ assert.equal((await post(winner,{action:'member',id:o.id,revision:o.revision,decision:'promote',reason:'x'})).status,403);
+ assert.equal((await post(admin,{action:'member',id:w.id,revision:w.revision,decision:'promote',reason:'test appointment'})).status,200);
+ assert.equal((await post(winner,{action:'createInvite'})).status,403);
+ assert.equal((await call(interactions+'?admin=1',winner)).status,200);
+ assert.equal((await post(winner,{action:'member',id:o.id,revision:o.revision,decision:'mute',days:1,reason:'test mute'})).status,200);
+ assert.equal((await call(community,other)).status,200);assert.equal((await call(community,other,{action:'createTopic',title:'blocked'})).status,403);
+ assert.equal((await post(other,{action:'appeal',reason:'please review'})).status,201);
+ assert.equal((await post(other,{action:'appeal',reason:'duplicate'})).status,409);
+ const pending=(await call(gov+'?manage=1',winner)).data.appeals[0];assert.equal((await post(winner,{action:'resolveAppeal',id:pending.id,decision:'accepted',reason:'reviewed'})).status,200);
+ let current=(await call(gov,other)).data.member;
+ assert.equal((await post(winner,{action:'member',id:o.id,revision:o.revision,decision:'restore',reason:'stale'})).status,409);
+ assert.equal((await post(winner,{action:'member',id:o.id,revision:current.revision,decision:'suspend',reason:'test pause'})).status,200);
+ assert.equal((await call(community,other)).status,403);assert.equal((await call('/api/literature/entries',other)).status,200);assert.equal((await call(ai,other,{action:'search',scope:'private',terms:['private']})).status,200);
+ current=(await call(gov,other)).data.member;assert.equal((await post(winner,{action:'member',id:o.id,revision:current.revision,decision:'restore',reason:'test restore'})).status,200);
+ assert.equal((await call(community,other)).status,200);assert.equal((await call(gov+'?manage=1',other)).status,403);assert.match((await call(gov,other)).cache,/no-store/);
+ const logs=(await call(gov+'?manage=1',admin)).data.logs;assert.ok(logs.some(l=>l.action==='member-mute'));assert.ok(logs.some(l=>l.action==='appeal-accepted'));assert.ok(!JSON.stringify(logs).includes(code));assert.ok(!JSON.stringify(logs).includes('private evidence'));
+ console.log('PASS: default-deny, invite race, expiry/revocation, role escalation protection, mute/suspend, private study access, appeal and audit.');
+}finally{await mf.dispose();}

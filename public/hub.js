@@ -62,7 +62,7 @@ const Hub={
   renderSchools(){
     $('#screen').innerHTML=`<section class="home-intro wash-hero" aria-labelledby="home-title">
       <div class="home-intro-copy">
-        <h1 id="home-title">博雅怀石</h1>
+        <h1 id="home-title">和知 AI</h1>
         <p class="page-lead">日本文学研习、读书笔记与高校保送训练。</p>
         <div class="wash-actions">
           <a class="btn primary" href="/reading-notes">进入日本读书笔记 <span aria-hidden="true">↗</span></a>
@@ -136,7 +136,7 @@ const Hub={
   packetTools(){return `<div class="hub-packet-tools no-print"><button class="btn secondary" data-hub="packet-json">导出试卷与作答</button><button class="btn secondary" data-hub="import-packet">导入试卷</button><button class="btn secondary" data-hub="packet-markdown">导出题目与参考</button><button class="btn secondary" data-hub="print">打印 / 存为 PDF</button><a class="text-link" href="#saved">学习档案</a></div>`;},
   renderPacket(){
     const p=this.packet;if(!p)return;this.school=p.schoolId;const isWritten=p.kind==='written';
-    $('#screen').innerHTML=`<a class="back-link" href="#school/${this.e(p.schoolId)}">← 学校专区</a><header class="exam-header"><div><span class="eyebrow">训练卷 · ${isWritten?'笔试':'口试'}</span><h1>${this.e(p.title)}</h1><div class="meta">${this.e(p.schoolName)} · ${p.count} ${isWritten?'题 · 100 分 · '+p.minutes+' 分钟':'项口试任务'} · ${this.dateText(p.createdAt)}</div></div><span class="hub-cloud-state ${this.packetMeta?.revision?'saved':'unsaved'}">${this.packetMeta?.revision?'已保存':'未保存'}</span></header>${this.saveError?`<div class="notice no-print">${this.e(this.saveError)} <button class="text-link" data-hub="retry-packet-save">重试保存</button></div>`:''}${this.packetTools()}<details class="help-note"><summary>试卷说明</summary><p>${this.e(p.note)}</p></details>${isWritten?this.writtenPacketHTML():this.oralPacketHTML()}<div class="hub-print-footer">博雅怀石 · 非官方训练材料 · ${this.e(p.schoolName)} · ${this.e(p.createdAt.slice(0,10))}</div>`;
+    $('#screen').innerHTML=`<a class="back-link" href="#school/${this.e(p.schoolId)}">← 学校专区</a><header class="exam-header"><div><span class="eyebrow">训练卷 · ${isWritten?'笔试':'口试'}</span><h1>${this.e(p.title)}</h1><div class="meta">${this.e(p.schoolName)} · ${p.count} ${isWritten?'题 · 100 分 · '+p.minutes+' 分钟':'项口试任务'} · ${this.dateText(p.createdAt)}</div></div><span class="hub-cloud-state ${this.packetMeta?.revision?'saved':'unsaved'}">${this.packetMeta?.revision?'已保存':'未保存'}</span></header>${this.saveError?`<div class="notice no-print">${this.e(this.saveError)} <button class="text-link" data-hub="retry-packet-save">重试保存</button></div>`:''}${this.packetTools()}<details class="help-note"><summary>试卷说明</summary><p>${this.e(p.note)}</p></details>${isWritten?this.writtenPacketHTML():this.oralPacketHTML()}<div class="hub-print-footer">和知 AI · 非官方训练材料 · ${this.e(p.schoolName)} · ${this.e(p.createdAt.slice(0,10))}</div>`;
     if(isWritten)this.restoreWrittenTimer();
   },
   writtenPacketHTML(){
@@ -277,7 +277,7 @@ const Hub={
     if(action==='refresh-saved'){if(currentView!=='saved')navigate('saved');else this.renderSaved();}
     if(action==='import-packet')$('#hub-import-file').click();
     if(action==='backup-legacy'){button.disabled=true;try{const copy=structuredClone(practice);for(const [id,state] of Object.entries(copy.papers)){state.elapsed=elapsed(practice.papers[id]);state.startAt=null;}await this.store('legacy-backup','legacy','旧版三科练习备份',copy,null);toast('旧版练习副本已保存云端。');this.renderSaved();}catch(error){toast(error.message);button.disabled=false;}}
-    if(action==='download-legacy')this.download('博雅怀石_旧版练习备份.json',JSON.stringify(this.loadedLegacy.payload,null,2));
+    if(action==='download-legacy')this.download('和知 AI_旧版练习备份.json',JSON.stringify(this.loadedLegacy.payload,null,2));
   },
 
 async startOralRecording(){

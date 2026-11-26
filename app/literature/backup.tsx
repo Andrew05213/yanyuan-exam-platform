@@ -8,7 +8,7 @@ export function Backup({entries,materials,reload}:{entries:Entry[];materials:Mat
  function download(){
   const changedMaterials=materials.filter(w=>{const base=works.find(x=>x.id===w.id);return !base||JSON.stringify(validateMaterial(base))!==JSON.stringify(validateMaterial(w))});
   const url=URL.createObjectURL(new Blob([JSON.stringify({format:"hezhi-notes-v1",entries,materials:changedMaterials},null,2)],{type:"application/json"}));
-  const a=document.createElement("a");a.href=url;a.download="博雅怀石笔记-"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const a=document.createElement("a");a.href=url;a.download="和知 AI笔记-"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
  async function restore(file:File){
   setBusy(true);let count=0;

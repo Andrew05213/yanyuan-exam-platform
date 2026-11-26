@@ -7,7 +7,7 @@ const require=createRequire(import.meta.url);
 const {Miniflare}=require(createRequire(require.resolve('wrangler')).resolve('miniflare'));
 const root=path.resolve(import.meta.dirname,'..'),serverRoot=path.join(root,'dist/server');
 const modules=readdirSync(serverRoot,{recursive:true}).filter(f=>/\.(m?js)$/.test(f)&&f!=='index.js');
-const mf=new Miniflare({modules:[{type:'ESModule',path:path.join(serverRoot,'index.js')},...modules.map(f=>({type:'ESModule',path:path.join(serverRoot,f)}))],modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],bindings:{RESEARCH_COMMUNITY_USER_IDS:'qa-owner-A, qa-owner-B, qa-owner-C'},d1Databases:['DB'],r2Buckets:['BUCKET']});
+const mf=new Miniflare({modules:[{type:'ESModule',path:path.join(serverRoot,'index.js')},...modules.map(f=>({type:'ESModule',path:path.join(serverRoot,f)}))],modulesRoot:serverRoot,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],d1Databases:['DB'],r2Buckets:['BUCKET']});
 const endpoint='/api/literature/community';
 async function call(route,user,method='GET',body,extra={}){
  const response=await mf.dispatchFetch('https://study.test'+route,{method,headers:{...(user?{'oai-authenticated-user-id':user,'oai-authenticated-user-email':user+'@qa.invalid'}:{}),...(body?{'Content-Type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined});
@@ -23,11 +23,12 @@ try{
   for(const statement of readFileSync(path.join(root,'drizzle',f),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(statement).run();
  }
  const a='qa-owner-A',b='qa-owner-B',c='qa-owner-C';
+ for(const uid of [a,b,c])await db.prepare("INSERT INTO research_memberships(user_id,id,role,state,change_id,created_at,updated_at) VALUES(?,?,'member','active',?,?,?)").bind(uid,'fixture-'+uid,'fixture-'+uid,new Date().toISOString(),new Date().toISOString()).run();
  const va=await save(a,'Original A');const vb=await save(b,'Independent B');
  assert.equal((await get(null)).status,401);
  const uninvited='ordinary-account';
- assert.deepEqual((await get(uninvited,'?capabilities=1')).data,{available:false});
- assert.deepEqual((await get(a,'?capabilities=1')).data,{available:true});
+ assert.deepEqual((await call('/api/literature/governance',uninvited)).data.read,false);
+ assert.deepEqual((await call('/api/literature/governance',a)).data.read,true);
  for(const route of [endpoint,'/api/literature/interactions','/api/literature/network']){
   assert.equal((await call(route,uninvited)).status,403);
   assert.equal((await call(route,uninvited,'POST',{action:'createTopic',title:'Permission check'})).status,403);

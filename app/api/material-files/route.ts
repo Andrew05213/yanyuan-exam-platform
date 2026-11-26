@@ -1,3 +1,5 @@
+import {communityAccess,requireCommunity} from "../../../lib/community-access";
+import {sharedMaterialVisible} from "../../../lib/shared-material-access";
 import {env} from 'cloudflare:workers';
 import {and,eq,sql} from 'drizzle-orm';
 import {getDb} from '../../../db/index';
@@ -6,12 +8,16 @@ import {principal,sameOrigin,AccessError,fail,privateHeaders} from '../../../lib
 export const dynamic='force-dynamic';const MAX=8*1024*1024;
 export async function GET(request:Request){try{
  const id=new URL(request.url).searchParams.get('id')||'',db=getDb();const f=await db.select().from(materialFiles).where(eq(materialFiles.id,id)).get();if(!f||!env.BUCKET)throw new AccessError('文件不存在。',404);
- const m=f.materialId?await db.select({id:communityMaterials.id,payload:communityMaterials.payload}).from(communityMaterials).where(and(eq(communityMaterials.id,f.materialId),eq(communityMaterials.active,1))).get():null;
- let publicFile=!!m&&JSON.parse(m.payload).fileIds.includes(f.id);if(!publicFile){let user;try{user=principal(request);}catch{throw new AccessError('文件不存在。',404);}if(user.id!==f.ownerId)throw new AccessError('文件不存在。',404);}
+ let user;try{user=principal(request);}catch{throw new AccessError('文件不存在。',404);}
+ if(user.id!==f.ownerId){
+  if(!(await communityAccess(request,user.id)).read||!f.materialId)throw new AccessError('文件不存在。',404);
+  const m=await db.select({id:communityMaterials.id,payload:communityMaterials.payload}).from(communityMaterials).where(and(eq(communityMaterials.id,f.materialId),eq(communityMaterials.active,1),sharedMaterialVisible(user.id))).get();
+  if(!m||!JSON.parse(m.payload).fileIds.includes(f.id))throw new AccessError('文件不存在。',404);
+ }
  const object=await env.BUCKET.get(f.objectKey);if(!object)throw new AccessError('文件不存在。',404);return new Response(object.body,{headers:{...privateHeaders,'Content-Type':f.mime,'Content-Disposition':`attachment; filename*=UTF-8''${encodeURIComponent(f.filename)}`,'Content-Security-Policy':"sandbox; default-src 'none'"}});
  }catch(error){return fail(error,'文件暂时无法读取。');}}
 export async function POST(request:Request){try{
- const user=principal(request);sameOrigin(request);if(!env.BUCKET)throw Error();if(Number(request.headers.get('Content-Length'))>MAX)throw new AccessError('单个附件最多8MB。',413);
+ const user=principal(request);sameOrigin(request);await requireCommunity(request,user.id,'write');if(!env.BUCKET)throw Error();if(Number(request.headers.get('Content-Length'))>MAX)throw new AccessError('单个附件最多8MB。',413);
  const reader=request.body?.getReader();if(!reader)throw new AccessError('没有文件内容。',400);const chunks=[];let size=0;while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>MAX){await reader.cancel();throw new AccessError('单个附件最多8MB。',413);}chunks.push(value);}const bytes=new Uint8Array(size);let offset=0;for(const b of chunks){bytes.set(b,offset);offset+=b.length;}
  let filename;try{filename=decodeURIComponent(request.headers.get('X-File-Name')||'资料').replace(/[\r\n\0]/g,'').slice(0,180);}catch{throw new AccessError('文件名无效。',400);}const ext=filename.split('.').pop()?.toLowerCase();let mime='';const head=String.fromCharCode(...bytes.slice(0,5));
  if(ext==='pdf'&&head==='%PDF-')mime='application/pdf';else if(ext==='docx'&&bytes[0]===80&&bytes[1]===75)mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document';else if(['jpg','jpeg'].includes(ext||'')&&bytes[0]===255&&bytes[1]===216)mime='image/jpeg';else if(ext==='png'&&bytes[0]===137&&bytes[1]===80)mime='image/png';else if(ext==='txt'){try{new TextDecoder('utf-8',{fatal:true}).decode(bytes);mime='text/plain;charset=utf-8';}catch{}}

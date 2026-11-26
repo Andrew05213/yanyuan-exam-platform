@@ -120,6 +120,13 @@
       "when": 1795610000003,
       "tag": "0016_research_network",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1795610000004,
+      "tag": "0017_research_governance",
+      "breakpoints": true
     }
   ]
 }
