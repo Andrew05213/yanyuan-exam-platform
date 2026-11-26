@@ -2,6 +2,18 @@ export const folders=["active","archived","trash"] as const;
 export type Folder=typeof folders[number];
 export type Entry={id:string;workId?:string|null;title:string;content:string;status:string;updated_at?:string;tags?:string|null;locator?:string|null;reviewOn?:string|null;revision?:number;folder?:Folder;language?:string|null;sourceLanguage?:string|null;discipline?:string|null};
 export const noteId=(value:unknown):value is string=>typeof value==="string"&&/^[a-zA-Z0-9_-]{1,100}$/.test(value);
+export const workNotePrefix="note_work_";
+
+export function workReadingNote(entries:Entry[],work:{id:string;title:string}){
+ const original=entries.find(note=>note.id===work.id);
+ if(original&&(original.folder??"active")==="active")return original;
+ const replacements=entries.filter(note=>note.workId===work.id&&(
+   note.id.startsWith(workNotePrefix)||(original&&note.title===work.title&&!note.tags?.includes("面试复练"))
+ ));
+ return replacements.find(note=>(note.folder??"active")==="active")
+   ?? replacements.find(note=>note.folder==="archived")
+   ?? (original?.folder==="archived"?original:undefined);
+}
 
 export function dueNotes(entries:Entry[],now=new Date()){
  const today=new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Shanghai",year:"numeric",month:"2-digit",day:"2-digit"}).format(now);
