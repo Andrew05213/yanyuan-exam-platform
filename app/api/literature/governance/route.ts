@@ -66,6 +66,7 @@ export async function POST(request:Request){try{
   const current=await d.prepare("SELECT user_id AS uid,role,state,revision FROM research_memberships WHERE id=?").bind(member).first<{uid:string;role:string;state:string;revision:number}>();
   if(!current)throw new AccessError("成员不存在。",404);
   if(current.uid===uid||(!isAdmin(request)&&current.role!=="member"))throw new AccessError("不能处理自己或越权处理管理员。",403);
+  if(revision!==current.revision)throw new AccessError("成员权限已更新，请刷新。",409);
   const decision=b.decision;
   let role=current.role,state=current.state,mute:string|null=null;
   if(decision==="mute"){const days=b.days;if(typeof days!=="number"||!Number.isInteger(days)||days<1||days>30||state!=="active")throw new AccessError("禁言期限须为1至30天，且成员须有效。",400);mute=new Date(Date.now()+days*86400000).toISOString();}
@@ -75,7 +76,7 @@ export async function POST(request:Request){try{
   else if(decision==="promote"||decision==="demote"){if(!isAdmin(request)||state!=="active")throw new AccessError("仅系统管理员可任命有效社区成员。",403);role=decision==="promote"?"moderator":"member";}
   else throw new AccessError("处理方式无效。",400);
   const r=await d.batch([
-   d.prepare("UPDATE research_memberships SET role=?,state=?,mute_until=?,reason=?,revision=revision+1,change_id=?,updated_at=? WHERE id=? AND revision=?").bind(role,state,mute,why,change,date,member,revision),
+   d.prepare("UPDATE research_memberships SET role=?,state=?,mute_until=?,reason=?,revision=revision+1,change_id=?,updated_at=? WHERE id=? AND revision=?").bind(role,state,mute,why,change,date,member,current.revision),
    d.prepare("INSERT INTO research_governance_audit(id,actor_id,action,target_id,reason,created_at) SELECT ?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM research_memberships WHERE id=? AND change_id=?)").bind(crypto.randomUUID(),uid,"member-"+decision,member,why,date,member,change)
   ]);
   if(!r[0].meta.changes)throw new AccessError("成员权限已更新，请刷新。",409);return json({ok:true});

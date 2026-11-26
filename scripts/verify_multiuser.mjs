@@ -95,6 +95,9 @@ try{
  check((await call('/api/materials','B',{...material,id:m.id,expectedRevision:m.revision})).status,404);
  check((await call('/api/materials?catalog=1')).restricted,true);check((await call('/api/materials?catalog=1')).items.length,0);
  const publicList=await call('/api/materials?catalog=1','B');check(publicList.items.length,1);
+ await db.prepare("UPDATE research_memberships SET state='suspended' WHERE user_id='A'").run();
+ const ownCatalog=await call('/api/materials?catalog=1','A');check(ownCatalog.restricted,true);check(ownCatalog.items[0]?.id,publicList.items[0].id);
+ await db.prepare("UPDATE research_memberships SET state='active' WHERE user_id='A'").run();
  check((await mf.dispatchFetch('https://study.test/api/material-files?id='+file.id)).status,404);check((await mf.dispatchFetch('https://study.test/api/material-files?id='+file.id,{headers:actor('B')})).status,200);
  const box={console,crypto,structuredClone};vm.createContext(box);for(const f of ['hub-engine.js','workflows-engine.js','difficulty-engine.js'])vm.runInContext(readFileSync(path.join(root,'public',f),'utf8'),box);
  const catalog=JSON.parse(readFileSync(path.join(root,'public/difficulty.json')));catalog.items=publicList.items;

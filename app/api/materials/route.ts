@@ -12,14 +12,18 @@ export async function GET(request:Request){try{
  const user=request.headers.get('oai-authenticated-user-id')?principal(request):null;
  if(mine&&!user)throw new AccessError('请先登录。',401);
  const allowed=mine||!!user&&(await communityAccess(request,user.id)).read;
- if(!allowed){if(id)throw new AccessError('资料不存在。',404);return reply({materials:[],...(params.get('catalog')==='1'?{items:[]} : {}),limit:200,next:null,restricted:true});}
- if(id){const r=await db.select().from(communityMaterials).where(and(eq(communityMaterials.id,id),mine?eq(communityMaterials.ownerId,user!.id):and(eq(communityMaterials.active,1),sharedMaterialVisible(user!.id)))).get();if(!r)return reply({error:'资料不存在。'},404);return reply({material:publicMaterial(r)});}
+ const catalog=params.get('catalog')==='1';
+ if(!user&&id)throw new AccessError('资料不存在。',404);
+ if(!user||!allowed&&!catalog&&!id)return reply({materials:[],...(catalog?{items:[]} : {}),limit:200,next:null,restricted:true});
+ const owner=eq(communityMaterials.ownerId,user.id);
+ const visible=mine?owner:and(eq(communityMaterials.active,1),allowed?sharedMaterialVisible(user.id):owner);
+ if(id){const r=await db.select().from(communityMaterials).where(and(eq(communityMaterials.id,id),visible)).get();if(!r)return reply({error:'资料不存在。'},404);return reply({material:publicMaterial(r)});}
  const beforeTime=params.get('beforeTime'),beforeId=params.get('beforeId');
  if((beforeTime&&!beforeId)||(!beforeTime&&beforeId)||(beforeTime&&!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(beforeTime))||(beforeId&&!/^material-[a-f0-9-]{36}$/.test(beforeId)))throw new AccessError('分页参数无效。',400);
  const cursor=beforeTime&&beforeId?or(lt(communityMaterials.updatedAt,beforeTime),and(eq(communityMaterials.updatedAt,beforeTime),lt(communityMaterials.id,beforeId))):undefined;
- const rows=await db.select().from(communityMaterials).where(and(mine?eq(communityMaterials.ownerId,user!.id):and(eq(communityMaterials.active,1),sharedMaterialVisible(user!.id)),cursor)).orderBy(desc(communityMaterials.updatedAt),desc(communityMaterials.id)).limit(201);
+ const rows=await db.select().from(communityMaterials).where(and(visible,cursor)).orderBy(desc(communityMaterials.updatedAt),desc(communityMaterials.id)).limit(201);
  const hasMore=rows.length>200,records=rows.slice(0,200),last=records.at(-1);
- return reply({materials:records.map(r=>({...publicMaterial(r),questions:undefined,text:undefined,questionCount:JSON.parse(r.payload).questions.length})),...(params.get('catalog')==='1'?{items:records.flatMap(materialUnits)}:{}),limit:200,next:hasMore&&last?{time:last.updatedAt,id:last.id}:null});
+ return reply({materials:records.map(r=>({...publicMaterial(r),questions:undefined,text:undefined,questionCount:JSON.parse(r.payload).questions.length})),...(catalog?{items:records.flatMap(materialUnits)}:{}),...(!allowed?{restricted:true}:{}),limit:200,next:hasMore&&last?{time:last.updatedAt,id:last.id}:null});
  }catch(error){return fail(error,'共享资料暂时无法读取。');}}
 export async function POST(request:Request){try{
  const user=principal(request);sameOrigin(request);const raw=await readLimitedText(request,750000);if(raw.length>750000)throw new AccessError('单份资料请控制在750KB文字以内。',413);const body=JSON.parse(raw),db=getDb(),id=body.id||'material-'+crypto.randomUUID();if(!/^material-[a-f0-9-]{36}$/.test(id))throw new AccessError('资料编号无效。',400);
