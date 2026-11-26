@@ -1,8 +1,8 @@
-/* 燕园备考 · 管理后台
+/* 博雅怀石 · 管理后台
    与学生端共享纸色、墨色与朱砂色；以更紧凑的间距、分栏和表格提高操作效率。 */
 
 :root {
-  --paper: #f4f0e7;
+  --paper: #f7f5ec;
   --paper-deep: #ece6db;
   --surface: #fffdf8;
   --surface-2: #f1ece2;
@@ -12,8 +12,8 @@
   --line: #d9d1c2;
   --line-soft: #e7e0d4;
   --line-strong: #bdb19e;
-  --accent: #9b4248;
-  --accent-deep: #7c3339;
+  --accent: #903e33;
+  --accent-deep: #743127;
   --accent-soft: #f1e4e0;
   --green: #365d4f;
   --green-soft: #e7ede7;

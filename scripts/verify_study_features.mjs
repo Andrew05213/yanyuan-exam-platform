@@ -41,14 +41,39 @@ async function setProvider(protocol,baseUrl) {
 try {
   const db=await mf.getD1Database('DB');
   for(const file of readdirSync(path.join(root,'drizzle')).filter(name=>name.endsWith('.sql')).sort()) {
+    if(file.startsWith('0012_')){
+      await db.prepare("INSERT INTO entries(user_id,id,title,content,status,updated_at) VALUES('migration-check','legacy-note','旧笔记','原正文','已读','2026-11-20T02:00:00Z')").run();
+    }
     for(const sql of readFileSync(path.join(root,'drizzle',file),'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean)) {
       await db.prepare(sql).run();
     }
   }
   const notes='/api/literature/entries',bank='/api/question-bank',questions='/api/ai-questions',review='/api/literature/feedback';
+  const legacy=(await call(notes,'migration-check')).body[0];
+  assert.deepEqual([legacy.id,legacy.content,legacy.folder,legacy.revision,legacy.language],['legacy-note','原正文','active',1,null]);
+  assert.deepEqual((await call('/api/literature/community?capabilities=1','A')).body,{available:false});
+  assert.equal((await call('/api/literature/community','A')).status,403);
   assert.equal((await call(notes,null)).status,401);
-  assert.equal((await call(notes,'A','PUT',{id:'test_note',title:'研究笔记',content:'文本依据',status:'在读'})).status,200);
-  assert.equal((await call(notes,'A')).body[0].title,'研究笔记');
+  assert.equal((await call(notes,'A','PUT',{id:'test_note',title:'研究笔记',content:'文本依据',status:'在读',language:'日语',sourceLanguage:'日本語',discipline:'文学'})).status,200);
+  const note=(await call(notes,'A')).body[0];
+  assert.equal(note.title,'研究笔记');
+  assert.equal(note.revision,1);
+  const edits=await Promise.all(['甲端修改','乙端修改'].map(content=>call(notes,'A','PUT',{...note,content})));
+  assert.deepEqual(edits.map(item=>item.status).sort(),[200,409]);
+  const savedNote=edits.find(item=>item.status===200).body.entry;
+  assert.equal(savedNote.revision,2);
+  assert.deepEqual(edits.find(item=>item.status===409).body.current,savedNote);
+  assert.equal((await call(notes,'B','PATCH',{id:note.id,revision:2,folder:'trash'})).body.current,null);
+  const moved=await call(notes,'A','PATCH',{id:note.id,revision:2,folder:'archived'});
+  assert.equal(moved.body.entry.folder,'archived');
+  assert.equal((await call(notes,'A','PUT',{...savedNote,revision:3})).status,409);
+  assert.equal((await call(notes,'A','PATCH',{id:note.id,revision:3,folder:'trash'})).body.entry.folder,'trash');
+  const restored=(await call(notes,'A','PATCH',{id:note.id,revision:4,folder:'active'})).body.entry;
+  assert.equal(restored.revision,5);
+  assert.equal(restored.content,savedNote.content);
+  assert.deepEqual([restored.language,restored.sourceLanguage,restored.discipline],['日语','日本語','文学']);
+  assert.equal((await call(notes,'A','POST',{entries:[note]})).body.changed,0);
+  assert.equal((await call(notes,'A')).body[0].revision,5);
   assert.deepEqual((await call(notes,'B')).body,[]);
   assert.equal((await call(questions,'A')).body.ready,false);
   await setProvider('openai-responses','https://api.openai.com/v1');

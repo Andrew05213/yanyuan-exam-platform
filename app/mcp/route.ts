@@ -24,7 +24,7 @@ export async function POST(request:Request){
     const raw=await readLimitedText(request,1000000);if(raw.length>1000000)throw Error('请求超过限制');rpc=JSON.parse(raw);
     const result=async()=>{
       if(rpc.method==='server/discover')return {supportedVersions:['2026-07-28'],capabilities:{tools:{}}};
-      if(rpc.method==='initialize')return {protocolVersion:'2024-11-05',capabilities:{tools:{}},serverInfo:{name:'燕园备考',version:'2.1'}};
+      if(rpc.method==='initialize')return {protocolVersion:'2024-11-05',capabilities:{tools:{}},serverInfo:{name:'博雅怀石',version:'2.1'}};
       if(rpc.method==='tools/list')return {tools};
       if(rpc.method!=='tools/call')throw Error('不支持的方法');
       const {name,arguments:args={}}=rpc.params||{};

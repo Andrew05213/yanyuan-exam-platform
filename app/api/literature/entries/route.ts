@@ -1,36 +1,82 @@
-import { getChatGPTUser } from "../../../chatgpt-auth";
-import { storage } from "../../../../db/store";
-import { validEntry, type Entry } from "../../../literature/notes";
+import {getChatGPTUser} from "../../../chatgpt-auth";
+import {storage} from "../../../../db/store";
+import {folders,noteId,validEntry,type Entry} from "../../../literature/notes";
+import {AccessError,fail,privateHeaders,readLimitedText,sameOrigin} from "../../../../lib/user-access";
 
-const fail=(error:string,status:number)=>Response.json({error},{status});
-export async function GET(){
+const columns="id,work_id AS workId,title,content,status,tags,locator,review_on AS reviewOn,updated_at,revision,folder,language,source_language AS sourceLanguage,discipline";
+const insert="INSERT INTO entries(user_id,id,title,content,status,updated_at,work_id,tags,locator,review_on,language,source_language,discipline,folder) VALUES(?,?,?,?,?,?,?,?,?,?,NULLIF(?,''),NULLIF(?,''),NULLIF(?,''),?) ON CONFLICT(user_id,id) DO NOTHING";
+const reply=(body:unknown,status=200,headers:Record<string,string>={})=>Response.json(body,{status,headers:{...privateHeaders,...headers}});
+
+async function userId() {
   const user=await getChatGPTUser();
-  if(!user)return fail("请先登录",401);
-  try{
-    const rows=await storage().prepare("SELECT id,work_id AS workId,title,content,status,tags,locator,review_on AS reviewOn,updated_at FROM entries WHERE user_id=? ORDER BY updated_at DESC").bind(user.userId).all();
-    return Response.json(rows.results,{headers:{"Cache-Control":"private, no-store","X-Draft-Owner":encodeURIComponent(user.userId)}});
-  }catch{return fail("暂时无法读取笔记",503);}
+  if(!user)throw new AccessError("请先登录",401);
+  return user.userId;
 }
-const insert="INSERT INTO entries(user_id,id,title,content,status,updated_at,work_id,tags,locator,review_on) VALUES(?,?,?,?,?,?,?,?,?,?)";
-async function write(request:Request, importing:boolean){
-  const user=await getChatGPTUser();
-  if(!user)return fail("请先登录",401);
-  const origin=request.headers.get("origin");
-  if(origin&&origin!==new URL(request.url).origin)return fail("来源不匹配",403);
-  const body=await request.json().catch(()=>null);
-  const rows:unknown=importing?(body as {entries?:unknown}|null)?.entries:[body];
-  if(!Array.isArray(rows)||!rows.length||rows.length>40||!rows.every(validEntry))return fail("请检查笔记格式与长度",400);
-  const updated_at=new Date().toISOString();
-  const sql=insert+(importing?" ON CONFLICT(user_id,id) DO NOTHING":" ON CONFLICT(user_id,id) DO UPDATE SET title=excluded.title,content=excluded.content,status=excluded.status,updated_at=excluded.updated_at,work_id=COALESCE(excluded.work_id,entries.work_id),tags=COALESCE(excluded.tags,entries.tags),locator=COALESCE(excluded.locator,entries.locator),review_on=COALESCE(excluded.review_on,entries.review_on)");
-  try{
-    const db=storage();
-    const batch=rows.map(e=>{
-      const time=importing&&e.updated_at&&Number.isFinite(Date.parse(e.updated_at))?new Date(e.updated_at).toISOString():updated_at;
-      return db.prepare(sql).bind(user.userId,e.id,e.title.trim(),e.content,e.status,time,e.workId??(e.id.startsWith("note_")?("workId" in e?"":null):e.id),e.tags??null,e.locator??null,e.reviewOn??null);
-    });
-    const results=await db.batch(batch);
-    return Response.json({ok:true,updated_at,changed:results.reduce((n,r)=>n+r.meta.changes,0)});
-  }catch{return fail("保存失败。请保留草稿或备份文件后重试。",503);}
+
+async function body(request:Request,max:number) {
+  sameOrigin(request);
+  try{return JSON.parse(await readLimitedText(request,max));}
+  catch(error){if(error instanceof AccessError)throw error;throw new AccessError("请检查笔记数据格式。",400);}
 }
-export const PUT=(request:Request)=>write(request,false);
-export const POST=(request:Request)=>write(request,true);
+
+function fields(entry:Entry,stamp:string) {
+  return [entry.title.trim(),entry.content,entry.status,stamp,
+    entry.workId??(entry.id.startsWith("note_")?("workId" in entry?"":null):entry.id),
+    entry.tags??null,entry.locator??null,entry.reviewOn??null,
+    ...[entry.language,entry.sourceLanguage,entry.discipline].map(value=>value===undefined?null:value?.trim()??"")];
+}
+
+async function changed(owner:string,id:string) {
+  const current=await storage().prepare("SELECT "+columns+" FROM entries WHERE user_id=? AND id=?").bind(owner,id).first<Entry>();
+  return reply({error:"云端笔记已更新。你的修改仍保存在草稿中。",current},409);
+}
+
+export async function GET() {
+  try {
+    const owner=await userId();
+    const rows=await storage().prepare("SELECT "+columns+" FROM entries WHERE user_id=? ORDER BY updated_at DESC").bind(owner).all<Entry>();
+    return reply(rows.results,200,{"X-Draft-Owner":encodeURIComponent(owner)});
+  }catch(error){return fail(error,"暂时无法读取笔记");}
+}
+
+export async function PUT(request:Request) {
+  try {
+    const owner=await userId();
+    const entry=await body(request,650_000);
+    if(!validEntry(entry))throw new AccessError("请检查笔记格式与长度。",400);
+    const revision=entry.revision??0;
+    if(!Number.isSafeInteger(revision)||revision<0)throw new AccessError("笔记版本无效，请重新读取。",400);
+    const stamp=new Date().toISOString(),db=storage();
+    const result=revision===0
+      ? await db.prepare(insert+" RETURNING "+columns).bind(owner,entry.id,...fields(entry,stamp),"active").first<Entry>()
+      : await db.prepare("UPDATE entries SET title=?,content=?,status=?,updated_at=?,work_id=COALESCE(?,work_id),tags=COALESCE(?,tags),locator=COALESCE(?,locator),review_on=COALESCE(?,review_on),language=NULLIF(COALESCE(?,language),''),source_language=NULLIF(COALESCE(?,source_language),''),discipline=NULLIF(COALESCE(?,discipline),''),revision=revision+1 WHERE user_id=? AND id=? AND revision=? AND folder='active' RETURNING "+columns)
+        .bind(...fields(entry,stamp),owner,entry.id,revision).first<Entry>();
+    if(!result)return await changed(owner,entry.id);
+    return reply({ok:true,changed:1,updated_at:result.updated_at,entry:result});
+  }catch(error){return fail(error,"保存失败。请保留草稿后重试。");}
+}
+
+export async function POST(request:Request) {
+  try {
+    const owner=await userId(),payload=await body(request,24_500_000),entries=payload?.entries as unknown;
+    if(!Array.isArray(entries)||!entries.length||entries.length>40||!entries.every(validEntry))throw new AccessError("请检查备份格式与长度。",400);
+    const db=storage(),stamp=new Date().toISOString();
+    const results=await db.batch(entries.map(entry=>{
+      const date=entry.updated_at&&Number.isFinite(Date.parse(entry.updated_at))?new Date(entry.updated_at).toISOString():stamp;
+      return db.prepare(insert).bind(owner,entry.id,...fields(entry,date),entry.folder??"active");
+    }));
+    return reply({ok:true,updated_at:stamp,changed:results.reduce((n,result)=>n+result.meta.changes,0)});
+  }catch(error){return fail(error,"导入笔记失败，请重试。");}
+}
+
+export async function PATCH(request:Request) {
+  try {
+    const owner=await userId(),payload=await body(request,1024);
+    const {id,revision,folder}=payload??{};
+    if(!noteId(id)||!Number.isSafeInteger(revision)||revision<1||!folders.includes(folder))throw new AccessError("笔记操作无效。",400);
+    const result=await storage().prepare(
+      "UPDATE entries SET folder=?,revision=revision+1 WHERE user_id=? AND id=? AND revision=? AND folder<>? AND (?<>'archived' OR folder='active') RETURNING "+columns
+    ).bind(folder,owner,id,revision,folder,folder).first<Entry>();
+    return result?reply({ok:true,entry:result}):await changed(owner,id);
+  }catch(error){return fail(error,"移动笔记失败，请重试。");}
+}
