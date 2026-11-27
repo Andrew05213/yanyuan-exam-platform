@@ -63,6 +63,6 @@ try{
  }
  console.log('PASS: Chromium desktop/mobile plan save, reload, evidence and training navigation.');
 }finally{
- socket?.close();if(chrome?.pid&&chrome.exitCode===null){const closed=once(chrome,'exit');chrome.kill();await closed;}
+ socket?.close();if(chrome?.pid&&chrome.exitCode===null&&chrome.signalCode===null){const closed=once(chrome,'exit');chrome.kill();await closed;}
  app.closeAllConnections();app.close();await mf.dispose();rmSync(userdir,{recursive:true,force:true,maxRetries:10,retryDelay:200});
 }
