@@ -41,7 +41,7 @@ const Admissions={
    '</details><div class="toolbar"><button type="submit" value="preview" class="btn primary">查看资格与冲突</button><button type="submit" value="save" class="btn secondary">保存方案</button><button type="button" data-delete-plan class="btn secondary"'+(!version?' hidden':'')+'>删除已保存方案</button></div></fieldset>'+
    '<p role="status" aria-live="polite"></p></form><div class="admissions-results"></div>';
 
-  // Private, transient self-assessment. No storage or provider transmission.
+  // Private self-assessment; persisted only with explicit plan save.
   const profile=document.createElement('section');
   profile.className='hub-panel';
   const dimensions=[
@@ -68,9 +68,9 @@ const Admissions={
    [['可靠证据明显不足','自评有限','达到参考','充分证据达到目标'],['保送优先','按结果','高考主要备选','明确优先高考']],
    [['0–3项','4–5项','6–7项','8–10项'],['同前提矛盾','重要冲突待解','条件已解释','多情景一致']]
   ];
-  profile.innerHTML='<h2>十维学生画像 · 自评预览</h2><p>暂定工程规则，不是心理量表或录取概率。仅在本页内计算，不保存、不发送给 AI；可跳过任何问题。各维度含义不同，不计算总分。</p><div data-profile-question></div><div class="toolbar"><button type="button" data-prev class="btn secondary">上一维</button><button type="button" data-next class="btn primary">下一维</button></div><div data-profile-result aria-live="polite"></div>';
+  profile.innerHTML='<h2>十维学生画像 · 自评预览</h2><p>暂定工程规则，不是心理量表或录取概率。点击保存方案时随私人方案保存，不发送给 AI；可跳过任何问题。各维度含义不同，不计算总分。</p><div data-profile-question></div><div class="toolbar"><button type="button" data-prev class="btn secondary">上一维</button><button type="button" data-next class="btn primary">下一维</button></div><div data-profile-result aria-live="polite"></div>';
   root.prepend(profile);
-  const answers=dimensions.map(()=>[null,null]);let current=0;
+  const answers=dimensions.map((_,i)=>[...(plan.profile?.[i]??[null,null])]);let current=0;
   const question=profile.querySelector('[data-profile-question]'),result=profile.querySelector('[data-profile-result]');
   const draw=()=>{
    const d=dimensions[current];
@@ -128,7 +128,7 @@ const Admissions={
     exams.push({schoolId:group.dataset.exam,start:value('start'),end:value('end'),location:value('location'),from:value('from'),
      travelMinutes:value('travelMinutes')===''?null:Number(value('travelMinutes'))});
    }
-   const next={year:Number(f.get('year')),language:f.get('language'),qualification:f.get('qualification'),examRegistration:f.get('examRegistration'),schoolIds,exams};
+   const next={year:Number(f.get('year')),language:f.get('language'),qualification:f.get('qualification'),examRegistration:f.get('examRegistration'),schoolIds,exams,profile:answers.map(pair=>[...pair])};
    const save=event.submitter?.value==='save';
    inputs.disabled=true;message.textContent=save?'正在保存…':'正在核对…';
    try{
