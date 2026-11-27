@@ -1,0 +1,56 @@
+import {eligibility,examConflict,pathState,RULE_VERSION} from './core.mjs';
+import {admissionsPolicies,admissionsSchools} from './policies';
+import {AccessError} from '../user-access';
+
+const schoolIds=new Set<string>(admissionsSchools.map(s=>s.id));
+export const admissionsLanguages=[...new Set(admissionsPolicies.flatMap(p=>p.eligibleLanguages))];
+const shanghaiNow=()=>new Date(Date.now()+8*3600000);
+export const admissionsYear=()=>shanghaiNow().getUTCFullYear();
+export const defaultAdmissionsYear=()=>admissionsYear()+(shanghaiNow().getUTCMonth()>=6?1:0);
+type Qualification='confirmed'|'pending'|'denied';
+type Check='yes'|'no'|'unknown';
+type Exam={schoolId:string;start:string;end:string;location:string;from:string;travelMinutes:number|null};
+export type AdmissionPlan={year:number;language:string;qualification:Qualification;examRegistration:Check;schoolIds:string[];exams:Exam[]};
+
+function invalid():never{throw new AccessError('请检查年份、报考条件与考试日程。',400);}
+const dateTime=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+function parseTime(value:string){
+  if(!dateTime.test(value))return NaN;
+  const instant=Date.parse(value+'+08:00');
+  return Number.isFinite(instant)&&new Date(instant+8*3600000).toISOString().slice(0,16)===value?instant:NaN;
+}
+
+export function admissionPlan(value:unknown):AdmissionPlan{
+  const b=value as Partial<AdmissionPlan>|null;
+  if(!b||typeof b!=='object'||!Number.isInteger(b.year)||b.year!<2020||b.year!>admissionsYear()+3||
+    typeof b.language!=='string'||(b.language!==''&&!admissionsLanguages.includes(b.language as typeof admissionsLanguages[number]))||
+    !['confirmed','pending','denied'].includes(b.qualification??'')||!['yes','no','unknown'].includes(b.examRegistration??'')||
+    !Array.isArray(b.schoolIds)||!b.schoolIds.length||b.schoolIds.length>schoolIds.size||
+    new Set(b.schoolIds).size!==b.schoolIds.length||b.schoolIds.some(id=>!schoolIds.has(id))||
+    !Array.isArray(b.exams)||b.exams.length>12)invalid();
+  const exams=b.exams.map(e=>{
+    if(!e||!b.schoolIds!.includes(e.schoolId)||typeof e.start!=='string'||typeof e.end!=='string'||
+      !(parseTime(e.end)>parseTime(e.start))||typeof e.location!=='string'||e.location.trim().length>80||
+      typeof e.from!=='string'||e.from.trim().length>80||
+      (e.travelMinutes!==null&&(!Number.isInteger(e.travelMinutes)||e.travelMinutes<0||e.travelMinutes>10080))||
+      (e.travelMinutes!==null&&!e.from.trim()))invalid();
+    return {schoolId:e.schoolId,start:e.start,end:e.end,location:e.location.trim(),from:e.from.trim(),travelMinutes:e.travelMinutes};
+  });
+  return {year:b.year!,language:b.language,qualification:b.qualification!,examRegistration:b.examRegistration!,schoolIds:b.schoolIds,exams};
+}
+
+export function assessAdmissions(plan:AdmissionPlan,now=Date.now()){
+  const results=admissionsSchools.filter(s=>plan.schoolIds.includes(s.id)).map(school=>{
+    const policy=admissionsPolicies.find(p=>p.schoolId===school.id&&p.year===plan.year);
+    const reference=policy??admissionsPolicies.find(p=>p.schoolId===school.id);
+    const current=policy&&Date.parse(policy.registrationCloses)>now?policy:undefined;
+    const status=eligibility({qualification:plan.qualification,year:plan.year,program:current,
+      language:plan.language,hardChecks:[plan.examRegistration]});
+    return {...school,status,policy:reference??null,historical:!!reference&&!current};
+  });
+  const normalized=plan.exams.map(exam=>({...exam,start:parseTime(exam.start),end:parseTime(exam.end),transferMs:exam.travelMinutes===null?null:exam.travelMinutes*60000}));
+  const conflicts=normalized.flatMap((exam,i)=>normalized.slice(i+1).map((other,j)=>({
+    first:i,second:i+1+j,status:examConflict(exam,other),
+  })));
+  return {results,conflicts,path:pathState(plan.qualification),ruleVersion:RULE_VERSION};
+}
