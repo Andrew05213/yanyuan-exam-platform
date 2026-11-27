@@ -30,8 +30,11 @@ const scopeArgs=(actor:string)=>[actor,actor,actor,actor,actor];
 const safeId=(value:unknown)=>{if(typeof value!=='string'||!uuid.test(value))throw missing();return value;};
 const readProject=(row:Row)=>JSON.parse(row.payload) as Project;
 
-async function notes(db:Store,actor:string){
-  return (await db.prepare("SELECT id,title FROM entries WHERE user_id=? AND folder='active' ORDER BY updated_at DESC,id LIMIT 300").bind(actor).all<Note>()).results;
+async function notes(db:Store,actor:string,offset:number,search:string){
+  const rows=(await db.prepare("SELECT id,title FROM entries WHERE user_id=? AND folder='active'"+
+    " AND (?='' OR instr(lower(title),lower(?))>0) ORDER BY updated_at DESC,id LIMIT 51 OFFSET ?")
+    .bind(actor,search,search,offset).all<Note>()).results;
+  return {notes:rows.slice(0,50),nextNoteOffset:rows.length>50?offset+50:null};
 }
 
 function summary(project:Project,actor:string,updatedAt:string){
@@ -84,8 +87,10 @@ export async function GET(request:Request){
     if(requested){
       const {project,updatedAt}=await loadProject(db,actor,safeId(requested));
       if(!role(project,actor))return json({project:summary(project,actor,updatedAt),notes:[]});
-      const [projectDetail,own]=await Promise.all([detail(project,actor,db),notes(db,actor)]);
-      return json({project:projectDetail,notes:own});
+      const offset=Number(params.get('noteOffset')??0),search=params.get('noteQuery')?.trim()??'';
+      if(!Number.isSafeInteger(offset)||offset<0||offset>100000||search.length>120)throw bad();
+      const [projectDetail,picker]=await Promise.all([detail(project,actor,db),notes(db,actor,offset,search)]);
+      return json({project:projectDetail,...picker});
     }
     const offset=Number(params.get('offset')??0);
     const search=params.get('q')?.trim()??'';

@@ -46,6 +46,9 @@ try{
   const picker=await get('A');
   assert.equal(picker.data.notes.some(n=>n.id==='note_A'),false);
   assert.equal(picker.data.project.links[0].id,'note_A');
+  assert.equal(picker.data.nextNoteOffset,50);
+  assert.equal((await call('A','?id='+id+'&noteOffset=300')).data.notes[0].id,'note_A');
+  assert.equal((await call('A','?id='+id+'&noteQuery='+encodeURIComponent('私人标题 A'))).data.notes[0].id,'note_A');
   await db.prepare("UPDATE entries SET folder='archived' WHERE user_id='A' AND id='note_A'").run();
   assert.equal((await get('A')).data.project.links[0].folder,'archived');
   assert.equal((await act('A',2,'invite',{code:codes.B})).status,200);
