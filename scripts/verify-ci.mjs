@@ -26,6 +26,7 @@ const suites=[
  'verify_ui_flows.mjs',
  'verify_oral_save_races.mjs',
  'verify_lan_auth_policy.mjs',
+ 'verify_registration_policy.mjs',
  'verify_public_assets.mjs',
  'verify_startup.mjs',
  'verify_oral_audio_ui.mjs',
