@@ -7,6 +7,14 @@ export const admissionsPlans = sqliteTable('admissions_plans', {
   version: text('version').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
+export const researchProjects = sqliteTable('research_projects', {
+  id:text('id').primaryKey().notNull(),
+  ownerId:text('owner_id').notNull(),
+  payload:text('payload').notNull(),
+  status:text('status').notNull(),
+  revision:integer('revision').notNull(),
+  updatedAt:text('updated_at').notNull(),
+}, t=>[index('research_projects_owner_idx').on(t.ownerId,t.updatedAt)]);
 // Owner-scoped records. NULL is reserved for pre-publication legacy records.
 export const archiveRecords = sqliteTable("archive_records", {
   id: text("id").primaryKey(),
