@@ -1,5 +1,12 @@
 import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import {sql} from 'drizzle-orm';
+
+export const admissionsPlans = sqliteTable('admissions_plans', {
+  userId: text('user_id').primaryKey().notNull(),
+  payload: text('payload').notNull(),
+  version: text('version').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
 // Owner-scoped records. NULL is reserved for pre-publication legacy records.
 export const archiveRecords = sqliteTable("archive_records", {
   id: text("id").primaryKey(),
