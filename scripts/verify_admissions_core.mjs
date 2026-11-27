@@ -1,0 +1,13 @@
+import {scorePair,rankLevel,budgetLevel,eligibility,preference,examConflict,pathState} from '../lib/admissions/core.mjs';
+function verify(){let n=0;const eq=(a,b)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw Error(JSON.stringify({a,b}));n++};const e=(level)=>({level,grade:"E2",evidenceId:"synthetic"});for(let x=0;x<=3;x++)for(let y=0;y<=3;y++){const s=scorePair([e(x),e(y)]);eq(Math.round(s.lower*1e6),Math.round((x+y)*100/6*1e6));eq(s.coverage,1);eq(s.band,scorePair([e(y),e(x)]).band);}eq(scorePair([null,null]).upper,100);eq(scorePair([e(3),null]).band,null);eq(scorePair([e(0),null]).coverage,.5);eq(rankLevel(10,100),3);eq(rankLevel(30,100),2);eq(rankLevel(60,100),1);eq(rankLevel(61,100),0);eq(budgetLevel(null,100),null);eq(budgetLevel(100,100),2);eq(budgetLevel(101,100),3);const p={channel:"foreign-language-recommended",year:2027,review:"verified",source:"synthetic",eligibleLanguages:["English"]};const z={qualification:"confirmed",year:2027,program:p,language:"English"};eq(eligibility(z),"eligible");eq(eligibility({...z,year:2028}),"conditional");eq(eligibility({...z,qualification:"denied"}),"excluded");eq(eligibility({...z,hardChecks:["unknown"]}),"conditional");eq(eligibility({...z,language:"Other"}),"excluded");eq(preference("a","b",[{preferred:"a",other:"b"},{preferred:"b",other:"a"}]),"conflict");eq(examConflict({start:0,end:3,location:"x"},{start:2,end:4,location:"x"}),"conflict");eq(examConflict({start:0,end:3,location:"x"},{start:3,end:4,location:"y"}),"unknown");eq(pathState("denied"),"gaokao_fallback");eq(pathState("pending"),"parallel_keep_gaokao");return n;}
+console.log('Admissions isolated assertions:',verify());
+
+import assert from 'node:assert/strict';
+const verified={channel:'foreign-language-recommended',year:2027,review:'verified',source:'synthetic'};
+assert.equal(eligibility({qualification:'confirmed',year:2027,program:{...verified,eligibleLanguages:'Japanese'},language:'Japan'}),'conditional');
+assert.equal(eligibility({qualification:'confirmed',year:2027,program:{...verified,eligibleLanguages:['Japanese']},language:''}),'conditional');
+const first={start:0,end:60,location:'A',from:'B',transferMs:10};
+const second={start:100,end:140,location:'B',from:'A',transferMs:45};
+assert.equal(examConflict(first,second),'conflict');
+assert.equal(examConflict(second,first),'conflict');
+assert.equal(examConflict(first,{...second,from:''}),'unknown');

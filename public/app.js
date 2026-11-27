@@ -7,7 +7,7 @@ const $=s=>document.querySelector(s);
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const allQuestions=p=>p.sections.flatMap(s=>s.blocks.flatMap(b=>b.questions));
 const allPapers=()=>[...bank.papers,...(bank.archivedPapers||[])];
-const names={today:'今日学习',community:'共享题库',schools:'学校中心',studio:'组卷工作台',oral:'口试训练',saved:'学习档案',mistakes:'错题库',writing:'作文与翻译',library:'三科模拟卷',sources:'原始样卷',blueprint:'题型蓝图',records:'旧版本机记录'};
+const names={today:'今日学习',admissions:'保送择校',community:'共享题库',schools:'学校中心',studio:'组卷工作台',oral:'口试训练',saved:'学习档案',mistakes:'错题库',writing:'作文与翻译',library:'三科模拟卷',sources:'原始样卷',blueprint:'题型蓝图',records:'旧版本机记录'};
 let toastTimer;
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3200)}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(practice))}catch(e){storageAvailable=false;toast('当前浏览器无法保存，请导出练习记录备份。')}}
@@ -67,6 +67,7 @@ function navigate(view,setHash=true){
   document.querySelectorAll('[data-view]').forEach(el=>{el.classList.toggle('active',el.dataset.view===(['report','feedback'].includes(view)?'saved':view));el.setAttribute('aria-current',el.dataset.view===view?'page':'false')});
   setBreadcrumb(['report','feedback'].includes(view)?'saved':view,names[view]);
   if(view==='today'&&typeof Today!=='undefined')Today.render();
+  else if(view==='admissions')Admissions.render();
   else if(['schools','studio','oral','saved','mistakes','writing','community','standards','report','feedback'].includes(view))Hub.render(view);
   else ({library:renderLibrary,sources:renderSources,blueprint:renderBlueprint,records:renderRecords}[view]||renderLibrary)();
   window.scrollTo({top:0,behavior:'instant'});

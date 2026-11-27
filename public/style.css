@@ -3407,3 +3407,15 @@ body{font-size:15px}
  .nav-toggle{width:44px;height:44px}
 }
 @media print{body{padding-left:0}.academic-mobile-dock,.academic-home-aside{display:none!important}.academic-home-grid{display:block}.academic-learning-hero{background:white!important;color:black!important}.academic-learning-hero .today-section-heading h2,.academic-learning-hero .today-section-heading p,.academic-learning-hero .today-metrics strong,.academic-learning-hero .today-metrics span{color:black!important}}
+.admissions-workspace,.admissions-results{display:grid;gap:16px}
+.admissions-results:empty{display:none}
+.admissions-fields,.admissions-schools,.admissions-schedule fieldset{border:0;margin:0;padding:0;min-width:0}
+.admissions-fields legend,.admissions-schedule summary{font-weight:650;margin-bottom:12px}
+.admissions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px}
+.admissions-grid label{display:grid;gap:6px;min-width:0}
+.admissions-grid input,.admissions-grid select{width:100%;min-width:0}
+.admissions-schools,.admissions-schedule{margin-block:18px}
+.admissions-schools label{display:inline-flex;align-items:center;gap:6px;margin-inline-end:18px}
+.admissions-schedule fieldset,.admissions-slot,.admissions-card{padding:14px;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px}
+.admissions-card a{color:var(--green);text-decoration:underline}
+.admissions-workspace [hidden]{display:none!important}

@@ -127,6 +127,13 @@
       "when": 1795610000004,
       "tag": "0017_research_governance",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1795739947748,
+      "tag": "0018_admissions_plans",
+      "breakpoints": true
     }
   ]
 }
