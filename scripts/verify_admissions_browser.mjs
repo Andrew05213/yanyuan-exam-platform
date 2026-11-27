@@ -60,8 +60,28 @@ try{
   assert.equal(await js("document.querySelector('[name=city]').value"),'北京');
   await js("document.querySelector('.admissions-results a[href^=\"#task/\"]').click()");
   await until("location.hash.startsWith('#task/') && !!document.querySelector('#screen h1') && !document.querySelector('.admissions-workspace')");
+  await send('Page.navigate',{url:base+'/index.html#today'});
+  await until("!!document.querySelector('[data-sp-add]')");
+  await js("document.querySelector('[data-sp-add]').click();document.querySelector('[data-sp-manual] [name=title]').value='Browser study';document.querySelector('[data-sp-preview]').click()");
+  await until("!document.querySelector('[data-sp-save]').disabled");
+  await js("document.querySelector('[data-sp-save]').click()");
+  await until("!!document.querySelector('[data-sp-task]') && document.querySelector('[data-sp-message]').innerText.includes('已保存')");
+  await js("window.__previousPage=true");await send('Page.reload');await until("!window.__previousPage");await until("document.querySelector('[data-sp-tasks]')?.innerText.includes('Browser study')");
+  await js("document.querySelector('[data-sp-done]').click()");
+  await until("document.querySelector('[data-sp-done]')?.checked && document.querySelector('[data-sp-message]')?.innerText.includes('已保存')");
+  await js("document.querySelector('[data-sp-tab=week]').click()");
+  await until("document.querySelector('[data-sp-body]').innerText.includes('备考主线投入')");
+
+  await js("document.querySelector('[data-sp-tab=reflection]').click();document.querySelector('[data-sp-reflection] [name=challenge]').value='Browser reflection';document.querySelector('[data-sp-reflection] button').click()");
+  await until("document.querySelector('[data-sp-message]')?.innerText.includes('已保存')");
+  await js("document.querySelector('[data-sp-tab=tasks]').click()");
+  await until("!!document.querySelector('[data-sp-delete]')");
+  await send('Page.enable');let dialog;socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
+  await js("document.querySelector('[data-sp-delete]').click()");
+  await until("!document.querySelector('[data-sp-task]') && document.querySelector('[data-sp-message]')?.innerText.includes('已保存')");
+
  }
- console.log('PASS: Chromium desktop/mobile plan save, reload, evidence and training navigation.');
+ console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete and navigation.');
 }finally{
  socket?.close();if(chrome?.pid&&chrome.exitCode===null&&chrome.signalCode===null){const closed=once(chrome,'exit');chrome.kill();await closed;}
  app.closeAllConnections();app.close();await mf.dispose();rmSync(userdir,{recursive:true,force:true,maxRetries:10,retryDelay:200});

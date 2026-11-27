@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import {sql} from 'drizzle-orm';
 
 export const admissionsPlans = sqliteTable('admissions_plans', {
@@ -124,3 +124,7 @@ export const aiQuestionJobs = sqliteTable("ai_question_jobs", {
 ]);
 
 export * from "./literature-schema";
+
+export const studyDayPlans=sqliteTable("study_day_plans",{
+ userId:text("user_id").notNull(),day:text("day").notNull(),version:text("version").notNull(),payload:text("payload").notNull(),updatedAt:text("updated_at").notNull(),
+},t=>[primaryKey({columns:[t.userId,t.day]})]);

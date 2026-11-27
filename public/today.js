@@ -2,7 +2,7 @@
 // Summary only: never read note bodies, archive payloads, local drafts or model data.
 const Today={
  controller:null,serial:0,
- leave(){this.serial++;this.controller?.abort();this.controller=null;},
+ leave(){if(typeof StudyPlanner!=='undefined')StudyPlanner.leave();this.serial++;this.controller?.abort();this.controller=null;},
  render(){
   this.leave();const serial=this.serial,controller=new AbortController();this.controller=controller;
   const screen=document.querySelector('#screen');
@@ -11,7 +11,8 @@ const Today={
   if(!PublicApp.session.authenticated){target.innerHTML='<div class="today-panel"><h2>个人学习记录</h2><p>登录后查看到期复习、最近笔记和学习档案。下方公开训练入口仍可使用。</p></div>';return;}
   fetch('/api/today',{credentials:'same-origin',cache:'no-store',signal:controller.signal}).then(async r=>{if(!r.ok)throw Error();return r.json();}).then(data=>{
    if(serial!==this.serial||controller.signal.aborted||currentView!=='today'||!target.isConnected)return;
-   target.innerHTML=this.summary(data);
+   target.innerHTML='<section id="study-planner-root" aria-label="个性化学习计划"></section>'+this.summary(data);
+   if(typeof StudyPlanner!=='undefined')StudyPlanner.mount(target.querySelector('#study-planner-root'),data.today);
   }).catch(()=>{
    if(serial!==this.serial||controller.signal.aborted||currentView!=='today'||!target.isConnected)return;
    target.innerHTML='<div class="today-panel"><h2>学习记录暂不可用</h2><p>未能读取个人记录，不会显示虚构的统计。</p><button type="button" id="today-retry" class="btn secondary">重新读取</button></div>';
