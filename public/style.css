@@ -3419,3 +3419,5 @@ body{font-size:15px}
 .admissions-schedule fieldset,.admissions-slot,.admissions-card{padding:14px;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px}
 .admissions-card a{color:var(--green);text-decoration:underline}
 .admissions-workspace [hidden]{display:none!important}
+
+.project-workspace{display:grid;gap:16px}.project-workspace label{display:grid;gap:6px;margin-bottom:10px}.project-workspace textarea,.project-workspace input,.project-workspace select{width:100%}.project-list{padding:0;list-style:none}.project-list li{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding-block:8px;border-bottom:1px solid var(--line)}.project-workspace code{overflow-wrap:anywhere}

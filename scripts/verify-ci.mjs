@@ -20,6 +20,8 @@ const suites=[
  'verify_today_workspace.mjs',
  'verify_admissions_core.mjs',
  'verify_admissions_api.mjs',
+ 'verify_research_projects_core.mjs',
+ 'verify_research_projects_api.mjs',
  'verify_research_governance.mjs',
  'verify_admin_contracts.mjs',
  'verify_ai_contracts.mjs',
