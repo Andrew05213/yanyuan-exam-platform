@@ -1,16 +1,16 @@
-import {eligibility,examConflict,pathState,RULE_VERSION} from './core.mjs';
+import {scorePair,eligibility,examConflict,pathState,RULE_VERSION} from './core.mjs';
 import {admissionsPolicies,admissionsSchools} from './policies';
 import {AccessError} from '../user-access';
 
 const schoolIds=new Set<string>(admissionsSchools.map(s=>s.id));
-export const admissionsLanguages=[...new Set(admissionsPolicies.flatMap(p=>p.eligibleLanguages))];
+export const admissionsLanguages=[...new Set([...admissionsPolicies.flatMap(p=>p.eligibleLanguages),...admissionsSchools.flatMap(s=>s.trainingLanguages)])];
 const shanghaiNow=()=>new Date(Date.now()+8*3600000);
 export const admissionsYear=()=>shanghaiNow().getUTCFullYear();
 export const defaultAdmissionsYear=()=>admissionsYear()+(shanghaiNow().getUTCMonth()>=6?1:0);
 type Qualification='confirmed'|'pending'|'denied';
 type Check='yes'|'no'|'unknown';
 type Exam={schoolId:string;start:string;end:string;location:string;from:string;travelMinutes:number|null};
-export type AdmissionPlan={year:number;language:string;qualification:Qualification;examRegistration:Check;schoolIds:string[];exams:Exam[];profile?: (number|null)[][]};
+export type AdmissionPlan={year:number;language:string;qualification:Qualification;examRegistration:Check;schoolIds:string[];exams:Exam[];profile?: (number|null)[][];evidence?: string[][];city?:string;trainingFocus?:string};
 
 function invalid():never{throw new AccessError('请检查年份、报考条件与考试日程。',400);}
 const dateTime=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
@@ -38,7 +38,10 @@ export function admissionPlan(value:unknown):AdmissionPlan{
   });
   const profile=b.profile;
   if(profile!==undefined&&(!Array.isArray(profile)||profile.length!==10||profile.some(pair=>!Array.isArray(pair)||pair.length!==2||pair.some(v=>v!==null&&(!Number.isInteger(v)||v<0||v>3)))))invalid();
-  return {year:b.year!,language:b.language,qualification:b.qualification!,examRegistration:b.examRegistration!,schoolIds:b.schoolIds,exams,...(profile===undefined?{}:{profile:profile.map(pair=>[...pair])})};
+  if(b.evidence!==undefined&&(!profile||!Array.isArray(b.evidence)||b.evidence.length!==10||b.evidence.some(row=>!Array.isArray(row)||row.length!==2||row.some(g=>!['E1','E2','E3'].includes(g)))))invalid();
+  if(b.city!==undefined && b.city!=='' && !admissionsSchools.some(s=>s.city===b.city))invalid();
+  if(b.trainingFocus!==undefined && b.trainingFocus!=='' && !['reading','speech','personal','zh-en','en-zh'].includes(b.trainingFocus))invalid();
+  return {city:b.city||'',trainingFocus:b.trainingFocus||'',...(b.evidence?{evidence:b.evidence}:{}),year:b.year!,language:b.language,qualification:b.qualification!,examRegistration:b.examRegistration!,schoolIds:b.schoolIds,exams,...(profile===undefined?{}:{profile:profile.map(pair=>[...pair])})};
 }
 
 export function assessAdmissions(plan:AdmissionPlan,now=Date.now()){
@@ -48,11 +51,21 @@ export function assessAdmissions(plan:AdmissionPlan,now=Date.now()){
     const current=policy&&Date.parse(policy.registrationCloses)>now?policy:undefined;
     const status=eligibility({qualification:plan.qualification,year:plan.year,program:current,
       language:plan.language,hardChecks:[plan.examRegistration]});
-    return {...school,status,policy:reference??null,historical:!!reference&&!current};
+    const cityMatch=plan.city?school.city===plan.city:null;
+    const languageMatch=plan.language?(reference?reference.eligibleLanguages.some(language=>language===plan.language):(school.historicalLanguages.length?school.historicalLanguages:school.trainingLanguages).includes(plan.language)):null;
+    const reasons=[cityMatch?'符合城市偏好':null,languageMatch?(reference||school.historicalLanguages.length?'参考简章列有意向语种':'站内有意向语种训练'):null].filter(Boolean);
+    const type=plan.trainingFocus||(plan.profile?.[0]?.some(v=>v!==null&&v<=1)?'reading':'personal');
+    const task=school.training.find(t=>t.type===type)??school.training[0];
+    const {training,...details}=school;
+    return {...details,status,policy:reference??null,historical:!!reference&&!current,reasons,task,hasSchoolHub:!school.id.startsWith('national-')&&school.id!=='gdufs'};
+
   });
+  const priority:Record<string,number>={eligible:0,conditional:1,excluded:2};
+  results.sort((a,b)=>priority[a.status]-priority[b.status]||b.reasons.length-a.reasons.length);
+  const scores=plan.profile?.map((pair,i)=>scorePair(pair.map((level,j)=>level===null?null:{level,grade:plan.evidence?.[i]?.[j]??'E1',evidenceId:i+'-'+j})));
   const normalized=plan.exams.map(exam=>({...exam,start:parseTime(exam.start),end:parseTime(exam.end),transferMs:exam.travelMinutes===null?null:exam.travelMinutes*60000}));
   const conflicts=normalized.flatMap((exam,i)=>normalized.slice(i+1).map((other,j)=>({
     first:i,second:i+1+j,status:examConflict(exam,other),
   })));
-  return {results,conflicts,path:pathState(plan.qualification),ruleVersion:RULE_VERSION};
+  return {results,scores,conflicts,path:pathState(plan.qualification),ruleVersion:RULE_VERSION};
 }

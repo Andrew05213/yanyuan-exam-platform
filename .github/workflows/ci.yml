@@ -48,3 +48,7 @@ jobs:
         run: pnpm exec tsc --noEmit
       - name: Run isolated regression suites
         run: node scripts/verify-ci.mjs
+      - name: Exercise admissions in desktop and mobile Chromium
+        env:
+          CHROME_BIN: google-chrome
+        run: node scripts/verify_admissions_browser.mjs

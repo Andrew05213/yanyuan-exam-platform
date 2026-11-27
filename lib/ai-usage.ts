@@ -3,7 +3,7 @@ import {AdminInputError,estimateCostMicros,validateUsage,type Pricing,type Usage
 import {AccessError,type Principal} from './user-access';
 
 export type BillingProvider={id:string;name:string;model:string;currency:string;revision:number;pricing:Pricing};
-const tasks=['writing','translation','oral','oral-audio','question-generation','literature-feedback','research-assistant'] as const;
+const tasks=['writing','translation','oral','oral-audio','question-generation','literature-feedback','research-assistant','admissions-followup'] as const;
 export type UsageEvent={requestId:string;task:typeof tasks[number];status:'success'|'error'|'unknown';counts:UsageCounts;elapsedMs?:number|null};
 
 // Call only from server-side model execution, using a trusted user and a pricing

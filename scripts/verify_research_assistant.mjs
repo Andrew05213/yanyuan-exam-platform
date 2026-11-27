@@ -59,6 +59,16 @@ try{
  assert.equal(requests,0);
  const provider=(await call('/api/admin/providers','admin',{name:'QA DeepSeek',protocol:'openai-compatible',baseUrl:'https://api.deepseek.com',model:'qa-research',currency:'USD',enabled:true,apiKey:secret,inputPrice:'2',cachedInputPrice:'0.5',outputPrice:'8'})).data.provider;
  assert.equal((await call('/api/admin/providers','admin',{action:'select-default',id:provider.id,expectedRevision:provider.revision})).status,200);
+ const followup='/api/admissions/followup';
+ const turn={consent:true,dimension:2,levels:[1,null],feedback:'条件有冲突',ignored:'PRIVATE_FIXTURE'};
+ assert.equal((await call(followup,null,turn)).status,401);
+ assert.equal((await call(followup,'B',{...turn,consent:false})).status,400);
+ assert.equal((await call(followup,'B',{...turn,levels:[1,8]})).status,400);
+ stub({question:'当专业与城市无法兼得时，你会如何选择？'},body=>{
+   assert.ok(body.includes('条件有冲突'));assert.ok(!body.includes('PRIVATE_FIXTURE'));
+ });
+ assert.equal((await call(followup,'B',turn)).data.question,'当专业与城市无法兼得时，你会如何选择？');
+ requests=0;
  const preview=await ai('B',{action:'preview',...base});assert.equal(preview.status,200,JSON.stringify(preview.data));assert.equal(preview.data.destination.host,'api.deepseek.com');assert.equal(requests,0);
  const f=preview.data.fingerprint;
  assert.equal((await ai('B',{action:'analyze',...base,fingerprint:f})).status,409);

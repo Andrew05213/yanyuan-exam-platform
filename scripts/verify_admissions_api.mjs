@@ -38,6 +38,22 @@ try{
   assert.equal(preview.data.analysis.conflicts[0].status,'conflict');
   assert.ok(preview.data.analysis.results.every(x=>x.status==='conditional'&&x.historical));
   assert.equal((await call('GET','A')).data.plan,null);
+  // Six independent synthetic decisions, all through the compiled HTTP route.
+  const profiles=[
+    ['A',{qualification:'denied'},a=>assert.ok(a.results.every(s=>s.status==='excluded'))],
+    ['B',{qualification:'pending'},a=>assert.equal(a.path,'parallel_keep_gaokao')],
+    ['C',{schoolIds:['zju','speit'],city:'上海',exams:[]},a=>assert.equal(a.results[0].id,'speit')],
+    ['D',{language:'',schoolIds:['ruc'],exams:[],trainingFocus:'reading'},a=>assert.equal(a.results[0].task.type,'reading')],
+    ['E',{profile:Array.from({length:10},()=>[null,null])},a=>assert.deepEqual([a.scores[0].lower,a.scores[0].upper],[0,100])],
+    ['F',{profile:Array.from({length:10},()=>[2,null]),evidence:Array.from({length:10},()=>['E3','E1'])},a=>assert.equal(a.scores[0].quality,.5)],
+  ];
+  for(const [name,fields,verify] of profiles){
+    const saved=await call('PUT','fixture-'+name,{plan:{...plan,...fields},version:null});
+    assert.equal(saved.status,200,JSON.stringify(saved.data));
+    verify((await call('GET','fixture-'+name)).data.analysis);
+    assert.equal((await call('DELETE','fixture-'+name,undefined,{'If-Match':saved.data.version})).status,200);
+  }
+  assert.equal((await call('POST','A',{...plan,evidence:[['E4']]})).status,400);
   const created=await call('PUT','A',{plan,version:null,ownerId:'B'});
   assert.equal(created.status,200,JSON.stringify(created.data));
   assert.match(created.cache,/no-store/);

@@ -1,0 +1,33 @@
+name: Admissions source review
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 22 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: admissions-source-monitor
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache/restore@v4
+        with:
+          path: .policy-review/sources.json
+          key: admissions-sources-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: admissions-sources-v1-
+      - run: python3 scripts/check_admissions_sources.py .policy-review/sources.json
+      - uses: actions/cache/save@v4
+        if: always() && hashFiles('.policy-review/sources.json') != ''
+        with:
+          path: .policy-review/sources.json
+          key: admissions-sources-v1-${{ github.run_id }}-${{ github.run_attempt }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: admissions-source-review
+          path: .policy-review/*.json
+          include-hidden-files: true
