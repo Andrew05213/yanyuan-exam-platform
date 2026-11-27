@@ -41,6 +41,11 @@ try{
   assert.match((await get('A')).cache,/no-store/);
   assert.equal((await act('A',1,'link',{noteId:'note_B'})).status,404);
   assert.equal((await act('A',1,'link',{noteId:'note_A'})).status,200);
+  await db.prepare("WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM n WHERE x<300)"+
+    " INSERT INTO entries(user_id,id,title,content,updated_at) SELECT 'A','newer_'||x,'Later title','','2099-01-01' FROM n").run();
+  const picker=await get('A');
+  assert.equal(picker.data.notes.some(n=>n.id==='note_A'),false);
+  assert.equal(picker.data.project.links[0].id,'note_A');
   assert.equal((await act('A',2,'invite',{code:codes.B})).status,200);
   const pending=await get('B');
   assert.equal(pending.data.project.role,'invited');
@@ -69,6 +74,6 @@ try{
   assert.equal((await act('A',8,'restore')).status,200);
   assert.equal((await act('A',9,'delete',{confirm:true})).status,200);
   assert.equal((await get('A')).status,404);
-  assert.equal((await db.prepare('SELECT count(*) AS n FROM entries').first()).n,2);
+  assert.equal((await db.prepare('SELECT count(*) AS n FROM entries').first()).n,302);
   console.log('PASS: private project access, consent, community suspension, owner-only controls, note isolation, revocation, concurrency, archive and deletion.');
 }finally{await mf.dispose();}

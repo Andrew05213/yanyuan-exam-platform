@@ -38,12 +38,14 @@ function summary(project:Project,actor:string,updatedAt:string){
     role:role(project,actor)??'invited',updatedAt};
 }
 
-function detail(project:Project,actor:string,availableNotes:Note[]){
+async function detail(project:Project,actor:string,db:Store){
   const view=viewProject(project,actor);
-  const ownedIds=new Set(project.links.filter(l=>l.ownerId===actor).map(l=>l.noteId));
+  const ownedIds=project.links.filter(l=>l.ownerId===actor).map(l=>l.noteId);
+  const links=ownedIds.length?(await db.prepare("SELECT id,title FROM entries WHERE user_id=? AND folder='active'"+
+    " AND id IN (SELECT value FROM json_each(?)) ORDER BY updated_at DESC,id").bind(actor,JSON.stringify(ownedIds)).all<Note>()).results:[];
   return {id:view.id,title:view.title,question:view.question,description:view.description,status:view.status,
     revision:view.revision,role:view.role,milestones:view.milestones,
-    links:availableNotes.filter(n=>ownedIds.has(n.id)),
+    links,
     ...(view.role==='owner'?{members:project.members.map(m=>({id:m.key,state:m.state}))}:{})};
 }
 
@@ -80,8 +82,8 @@ export async function GET(request:Request){
     if(requested){
       const {project,updatedAt}=await loadProject(db,actor,safeId(requested));
       if(!role(project,actor))return json({project:summary(project,actor,updatedAt),notes:[]});
-      const own=await notes(db,actor);
-      return json({project:detail(project,actor,own),notes:own});
+      const [projectDetail,own]=await Promise.all([detail(project,actor,db),notes(db,actor)]);
+      return json({project:projectDetail,notes:own});
     }
     const offset=Number(params.get('offset')??0);
     const search=params.get('q')?.trim()??'';
