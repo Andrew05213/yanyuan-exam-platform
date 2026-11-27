@@ -93,3 +93,8 @@ export const researchAppeals=sqliteTable("research_appeals",{
  createdAt:text("created_at").notNull(),
  resolvedAt:text("resolved_at")
 },t=>[uniqueIndex("research_appeals_revision_idx").on(t.userId,t.memberRevision),index("research_appeals_status_idx").on(t.status,t.createdAt)]);
+
+// Previous private title/body snapshots; bounded by the migration trigger.
+export const noteVersions=sqliteTable("note_versions",{
+ userId:text("user_id").notNull(),noteId:text("note_id").notNull(),revision:integer("revision").notNull(),title:text("title").notNull(),content:text("content").notNull(),updatedAt:text("updated_at").notNull(),
+},t=>[primaryKey({columns:[t.userId,t.noteId,t.revision]})]);
