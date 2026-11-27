@@ -10,7 +10,7 @@ export const defaultAdmissionsYear=()=>admissionsYear()+(shanghaiNow().getUTCMon
 type Qualification='confirmed'|'pending'|'denied';
 type Check='yes'|'no'|'unknown';
 type Exam={schoolId:string;start:string;end:string;location:string;from:string;travelMinutes:number|null};
-export type AdmissionPlan={year:number;language:string;qualification:Qualification;examRegistration:Check;schoolIds:string[];exams:Exam[]};
+export type AdmissionPlan={year:number;language:string;qualification:Qualification;examRegistration:Check;schoolIds:string[];exams:Exam[];profile?: (number|null)[][]};
 
 function invalid():never{throw new AccessError('请检查年份、报考条件与考试日程。',400);}
 const dateTime=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
@@ -36,7 +36,9 @@ export function admissionPlan(value:unknown):AdmissionPlan{
       (e.travelMinutes!==null&&!e.from.trim()))invalid();
     return {schoolId:e.schoolId,start:e.start,end:e.end,location:e.location.trim(),from:e.from.trim(),travelMinutes:e.travelMinutes};
   });
-  return {year:b.year!,language:b.language,qualification:b.qualification!,examRegistration:b.examRegistration!,schoolIds:b.schoolIds,exams};
+  const profile=b.profile;
+  if(profile!==undefined&&(!Array.isArray(profile)||profile.length!==10||profile.some(pair=>!Array.isArray(pair)||pair.length!==2||pair.some(v=>v!==null&&(!Number.isInteger(v)||v<0||v>3)))))invalid();
+  return {year:b.year!,language:b.language,qualification:b.qualification!,examRegistration:b.examRegistration!,schoolIds:b.schoolIds,exams,...(profile===undefined?{}:{profile:profile.map(pair=>[...pair])})};
 }
 
 export function assessAdmissions(plan:AdmissionPlan,now=Date.now()){
