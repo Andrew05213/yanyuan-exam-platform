@@ -1,0 +1,388 @@
+[
+  {
+    "id": "national-1",
+    "name": "北京航空航天大学",
+    "city": "北京",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=hnv6sv0zx1qouvwu",
+    "detail": true
+  },
+  {
+    "id": "national-2",
+    "name": "北京理工大学",
+    "city": "北京",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=zcec96yueixkn9k9",
+    "detail": true
+  },
+  {
+    "id": "national-3",
+    "name": "北京科技大学",
+    "city": "北京",
+    "source": "https://zhaosheng.ustb.edu.cn/zkxx/tslxzs/wylbss/a5a91652971f42079934605e64073152.htm",
+    "detail": true,
+    "programs": [
+      {
+        "language": "日语",
+        "field": "工程",
+        "label": "日语＋人工智能双学士"
+      }
+    ]
+  },
+  {
+    "id": "national-4",
+    "name": "北京师范大学",
+    "city": "北京",
+    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
+    "detail": false
+  },
+  {
+    "id": "national-5",
+    "name": "北京语言大学",
+    "city": "北京",
+    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
+    "detail": false
+  },
+  {
+    "id": "national-6",
+    "name": "对外经济贸易大学",
+    "city": "北京",
+    "source": "https://aeo.uibe.edu.cn/front/showContent.jspa?channelId=848&contentId=109302",
+    "detail": true
+  },
+  {
+    "id": "national-7",
+    "name": "首都经济贸易大学",
+    "city": "北京",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=lsd3su6kbbsm7fqo",
+    "detail": true
+  },
+  {
+    "id": "national-8",
+    "name": "南开大学",
+    "city": "天津",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=iugkdtcojfhlivqx",
+    "detail": true
+  },
+  {
+    "id": "national-9",
+    "name": "天津大学",
+    "city": "天津",
+    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
+    "detail": false
+  },
+  {
+    "id": "national-10",
+    "name": "天津外国语大学",
+    "city": "天津",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=x0su8gslhje8oszs",
+    "detail": true
+  },
+  {
+    "id": "national-11",
+    "name": "大连理工大学",
+    "city": "大连",
+    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
+    "detail": false
+  },
+  {
+    "id": "national-12",
+    "name": "吉林大学",
+    "city": "长春",
+    "source": "https://gongkai.jlu.edu.cn/info/1028/13597.htm",
+    "detail": true,
+    "historicalLanguages": [
+      "西班牙语",
+      "日语",
+      "俄语",
+      "朝鲜语"
+    ]
+  },
+  {
+    "id": "national-13",
+    "name": "东北师范大学",
+    "city": "长春",
+    "source": "https://zsb.nenu.edu.cn/info/1026/6490.htm",
+    "detail": true
+  },
+  {
+    "id": "national-14",
+    "name": "哈尔滨工业大学",
+    "city": "哈尔滨",
+    "source": "https://zsb.hit.edu.cn/article/read/1469612da6baa241e1e51b14032c901b",
+    "detail": true
+  },
+  {
+    "id": "national-15",
+    "name": "同济大学",
+    "city": "上海",
+    "source": "https://xxgk.tongji.edu.cn/index.php?classid=3138&newsid=20906&t=show",
+    "detail": true
+  },
+  {
+    "id": "national-16",
+    "name": "华东理工大学",
+    "city": "上海",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=n24pwlr5v2ecxmt4",
+    "detail": true
+  },
+  {
+    "id": "national-17",
+    "name": "东华大学",
+    "city": "上海",
+    "source": "https://zs.dhu.edu.cn/2026/0105/c9563a370613/page.htm",
+    "detail": true
+  },
+  {
+    "id": "national-18",
+    "name": "华东师范大学",
+    "city": "上海",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=vdpyh0q7w5dz87c8",
+    "detail": true
+  },
+  {
+    "id": "national-19",
+    "name": "上海财经大学",
+    "city": "上海",
+    "source": "https://zs.sufe.edu.cn/e3/51/c3336a254801/page.htm",
+    "detail": true
+  },
+  {
+    "id": "national-20",
+    "name": "东南大学",
+    "city": "南京",
+    "source": "https://zsb.seu.edu.cn/2026/0106/c23610a551331/pagem.htm",
+    "detail": true,
+    "historicalLanguages": [
+      "日语"
+    ],
+    "programs": [
+      {
+        "language": "日语",
+        "field": "工程",
+        "label": "日语＋电子科学与技术双学士，申请有选科要求"
+      }
+    ]
+  },
+  {
+    "id": "national-21",
+    "name": "南京航空航天大学",
+    "city": "南京",
+    "source": "https://zs.nuaa.edu.cn/2026/0107/c9155a391617/page.htm",
+    "detail": true
+  },
+  {
+    "id": "national-22",
+    "name": "厦门大学",
+    "city": "厦门",
+    "source": "https://zs.xmu.edu.cn/info/1172/35332.htm",
+    "detail": true,
+    "historicalLanguages": [
+      "日语",
+      "法语",
+      "俄语",
+      "西班牙语"
+    ]
+  },
+  {
+    "id": "national-23",
+    "name": "山东大学",
+    "city": "济南",
+    "source": "https://www.bkzs.sdu.edu.cn/info/1028/2566.htm",
+    "detail": true
+  },
+  {
+    "id": "national-24",
+    "name": "武汉理工大学",
+    "city": "武汉",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=pur59zxr3dsy389m",
+    "detail": true
+  },
+  {
+    "id": "national-25",
+    "name": "华中科技大学",
+    "city": "武汉",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=t9323ubcpsuycp32",
+    "detail": true
+  },
+  {
+    "id": "national-26",
+    "name": "中国石油大学（华东）",
+    "city": "青岛",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=0bigchh8gfnayjkg",
+    "detail": true
+  },
+  {
+    "id": "national-27",
+    "name": "华中师范大学",
+    "city": "武汉",
+    "source": "https://zs.ccnu.edu.cn/info/1006/10893.htm",
+    "detail": true,
+    "historicalLanguages": [
+      "日语",
+      "法语",
+      "俄语",
+      "西班牙语"
+    ]
+  },
+  {
+    "id": "national-28",
+    "name": "湖南大学",
+    "city": "长沙",
+    "source": "https://admi.hnu.edu.cn/info/1186/7276.htm",
+    "detail": true
+  },
+  {
+    "id": "national-29",
+    "name": "中南大学",
+    "city": "长沙",
+    "source": "https://zhaosheng.csu.edu.cn/info/1247/2484.htm",
+    "detail": true,
+    "historicalLanguages": [
+      "法语",
+      "日语",
+      "西班牙语"
+    ]
+  },
+  {
+    "id": "national-30",
+    "name": "湖南师范大学",
+    "city": "长沙",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=k0sshp54nk3erbry",
+    "detail": true
+  },
+  {
+    "id": "national-31",
+    "name": "中山大学",
+    "city": "广州",
+    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
+    "detail": false
+  },
+  {
+    "id": "national-32",
+    "name": "深圳大学",
+    "city": "深圳",
+    "source": "https://zs.szu.edu.cn/info/1021/7172.htm",
+    "detail": true
+  },
+  {
+    "id": "national-33",
+    "name": "四川大学",
+    "city": "成都",
+    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
+    "detail": false
+  },
+  {
+    "id": "national-34",
+    "name": "电子科技大学",
+    "city": "成都",
+    "source": "https://zs.uestc.edu.cn/view/2063.html",
+    "detail": true
+  },
+  {
+    "id": "national-35",
+    "name": "西南大学",
+    "city": "重庆",
+    "source": "https://bkzsw.swu.edu.cn/info/1060/1954.htm",
+    "detail": true
+  },
+  {
+    "id": "national-36",
+    "name": "四川外国语大学",
+    "city": "重庆",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=mttlwmax81ffpyva",
+    "detail": true
+  },
+  {
+    "id": "national-37",
+    "name": "西南政法大学",
+    "city": "重庆",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=d6uuag5ozl8ky66a",
+    "detail": true
+  },
+  {
+    "id": "national-38",
+    "name": "西安交通大学",
+    "city": "西安",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=4si197rpk3paoyon",
+    "detail": true
+  },
+  {
+    "id": "national-39",
+    "name": "西北工业大学",
+    "city": "西安",
+    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
+    "detail": false
+  },
+  {
+    "id": "national-40",
+    "name": "西安电子科技大学",
+    "city": "西安",
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=m9manmmm1adof7j5",
+    "detail": true
+  },
+  {
+    "id": "national-41",
+    "name": "兰州大学",
+    "city": "兰州",
+    "source": "https://zsb.lzu.edu.cn/zhaoshengdongtai/tongzhigonggao/2026/0109/327274.html",
+    "detail": true
+  },
+  {
+    "id": "gdufs",
+    "name": "广东外语外贸大学",
+    "city": "广州",
+    "source": "https://xxgk.gdufs.edu.cn/info/1165/3316.htm",
+    "detail": true,
+    "programs": [
+      {
+        "language": "法语",
+        "field": "经贸",
+        "label": "法语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "西班牙语",
+        "field": "经贸",
+        "label": "西班牙语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "俄语",
+        "field": "经贸",
+        "label": "俄语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "德语",
+        "field": "经贸",
+        "label": "德语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "日语",
+        "field": "经贸",
+        "label": "日语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "葡萄牙语",
+        "field": "经贸",
+        "label": "葡萄牙语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "意大利语",
+        "field": "经贸",
+        "label": "意大利语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "越南语",
+        "field": "法学",
+        "label": "越南语＋法学双学士"
+      },
+      {
+        "language": "泰语",
+        "field": "法学",
+        "label": "泰语＋法学双学士"
+      },
+      {
+        "language": "朝鲜语",
+        "field": "法学",
+        "label": "朝鲜语＋法学双学士"
+      }
+    ]
+  }
+]

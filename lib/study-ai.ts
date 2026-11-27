@@ -20,7 +20,7 @@ type Message = {role:'system'|'user';content:string};
 
 export async function runStudyAI<T>(
   target:Target, user:Principal, requestId:string,
-  task:Extract<UsageEvent['task'],'question-generation'|'literature-feedback'|'research-assistant'>,
+  task:Extract<UsageEvent['task'],'question-generation'|'literature-feedback'|'research-assistant'|'admissions-followup'>,
   messages:Message[], parse:(text:string)=>T, quota?:{since:string;limit:number},
 ) {
   const {provider,responses,url} = target;
