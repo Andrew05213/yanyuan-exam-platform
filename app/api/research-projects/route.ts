@@ -17,6 +17,7 @@ type Project={id:string;ownerId:string;title:string;question:string;description:
   members:Member[];milestones:{id:string;title:string;done:boolean}[];links:{ownerId:string;noteId:string}[]};
 type Row={payload:string;updatedAt:string};
 type Note={id:string;title:string};
+type LinkedNote=Note&{folder:string};
 type Store=ReturnType<typeof storage>;
 
 // Visibility is scoped in the database, including invitations and current membership.
@@ -41,8 +42,9 @@ function summary(project:Project,actor:string,updatedAt:string){
 async function detail(project:Project,actor:string,db:Store){
   const view=viewProject(project,actor);
   const ownedIds=project.links.filter(l=>l.ownerId===actor).map(l=>l.noteId);
-  const links=ownedIds.length?(await db.prepare("SELECT id,title FROM entries WHERE user_id=? AND folder='active'"+
-    " AND id IN (SELECT value FROM json_each(?)) ORDER BY updated_at DESC,id").bind(actor,JSON.stringify(ownedIds)).all<Note>()).results:[];
+  const links=ownedIds.length?(await db.prepare("SELECT l.value AS id,COALESCE(e.title,'笔记已不可用') AS title,COALESCE(e.folder,'missing') AS folder"+
+    " FROM json_each(?) l LEFT JOIN entries e ON e.user_id=? AND e.id=l.value ORDER BY e.updated_at DESC,l.value")
+    .bind(JSON.stringify(ownedIds),actor).all<LinkedNote>()).results:[];
   return {id:view.id,title:view.title,question:view.question,description:view.description,status:view.status,
     revision:view.revision,role:view.role,milestones:view.milestones,
     links,

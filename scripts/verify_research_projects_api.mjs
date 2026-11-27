@@ -46,6 +46,8 @@ try{
   const picker=await get('A');
   assert.equal(picker.data.notes.some(n=>n.id==='note_A'),false);
   assert.equal(picker.data.project.links[0].id,'note_A');
+  await db.prepare("UPDATE entries SET folder='archived' WHERE user_id='A' AND id='note_A'").run();
+  assert.equal((await get('A')).data.project.links[0].folder,'archived');
   assert.equal((await act('A',2,'invite',{code:codes.B})).status,200);
   const pending=await get('B');
   assert.equal(pending.data.project.role,'invited');
@@ -72,7 +74,9 @@ try{
   assert.deepEqual(race.map(r=>r.status).sort(),[200,409]);
   assert.equal((await act('A',7,'archive')).status,200);
   assert.equal((await act('A',8,'restore')).status,200);
-  assert.equal((await act('A',9,'delete',{confirm:true})).status,200);
+  assert.equal((await act('A',9,'unlink',{noteId:'note_A'})).status,200);
+  assert.deepEqual((await get('A')).data.project.links,[]);
+  assert.equal((await act('A',10,'delete',{confirm:true})).status,200);
   assert.equal((await get('A')).status,404);
   assert.equal((await db.prepare('SELECT count(*) AS n FROM entries').first()).n,302);
   console.log('PASS: private project access, consent, community suspension, owner-only controls, note isolation, revocation, concurrency, archive and deletion.');

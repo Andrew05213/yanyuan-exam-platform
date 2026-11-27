@@ -68,7 +68,7 @@ const ResearchProjects={
     '<section class="hub-panel"><h2>里程碑</h2><ul class="project-list">'+p.milestones.map(m=>'<li>'+e(m.title)+' <span>'+(m.done?'已完成':'待完成')+'</span>'+
      (owner&&active?button('milestone-toggle',m.done?'标为待完成':'标为完成','data-key="'+e(m.id)+'" data-done="'+!m.done+'"'):'')+'</li>').join('')+'</ul>'+
      (owner&&active?'<form data-action="milestone-add"><label>新里程碑<input name="title" required maxlength="120"></label><button class="btn secondary">添加里程碑</button></form>':'')+'</section>'+
-    '<section class="hub-panel"><h2>我的关联笔记</h2><ul class="project-list">'+p.links.map(n=>'<li><a href="/reading-notes#note/'+encodeURIComponent(n.id)+'">'+e(n.title)+'</a>'+
+    '<section class="hub-panel"><h2>我的关联笔记</h2><ul class="project-list">'+p.links.map(n=>'<li>'+(n.folder==='active'?'<a href="/reading-notes#note/'+encodeURIComponent(n.id)+'">'+e(n.title)+'</a>':e(n.title)+' · '+e({archived:'已归档',trash:'回收站',missing:'不可用'}[n.folder]))+
      (active?button('unlink','解除关联','data-key="'+e(n.id)+'"'):'')+'</li>').join('')+'</ul>'+
      (active?'<form data-action="link"><label>选择我的笔记<select name="noteId" required><option value="">请选择</option>'+notes.filter(n=>!linked.has(n.id)).map(n=>'<option value="'+e(n.id)+'">'+e(n.title)+'</option>').join('')+'</select></label><button class="btn secondary">关联笔记</button></form>':'')+'</section>'+
     (owner?'<section class="hub-panel"><h2>协作者</h2><ul class="project-list">'+p.members.map((m,i)=>'<li>协作者 '+(i+1)+' <span>'+e({active:'已接受',pending:'待接受',revoked:'已撤销',declined:'已拒绝'}[m.state])+'</span>'+
