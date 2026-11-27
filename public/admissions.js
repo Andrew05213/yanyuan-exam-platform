@@ -40,6 +40,53 @@ const Admissions={
    data.schools.map(s=>'<fieldset data-exam="'+e(s.id)+'"><legend>'+e(s.name)+'</legend><div data-slots></div><button class="btn secondary" type="button" data-add-exam>添加一场考试</button></fieldset>').join('')+
    '</details><div class="toolbar"><button type="submit" value="preview" class="btn primary">查看资格与冲突</button><button type="submit" value="save" class="btn secondary">保存方案</button><button type="button" data-delete-plan class="btn secondary"'+(!version?' hidden':'')+'>删除已保存方案</button></div></fieldset>'+
    '<p role="status" aria-live="polite"></p></form><div class="admissions-results"></div>';
+
+  // Private, transient self-assessment. No storage or provider transmission.
+  const profile=document.createElement('section');
+  profile.className='hub-panel';
+  const dimensions=[
+   ['学业能力','校内排名水平','目标考试常模水平'],
+   ['专业偏好','专业方向明确程度','专业取舍一致程度'],
+   ['院校平台','院校层次要求','平台优先程度'],
+   ['地域偏好','地域限制程度','地域优先程度'],
+   ['职业规划','职业目标明确程度','实现路径明确程度'],
+   ['风险偏好','录取风险接受程度','选拔风险接受程度'],
+   ['费用约束','常规费用预算比','高费用预算比'],
+   ['家庭决策','意见冲突程度','家庭决策影响程度'],
+   ['备考路径','目标考试能力证据','高考备选优先程度'],
+   ['信息完整性','核心字段覆盖程度','条件偏好一致程度']
+  ];
+  const anchors=[
+   [['后40%','前30–60%','前10–30%','前10%'],['后40%','前30–60%','前10–30%','前10%']],
+   [['无偏好','宽泛','明确方向','核心学科'],['不优先','条件性','一次明确取舍','多次一致取舍']],
+   [['无要求','灵活','有例外','明确底线'],['其他优先','条件选择','一次平台优先','多次一致']],
+   [['无限制','软偏好','区域限制','明确排除'],['不重视','条件选择','一次地域优先','多次一致']],
+   [['无目标','宽泛','岗位或方向','行业岗位专业关联'],['无路径','初步','读研就业','具体路径']],
+   [['确认当前','特定条件冒险','了解风险后接受','放弃可接受录取'],['拒绝选拔风险','看难度和后果','明确条件后接受','失败仍接受']],
+   [['≤60%','≤85%','≤100%','超过100%'],['≤60%','≤85%','≤100%','超过100%']],
+   [['一致','轻微','明显可协商','明确否决冲突'],['本人决定','建议','共同决定或影响较大','实际否决权']],
+   [['可靠证据明显不足','自评有限','达到参考','充分证据达到目标'],['保送优先','按结果','高考主要备选','明确优先高考']],
+   [['0–3项','4–5项','6–7项','8–10项'],['同前提矛盾','重要冲突待解','条件已解释','多情景一致']]
+  ];
+  profile.innerHTML='<h2>十维学生画像 · 自评预览</h2><p>暂定工程规则，不是心理量表或录取概率。仅在本页内计算，不保存、不发送给 AI；可跳过任何问题。各维度含义不同，不计算总分。</p><div data-profile-question></div><div class="toolbar"><button type="button" data-prev class="btn secondary">上一维</button><button type="button" data-next class="btn primary">下一维</button></div><div data-profile-result aria-live="polite"></div>';
+  root.prepend(profile);
+  const answers=dimensions.map(()=>[null,null]);let current=0;
+  const question=profile.querySelector('[data-profile-question]'),result=profile.querySelector('[data-profile-result]');
+  const draw=()=>{
+   const d=dimensions[current];
+   question.innerHTML='<h3>'+e((current+1)+' / 10 · '+d[0])+'</h3>'+d.slice(1).map((label,j)=>'<label>'+e(label)+'<select data-indicator="'+j+'">'+option('','未知 / 跳过',answers[current][j]===null?'':String(answers[current][j]))+anchors[current][j].map((a,k)=>option(String(k),a,String(answers[current][j]))).join('')+'</select></label>').join('');
+   profile.querySelector('[data-prev]').disabled=current===0;
+   profile.querySelector('[data-next]').disabled=current===9;
+   result.innerHTML='<h3>证据覆盖与评分区间</h3><div class="admissions-grid">'+dimensions.map((d,i)=>{
+    const known=answers[i].filter(v=>v!==null),lower=known.reduce((sum,v)=>sum+v*100/6,0),upper=lower+(2-known.length)*50;
+    return '<article class="admissions-card"><strong>'+e(d[0])+'</strong><p>'+Math.round(lower)+'–'+Math.round(upper)+' / 100 · '+known.length+'/2 项自评</p></article>';
+   }).join('')+'</div>';
+  };
+  question.addEventListener('change',event=>{const j=event.target.dataset.indicator;if(j===undefined)return;answers[current][Number(j)]=event.target.value===''?null:Number(event.target.value);draw();});
+  profile.querySelector('[data-prev]').addEventListener('click',()=>{if(current>0){current--;draw();}});
+  profile.querySelector('[data-next]').addEventListener('click',()=>{if(current<9){current++;draw();}});
+  draw();
+
   const form=root.querySelector('form'),inputs=form.querySelector('.admissions-fields'),message=form.querySelector('[role=status]');
   const output=root.querySelector('.admissions-results'),deleteButton=form.querySelector('[data-delete-plan]');
   const display=(analysis,exams)=>{output.innerHTML=this.summary(analysis,exams,data.schools);};
