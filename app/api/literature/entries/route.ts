@@ -31,9 +31,18 @@ async function changed(owner:string,id:string) {
   return reply({error:"云端笔记已更新。你的修改仍保存在草稿中。",current},409);
 }
 
-export async function GET() {
+export async function GET(request:Request) {
   try {
     const owner=await userId();
+    const history=new URL(request.url).searchParams.get("history");
+    if(history!==null){
+      if(!noteId(history))throw new AccessError("笔记标识无效。",400);
+      const db=storage();
+      const entry=await db.prepare("SELECT id FROM entries WHERE user_id=? AND id=?").bind(owner,history).first();
+      if(!entry)throw new AccessError("笔记不存在。",404);
+      const rows=await db.prepare("SELECT revision,title,content,updated_at FROM note_versions WHERE user_id=? AND note_id=? ORDER BY revision DESC LIMIT 20").bind(owner,history).all();
+      return reply({versions:rows.results});
+    }
     const rows=await storage().prepare("SELECT "+columns+" FROM entries WHERE user_id=? ORDER BY updated_at DESC").bind(owner).all<Entry>();
     return reply(rows.results,200,{"X-Draft-Owner":encodeURIComponent(owner)});
   }catch(error){return fail(error,"暂时无法读取笔记");}

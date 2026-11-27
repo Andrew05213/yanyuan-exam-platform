@@ -141,6 +141,13 @@
       "when": 1795740393693,
       "tag": "0019_research_projects",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1795779000000,
+      "tag": "0020_note_versions",
+      "breakpoints": true
     }
   ]
 }

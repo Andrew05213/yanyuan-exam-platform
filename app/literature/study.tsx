@@ -16,6 +16,7 @@ import {works,eras} from "./data";
 import {workReadingNote,workNotePrefix,type Entry,type Folder} from "./notes";
 import {draftKey,readDrafts} from "./drafts";
 import {Notebook} from "./notebook";
+import {AcademicEditor} from "./academic-editor";
 import {Community} from "./community";
 import {GovernanceGate} from "./governance";
 import {ReviewDesk} from "./review-desk";
@@ -34,9 +35,14 @@ export default function Study({notebook=false}:{notebook?:boolean}){
  const [draftOwner,setDraftOwner]=useState("");
  const [localDrafts,setLocalDrafts]=useState<Entry[]>([]);
  const [storageFailed,setStorageFailed]=useState(false);
+ const [autoCloudScope,setAutoCloudScope]=useState("");
+ const editedNotes=useRef(new Map<string,Entry>());
+ const autoAttempt=useRef("");
+ const saveLock=useRef(false);
  const [conflict,setConflict]=useState<{draft:Entry;current:Entry|null}|null>(null);
 
  function editDraft(value:Entry){
+   editedNotes.current.set(value.id,value);
    setDraft(value);
    if(!draftOwner)return;
    try{
@@ -46,10 +52,12 @@ export default function Study({notebook=false}:{notebook?:boolean}){
    }catch{setStorageFailed(true);}
  }
  function discard(id:string){
+   editedNotes.current.delete(id);
    try{localStorage.removeItem(draftKey(draftOwner,id));setLocalDrafts(old=>old.filter(n=>n.id!==id));}
    catch{setStorageFailed(true);}
  }
  function recover(value:Entry){
+   setAutoCloudScope("");autoAttempt.current="";
    setConflict(null);
    setActive(noteWork(value,entries,materials));
    setDraft({...value});setShowHints(false);
@@ -58,6 +66,9 @@ export default function Study({notebook=false}:{notebook?:boolean}){
  const [materials,setMaterials]=useState<Material[]>(works),[materialDraft,setMaterialDraft]=useState<Material|null>(null),[deleteTarget,setDeleteTarget]=useState<Material|null>(null),[materialBusy,setMaterialBusy]=useState(false),[materialError,setMaterialError]=useState(""),[interviewDraft,setInterviewDraft]=useState<Material|null>(null);
  const materialsRef=useRef(materials); materialsRef.current=materials;
 
+ const autoScope=draftOwner&&draft?JSON.stringify([draftOwner,draft.id]):"";
+ const autoCloud=!!autoScope&&autoCloudScope===autoScope;
+ const setAutoCloud=(enabled:boolean)=>setAutoCloudScope(enabled?autoScope:"");
  const secondaryPaper=active?furtherReading[active.id]:undefined;
  const writable=!loading&&!login&&!error;
  async function load(quiet=false){if(!quiet)setLoading(true);setError("");try {
@@ -105,6 +116,9 @@ export default function Study({notebook=false}:{notebook?:boolean}){
  },[notebook]);
  function replaceEntry(entry:Entry){setEntries(previous=>[entry,...previous.filter(note=>note.id!==entry.id)]);}
  async function save(entry:Entry):Promise<Entry|null>{
+  if(saveLock.current)return null;
+  saveLock.current=true;
+  const submittedEdit=editedNotes.current.get(entry.id);
   setSaving(true);
   try{
    const response=await fetch("/api/literature/entries",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(entry)});
@@ -117,13 +131,30 @@ export default function Study({notebook=false}:{notebook?:boolean}){
    }
    if(!response.ok||!result.entry)throw new Error(result.error||"保存失败，请重试。");
    const saved=result.entry;
-   discard(entry.id);replaceEntry(saved);
-   setDraft(previous=>previous?.id===saved.id?saved:previous);
+   const newer=editedNotes.current.get(entry.id);
+   replaceEntry(saved);
+   if(newer&&newer!==submittedEdit){
+    const pending={...newer,revision:saved.revision,updated_at:saved.updated_at};
+    editedNotes.current.set(entry.id,pending);
+    if(draftOwner)try{localStorage.setItem(draftKey(draftOwner,pending.id),JSON.stringify(pending));setStorageFailed(false);}catch{setStorageFailed(true);}
+    setLocalDrafts(old=>[pending,...old.filter(n=>n.id!==pending.id)]);
+    setDraft(previous=>previous?.id===saved.id?pending:previous);
+   }else{
+    discard(entry.id);setDraft(previous=>previous?.id===saved.id?saved:previous);
+   }
    setConflict(null);toast.success("已保存");
    return saved;
   }catch(error){toast.error(error instanceof Error?error.message:"保存失败，请重试。");return null;}
-  finally{setSaving(false);}
+  finally{saveLock.current=false;setSaving(false);}
  }
+ useEffect(()=>{
+  if(!draft){setAutoCloudScope("");autoAttempt.current="";return;}
+  if(!autoCloud||!writable||!draftOwner||saving||conflict||!draft.title.trim()||!localDrafts.some(n=>n.id===draft.id&&JSON.stringify(n)===JSON.stringify(draft)))return;
+  const snapshot={...draft,workId:linkedWork(draft)||null};const key=JSON.stringify(snapshot);
+  if(autoAttempt.current===key)return;
+  const timer=setTimeout(()=>{autoAttempt.current=key;void save(snapshot);},4000);
+  return()=>clearTimeout(timer);
+ },[draft,autoCloud,writable,draftOwner,saving,conflict,localDrafts]);
  async function moveEntry(entry:Entry,folder:Folder){
   try{
    const response=await fetch("/api/literature/entries",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:entry.id,revision:entry.revision,folder})});
@@ -223,9 +254,7 @@ export default function Study({notebook=false}:{notebook?:boolean}){
  <TabsContent value="interview"><section className="section-heading"><div><h2>把阅读转化为表达</h2><p>每题约 90 秒：明确观点，用文本举例，再说明观点的边界。</p></div></section><div className="questions">{materials.filter(w=>w.question).map((w,i)=><article key={w.id}><span className="question-number">{String(i+1).padStart(2,"0")}</span><div><small>{w.title} · {w.theme}</small><h3>{w.question}</h3><div className="interview-actions"><button className="text-button" onClick={()=>open(w)}>准备回答与记录</button><button className="text-button edit-question" disabled={!writable} aria-label={"编辑"+w.title+"面试题"} onClick={()=>{setMaterialError("");setInterviewDraft({...w,angles:[...w.angles]});}}><PenLine size={16}/>编辑</button></div></div></article>)}</div><p className="source-line">以上为学习练习题，不代表学校官方考题。可以在条目笔记中保存回答提纲。</p></TabsContent>
  </Tabs>}</main><nav className="literature-mobile-dock" aria-label="快捷导航"><a href="/#today">首页</a><a href="/#schools">学习</a><a href="/reading-notes" aria-current={notebook?"page":undefined}>笔记</a><a href="/literature#community">研究</a><a href="/#saved">档案</a></nav>
  <Dialog open={!!draft} onOpenChange={o=>{if(!o&&!saving){setDraft(null);setActive(null);setConflict(null);}}}><DialogContent className="editor notebook-editor"><DialogHeader><DialogTitle>{active?active.title:"读书笔记"}</DialogTitle><DialogDescription>{active?active.author+" · "+active.era:"写下你的阅读与思考，点击保存后长期保留。"}</DialogDescription></DialogHeader>{active&&writable&&<button type="button" className="text-button jump-to-note" onClick={()=>document.getElementById("note-body")?.focus()}>直接写笔记 ↓</button>}{active&&<div className="reading-guide"><h4>阅读切入点</h4><p>{active.guide||"记录你的阅读重点与文本依据。"}</p>{active.source&&<a href={active.source} target="_blank" rel="noreferrer">{paperInfo[active.source]||active.sourceName||"参考来源"}</a>}{secondaryPaper&&<p><a href={secondaryPaper[1]} target="_blank" rel="noreferrer">{paperInfo[secondaryPaper[1]]||secondaryPaper[0]} · 知网</a></p>}{active.id==="research_18"&&<p>作者依据图书馆目录校正为山冈庄八。<a href="https://opac.lib.uibe.edu.cn/opac/book/21d7aac32e24bc564ad189cf6c68b2d9" target="_blank" rel="noreferrer">核对馆藏书目</a></p>}{active.question&&<div className="prompt"><small>面试思考</small><h4>{active.question}</h4><button className="text-button" onClick={()=>setShowHints(!showHints)}>{showHints?"收起思路":"查看展开思路"}</button>{showHints&&<ol>{active.angles.map(a=><li key={a}>{a}</li>)}</ol>}</div>}</div>}{active&&<button type="button" className="text-button" disabled={!writable} onClick={()=>{const title=active.title;setActive(null);editDraft({...newEntry(),workId:active.id,title:title+" · 读书笔记",content:"作品： "+title+"\n\n摘录与页码：\n\n阅读感想：\n\n值得追问的问题：\n"});}}>为这部作品新建一篇笔记</button>}{active&&<section><h4>这部作品的笔记</h4>{relatedNotes.length===0?<p>尚无独立笔记。</p>:relatedNotes.map(n=><p key={n.id}><button className="text-button" onClick={()=>recover(n)}>{n.title}</button></p>)}</section>}{active&&<details className="notebook-tools"><summary>关联阅读与口试</summary>{readingPaths.filter(p=>p.ids.includes(active.id)).map(p=><section key={p.title}><h4>{p.title}</h4><p>{p.question}</p>{p.ids.filter(id=>id!==active.id).map(id=>materials.find(m=>m.id===id)).filter(w=>!!w).map(w=><button key={w.id} onClick={()=>open(w)}>{w.title}</button>)}</section>)}{oralLinks.filter(t=>t.works.includes(active.id)).map(t=><p key={t.id}><a href={"/?readingPractice=ja#task/pku/"+t.id}>{t.title} →</a></p>)}<p>本条目的专题面试可在下方练习。</p></details>}
- {(()=>{const work=active || (draft && materials.find(m=>m.id===linkedWork(draft)));return work && <Practice owner={draftOwner} key={draftOwner+work.id} work={work} save={save} enabled={writable} previous={entries.filter(n=>linkedWork(n)===work.id&&(n.tags?.includes("面试复练")||n.title.startsWith("面试复练 · ")))}/>})()} {draft&&localDrafts.some(n=>n.id===draft.id&&JSON.stringify(n)!==JSON.stringify(draft))&&<button className="text-button" onClick={()=>recover(localDrafts.find(n=>n.id===draft.id)!)}>恢复这篇笔记的本机草稿</button>}{conflict&&<div className="notice" role="alert"><strong>云端笔记已有变动</strong><p>你的草稿仍保存在本机。可以打开当前版本对照，或将草稿另存为一篇笔记。</p>{conflict.current?.folder==="active"&&<button type="button" onClick={()=>recover(conflict.current!)}>打开云端版本</button>}<button type="button" onClick={()=>{const original=conflict.draft;setActive(null);setConflict(null);editDraft({...original,id:newEntry().id,workId:linkedWork(original),folder:"active",revision:0});}}>另存为新笔记</button></div>}{draft&&<form onSubmit={async e=>{e.preventDefault();await save({...draft,workId:linkedWork(draft)||null});}}><fieldset disabled={saving||!writable} style={{border:0,padding:0,margin:0}}>{!active&&<label>关联作品<select value={linkedWork(draft)} onChange={e=>editDraft({...draft,workId:e.target.value})}><option value="">独立笔记</option>{materials.map(w=><option value={w.id} key={w.id}>{w.title}</option>)}</select></label>}<label>标题<input required maxLength={200} value={draft.title} onChange={e=>editDraft({...draft,title:e.target.value})}/></label><div className="status-row"><label>阅读状态</label><Filter value={draft.status} onChange={v=>editDraft({...draft,status:v})} items={["未开始","在读","已读"]} label="选择阅读状态"/></div><details className="note-fields"><summary>语种、学科与复习设置</summary><div className="field-pair"><label>笔记语种<input maxLength={100} value={draft.language||""} onChange={e=>editDraft({...draft,language:e.target.value})}/></label><label>原文语种<input maxLength={100} value={draft.sourceLanguage||""} onChange={e=>editDraft({...draft,sourceLanguage:e.target.value})}/></label></div><label>学科<input maxLength={100} value={draft.discipline||""} onChange={e=>editDraft({...draft,discipline:e.target.value})}/></label><label>主题标签（逗号分隔）<input maxLength={300} value={draft.tags||""} onChange={e=>editDraft({...draft,tags:e.target.value})}/></label><label>版本、章节或页码<input maxLength={300} value={draft.locator||""} onChange={e=>editDraft({...draft,locator:e.target.value})}/></label><label>下次复习<input type="date" value={draft.reviewOn||""} onChange={e=>editDraft({...draft,reviewOn:e.target.value})}/></label></details><label>{active?"阅读笔记 / 面试回答提纲":"正文"}<textarea id="note-body" className="note-body" rows={15} placeholder="我的观点：
-文本依据：
-可以追问的问题：" value={draft.content} onChange={e=>editDraft({...draft,content:e.target.value})} maxLength={100000}/></label><div className="save-row"><span role="status">{!writable?"登录并加载笔记后可编辑":storageFailed?"本机草稿存储不可用，请点击保存":localDrafts.some(n=>n.id===draft.id)?"草稿已保存在本机，点击保存可同步":"编辑后自动保留本机草稿"}</span><button className="primary" type="submit" disabled={saving||loading||login||!!error||!!conflict}>{saving?"保存中…":"保存"}</button></div></fieldset></form>}</DialogContent></Dialog>
+ {(()=>{const work=active || (draft && materials.find(m=>m.id===linkedWork(draft)));return work && <Practice owner={draftOwner} key={draftOwner+work.id} work={work} save={save} enabled={writable} previous={entries.filter(n=>linkedWork(n)===work.id&&(n.tags?.includes("面试复练")||n.title.startsWith("面试复练 · ")))}/>})()} {draft&&localDrafts.some(n=>n.id===draft.id&&JSON.stringify(n)!==JSON.stringify(draft))&&<button className="text-button" onClick={()=>recover(localDrafts.find(n=>n.id===draft.id)!)}>恢复这篇笔记的本机草稿</button>}{conflict&&<div className="notice" role="alert"><strong>云端笔记已有变动</strong><p>你的草稿仍保存在本机。可以打开当前版本对照，或将草稿另存为一篇笔记。</p>{conflict.current?.folder==="active"&&<button type="button" onClick={()=>recover(conflict.current!)}>打开云端版本</button>}<button type="button" onClick={()=>{const original=conflict.draft;setActive(null);setConflict(null);editDraft({...original,id:newEntry().id,workId:linkedWork(original),folder:"active",revision:0});}}>另存为新笔记</button></div>}{draft&&<form onSubmit={async e=>{e.preventDefault();await save({...draft,workId:linkedWork(draft)||null});}}><fieldset disabled={saving||!writable} style={{border:0,padding:0,margin:0}}>{!active&&<label>关联作品<select value={linkedWork(draft)} onChange={e=>editDraft({...draft,workId:e.target.value})}><option value="">独立笔记</option>{materials.map(w=><option value={w.id} key={w.id}>{w.title}</option>)}</select></label>}<label>标题<input required maxLength={200} value={draft.title} onChange={e=>editDraft({...draft,title:e.target.value})}/></label><div className="status-row"><label>阅读状态</label><Filter value={draft.status} onChange={v=>editDraft({...draft,status:v})} items={["未开始","在读","已读"]} label="选择阅读状态"/></div><details className="note-fields"><summary>语种、学科与复习设置</summary><div className="field-pair"><label>笔记语种<input maxLength={100} value={draft.language||""} onChange={e=>editDraft({...draft,language:e.target.value})}/></label><label>原文语种<input maxLength={100} value={draft.sourceLanguage||""} onChange={e=>editDraft({...draft,sourceLanguage:e.target.value})}/></label></div><label>学科<input maxLength={100} value={draft.discipline||""} onChange={e=>editDraft({...draft,discipline:e.target.value})}/></label><label>主题标签（逗号分隔）<input maxLength={300} value={draft.tags||""} onChange={e=>editDraft({...draft,tags:e.target.value})}/></label><label>版本、章节或页码<input maxLength={300} value={draft.locator||""} onChange={e=>editDraft({...draft,locator:e.target.value})}/></label><label>下次复习<input type="date" value={draft.reviewOn||""} onChange={e=>editDraft({...draft,reviewOn:e.target.value})}/></label></details><AcademicEditor key={draft.id} value={draft.content} onChange={content=>editDraft({...draft,content})} label={active?"阅读笔记 / 面试回答提纲":"正文"} noteId={draft.id} revision={draft.revision??0} onRestore={v=>{if(window.confirm("将旧标题和正文载入草稿？当前未提交的修改将被替换，云端不变，直到保存。")){setAutoCloud(false);editDraft({...draft,title:v.title,content:v.content});}}}/><label className="academic-autosave"><input type="checkbox" checked={autoCloud} onChange={e=>{autoAttempt.current="";setAutoCloud(e.target.checked);}}/> 本次编辑启用云端自动保存（停笔4秒；失败或冲突需手动处理）</label><div className="save-row"><span role="status">{!writable?"登录并加载笔记后可编辑":storageFailed?"本机草稿存储不可用，请点击保存":localDrafts.some(n=>n.id===draft.id)?"草稿已保存在本机，点击保存可同步":"编辑后自动保留本机草稿"}</span><button className="primary" type="submit" disabled={saving||loading||login||!!error||!!conflict}>{saving?"保存中…":"保存"}</button></div></fieldset></form>}</DialogContent></Dialog>
  <Dialog open={!!interviewDraft} onOpenChange={open=>{if(!open&&!materialBusy){setInterviewDraft(null);setMaterialError("");}}}><DialogContent className="editor interview-editor"><DialogHeader><DialogTitle>编辑面试题</DialogTitle><DialogDescription>{interviewDraft?.title} · {interviewDraft?.theme}</DialogDescription></DialogHeader>{interviewDraft&&<form onSubmit={e=>{e.preventDefault();void saveMaterial(interviewDraft,"interview");}}>
  <label>面试讨论题<textarea required disabled={materialBusy} maxLength={2000} className="short-text" value={interviewDraft.question} onChange={e=>setInterviewDraft({...interviewDraft,question:e.target.value})}/></label>
  <label>展开思路（每行一条）<textarea disabled={materialBusy} value={interviewDraft.angles.join("\n")} onChange={e=>setInterviewDraft({...interviewDraft,angles:e.target.value.split("\n")})} placeholder="明确核心观点\n引用文本依据\n讨论观点的边界"/></label>
