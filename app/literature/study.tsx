@@ -35,12 +35,14 @@ export default function Study({notebook=false}:{notebook?:boolean}){
  const [draftOwner,setDraftOwner]=useState("");
  const [localDrafts,setLocalDrafts]=useState<Entry[]>([]);
  const [storageFailed,setStorageFailed]=useState(false);
- const [autoCloud,setAutoCloud]=useState(false);
+ const [autoCloudScope,setAutoCloudScope]=useState("");
+ const editedNotes=useRef(new Map<string,Entry>());
  const autoAttempt=useRef("");
  const saveLock=useRef(false);
  const [conflict,setConflict]=useState<{draft:Entry;current:Entry|null}|null>(null);
 
  function editDraft(value:Entry){
+   editedNotes.current.set(value.id,value);
    setDraft(value);
    if(!draftOwner)return;
    try{
@@ -50,10 +52,12 @@ export default function Study({notebook=false}:{notebook?:boolean}){
    }catch{setStorageFailed(true);}
  }
  function discard(id:string){
+   editedNotes.current.delete(id);
    try{localStorage.removeItem(draftKey(draftOwner,id));setLocalDrafts(old=>old.filter(n=>n.id!==id));}
    catch{setStorageFailed(true);}
  }
  function recover(value:Entry){
+   setAutoCloudScope("");autoAttempt.current="";
    setConflict(null);
    setActive(noteWork(value,entries,materials));
    setDraft({...value});setShowHints(false);
@@ -62,6 +66,9 @@ export default function Study({notebook=false}:{notebook?:boolean}){
  const [materials,setMaterials]=useState<Material[]>(works),[materialDraft,setMaterialDraft]=useState<Material|null>(null),[deleteTarget,setDeleteTarget]=useState<Material|null>(null),[materialBusy,setMaterialBusy]=useState(false),[materialError,setMaterialError]=useState(""),[interviewDraft,setInterviewDraft]=useState<Material|null>(null);
  const materialsRef=useRef(materials); materialsRef.current=materials;
 
+ const autoScope=draftOwner&&draft?JSON.stringify([draftOwner,draft.id]):"";
+ const autoCloud=!!autoScope&&autoCloudScope===autoScope;
+ const setAutoCloud=(enabled:boolean)=>setAutoCloudScope(enabled?autoScope:"");
  const secondaryPaper=active?furtherReading[active.id]:undefined;
  const writable=!loading&&!login&&!error;
  async function load(quiet=false){if(!quiet)setLoading(true);setError("");try {
@@ -111,6 +118,7 @@ export default function Study({notebook=false}:{notebook?:boolean}){
  async function save(entry:Entry):Promise<Entry|null>{
   if(saveLock.current)return null;
   saveLock.current=true;
+  const submittedEdit=editedNotes.current.get(entry.id);
   setSaving(true);
   try{
    const response=await fetch("/api/literature/entries",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(entry)});
@@ -123,15 +131,24 @@ export default function Study({notebook=false}:{notebook?:boolean}){
    }
    if(!response.ok||!result.entry)throw new Error(result.error||"保存失败，请重试。");
    const saved=result.entry;
-   discard(entry.id);replaceEntry(saved);
-   setDraft(previous=>previous?.id===saved.id?saved:previous);
+   const newer=editedNotes.current.get(entry.id);
+   replaceEntry(saved);
+   if(newer&&newer!==submittedEdit){
+    const pending={...newer,revision:saved.revision,updated_at:saved.updated_at};
+    editedNotes.current.set(entry.id,pending);
+    if(draftOwner)try{localStorage.setItem(draftKey(draftOwner,pending.id),JSON.stringify(pending));setStorageFailed(false);}catch{setStorageFailed(true);}
+    setLocalDrafts(old=>[pending,...old.filter(n=>n.id!==pending.id)]);
+    setDraft(previous=>previous?.id===saved.id?pending:previous);
+   }else{
+    discard(entry.id);setDraft(previous=>previous?.id===saved.id?saved:previous);
+   }
    setConflict(null);toast.success("已保存");
    return saved;
   }catch(error){toast.error(error instanceof Error?error.message:"保存失败，请重试。");return null;}
   finally{saveLock.current=false;setSaving(false);}
  }
  useEffect(()=>{
-  if(!draft){setAutoCloud(false);autoAttempt.current="";return;}
+  if(!draft){setAutoCloudScope("");autoAttempt.current="";return;}
   if(!autoCloud||!writable||!draftOwner||saving||conflict||!draft.title.trim()||!localDrafts.some(n=>n.id===draft.id&&JSON.stringify(n)===JSON.stringify(draft)))return;
   const snapshot={...draft,workId:linkedWork(draft)||null};const key=JSON.stringify(snapshot);
   if(autoAttempt.current===key)return;
