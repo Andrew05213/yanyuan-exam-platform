@@ -53,6 +53,11 @@ try{
     verify((await call('GET','fixture-'+name)).data.analysis);
     assert.equal((await call('DELETE','fixture-'+name,undefined,{'If-Match':saved.data.version})).status,200);
   }
+  const choice={...plan,schoolIds:['pku','gdufs'],exams:[],language:'泰语',field:'法学'};
+  const matched=(await call('POST','A',choice)).data.analysis.results;
+  assert.equal(matched[0].id,'gdufs');assert.ok(matched[0].reasons.some(r=>r.includes('泰语＋法学')));
+  assert.equal((await call('POST','A',{...choice,preferredSchool:'pku'})).data.analysis.results[0].id,'pku');
+  assert.equal((await call('POST','A',{...choice,preferredSchool:'thu'})).status,400);
   assert.equal((await call('POST','A',{...plan,evidence:[['E4']]})).status,400);
   const created=await call('PUT','A',{plan,version:null,ownerId:'B'});
   assert.equal(created.status,200,JSON.stringify(created.data));

@@ -10,15 +10,22 @@
     "id": "national-2",
     "name": "北京理工大学",
     "city": "北京",
-    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
-    "detail": false
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=zcec96yueixkn9k9",
+    "detail": true
   },
   {
     "id": "national-3",
     "name": "北京科技大学",
     "city": "北京",
-    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
-    "detail": false
+    "source": "https://zhaosheng.ustb.edu.cn/zkxx/tslxzs/wylbss/a5a91652971f42079934605e64073152.htm",
+    "detail": true,
+    "programs": [
+      {
+        "language": "日语",
+        "field": "工程",
+        "label": "日语＋人工智能双学士"
+      }
+    ]
   },
   {
     "id": "national-4",
@@ -38,8 +45,8 @@
     "id": "national-6",
     "name": "对外经济贸易大学",
     "city": "北京",
-    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
-    "detail": false
+    "source": "https://aeo.uibe.edu.cn/front/showContent.jspa?channelId=848&contentId=109302",
+    "detail": true
   },
   {
     "id": "national-7",
@@ -100,8 +107,8 @@
     "id": "national-14",
     "name": "哈尔滨工业大学",
     "city": "哈尔滨",
-    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
-    "detail": false
+    "source": "https://zsb.hit.edu.cn/article/read/1469612da6baa241e1e51b14032c901b",
+    "detail": true
   },
   {
     "id": "national-15",
@@ -135,8 +142,8 @@
     "id": "national-19",
     "name": "上海财经大学",
     "city": "上海",
-    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
-    "detail": false
+    "source": "https://zs.sufe.edu.cn/e3/51/c3336a254801/page.htm",
+    "detail": true
   },
   {
     "id": "national-20",
@@ -146,6 +153,13 @@
     "detail": true,
     "historicalLanguages": [
       "日语"
+    ],
+    "programs": [
+      {
+        "language": "日语",
+        "field": "工程",
+        "label": "日语＋电子科学与技术双学士，申请有选科要求"
+      }
     ]
   },
   {
@@ -172,8 +186,8 @@
     "id": "national-23",
     "name": "山东大学",
     "city": "济南",
-    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
-    "detail": false
+    "source": "https://www.bkzs.sdu.edu.cn/info/1028/2566.htm",
+    "detail": true
   },
   {
     "id": "national-24",
@@ -274,8 +288,8 @@
     "id": "national-36",
     "name": "四川外国语大学",
     "city": "重庆",
-    "source": "https://gaokao.chsi.com.cn/zzbm/bssbm/",
-    "detail": false
+    "source": "https://gaokao.chsi.com.cn/zzbm/xxgk/detailXx.action?xxId=mttlwmax81ffpyva",
+    "detail": true
   },
   {
     "id": "national-37",
@@ -317,6 +331,58 @@
     "name": "广东外语外贸大学",
     "city": "广州",
     "source": "https://xxgk.gdufs.edu.cn/info/1165/3316.htm",
-    "detail": true
+    "detail": true,
+    "programs": [
+      {
+        "language": "法语",
+        "field": "经贸",
+        "label": "法语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "西班牙语",
+        "field": "经贸",
+        "label": "西班牙语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "俄语",
+        "field": "经贸",
+        "label": "俄语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "德语",
+        "field": "经贸",
+        "label": "德语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "日语",
+        "field": "经贸",
+        "label": "日语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "葡萄牙语",
+        "field": "经贸",
+        "label": "葡萄牙语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "意大利语",
+        "field": "经贸",
+        "label": "意大利语＋国际经济与贸易双学士"
+      },
+      {
+        "language": "越南语",
+        "field": "法学",
+        "label": "越南语＋法学双学士"
+      },
+      {
+        "language": "泰语",
+        "field": "法学",
+        "label": "泰语＋法学双学士"
+      },
+      {
+        "language": "朝鲜语",
+        "field": "法学",
+        "label": "朝鲜语＋法学双学士"
+      }
+    ]
   }
 ]

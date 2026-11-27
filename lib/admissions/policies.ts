@@ -9,11 +9,12 @@ const trainingSchools=catalog.schools.map(s=>({
   notices:directories[s.id as keyof typeof directories],
   source:s.id==='bfsu'?'https://joinus.bfsu.edu.cn/info/1033/10524.htm':s.sourceUrl,sourceLabel:s.id==='bfsu'?'北外2026年官方简章':s.sourceLabel,referenceYear:s.languagePolicy.year,
   reviewed:s.languagePolicy.checkedAt,referenceNote:s.languagePolicy.note,
+  programs:s.id==='zju'?[{language:'德语',field:'工程',label:'德语＋光电信息科学与工程双学士'},{language:'法语',field:'工程',label:'法语＋电子科学与技术双学士'}]:[],
   historicalLanguages:[] as string[],trainingLanguages:s.languageIds.map(id=>catalog.languages[id as keyof typeof catalog.languages].label),
   training:catalog.oralItems.filter(item=>item.schoolIds.includes(s.id)).map(({id,title,type})=>({id,title,type})),
 }));
 export const admissionsSchools=[...trainingSchools,...national.map(s=>({
-  ...s,notices:s.source,sourceLabel:s.detail?'2026年校方或阳光高考资料':'阳光高考2026年报名院校目录',
+  ...s,programs:s.programs??[],notices:s.source,sourceLabel:s.detail?'2026年校方或阳光高考资料':'阳光高考2026年报名院校目录',
   referenceYear:2026,reviewed:'2026-11-27',referenceNote:s.detail?'参阅该校年度资料核对专业、报名条件、费用与考核。':'该校在2026年平台报名目录中。外语保送专业、资格和报名窗口仍待逐项核验。',
   historicalLanguages:s.historicalLanguages??[],trainingLanguages:[] as string[],training:[] as typeof trainingSchools[number]['training'],
 }))];

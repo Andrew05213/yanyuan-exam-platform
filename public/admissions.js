@@ -35,6 +35,8 @@ const Admissions={
    '<label>外国语中学推荐保送资格<select name="qualification">'+option('pending','待确认',plan.qualification)+option('confirmed','已确认',plan.qualification)+option('denied','不具备',plan.qualification)+'</select></label>'+
    '<label>当年普通高考报名条件<select name="examRegistration">'+option('unknown','待确认',plan.examRegistration)+option('yes','符合',plan.examRegistration)+option('no','不符合',plan.examRegistration)+'</select></label></div>'+
    '<label>优先城市（按学校主校所在地，专业校区另核）<select name="city">'+option('','不限',plan.city)+[...new Set(data.schools.map(s=>s.city))].map(c=>option(c,c,plan.city)).join('')+'</select></label>'+
+   '<label>希望结合的培养方向<select name="field">'+['','法学','经贸','工程'].map(v=>option(v,v||'不限',plan.field)).join('')+'</select></label>'+
+   '<label>同等资格下首选院校<select name="preferredSchool"></select></label>'+
    '<label>本轮训练目标<select name="trainingFocus">'+Object.entries({'':'学校推荐',reading:'朗读理解',speech:'即兴表达',personal:'个人陈述','zh-en':'中译英','en-zh':'英译中'}).map(([k,v])=>option(k,v,plan.trainingFocus)).join('')+'</select></label>'+
    '<fieldset class="admissions-schools"><legend>候选院校</legend>'+data.schools.map(s=>'<label><input type="checkbox" name="school" value="'+e(s.id)+'"'+(plan.schoolIds.includes(s.id)?' checked':'')+'>'+e(s.name)+'</label>').join('')+'</fieldset>'+
    '<details class="admissions-schedule"><summary>考试日程（北京时间）</summary>'+
@@ -113,6 +115,9 @@ const Admissions={
   const display=(analysis,exams)=>{output.innerHTML=this.summary(analysis,exams,data.schools);};
   const showSelected=()=>{
    const selected=new FormData(form).getAll('school');
+   const first=form.elements.preferredSchool;
+   const previous=first.options.length?first.value:plan.preferredSchool;
+   first.innerHTML=option('','无优先',previous)+data.schools.filter(s=>selected.includes(s.id)).map(s=>option(s.id,s.name,previous)).join('');
    for(const item of form.querySelectorAll('[data-exam]')){
     const enabled=selected.includes(item.dataset.exam);
     item.hidden=!enabled;item.disabled=!enabled;
@@ -149,7 +154,7 @@ const Admissions={
     exams.push({schoolId:group.dataset.exam,start:value('start'),end:value('end'),location:value('location'),from:value('from'),
      travelMinutes:value('travelMinutes')===''?null:Number(value('travelMinutes'))});
    }
-   const next={year:Number(f.get('year')),language:f.get('language'),qualification:f.get('qualification'),examRegistration:f.get('examRegistration'),schoolIds,exams,city:f.get('city'),trainingFocus:f.get('trainingFocus'),evidence:grades.map(pair=>[...pair]),profile:answers.map(pair=>[...pair])};
+   const next={year:Number(f.get('year')),language:f.get('language'),qualification:f.get('qualification'),examRegistration:f.get('examRegistration'),schoolIds,exams,city:f.get('city'),field:f.get('field'),preferredSchool:f.get('preferredSchool'),trainingFocus:f.get('trainingFocus'),evidence:grades.map(pair=>[...pair]),profile:answers.map(pair=>[...pair])};
    const save=event.submitter?.value==='save';
    inputs.disabled=true;message.textContent=save?'正在保存…':'正在核对…';
    try{
@@ -175,10 +180,10 @@ const Admissions={
   const paths={gaokao_fallback:'建议按高考路径准备。',parallel_keep_gaokao:'资格待确认，保留高考备考。',conditional_admissions:'继续核对招生条件与报名时间。'};
   const conflictLabels={clear:'按已填信息未见冲突',conflict:'时间重叠或交通时间不足',unknown:'时间、地点或交通信息不足'};
   const schoolName=id=>schools.find(s=>s.id===id)?.name||id;
-  return '<section class="hub-panel"><h2>院校匹配与资格核对</h2><p>先按资格状态，再按城市、语种两项偏好的符合数量排序。同档同数并列。</p><p>'+e(paths[analysis.path])+'</p><div class="admissions-grid">'+analysis.results.map(s=>{
+  return '<section class="hub-panel"><h2>院校匹配与资格核对</h2><p>先按资格状态分组，组内优先本人首选，再按城市、语种和历史培养项目的吻合项数排列。未收录的项目保留未知。</p><p>'+e(paths[analysis.path])+'</p><div class="admissions-grid">'+analysis.results.map(s=>{
    const p=s.policy;
    return '<article class="admissions-card"><h3>'+e(s.name)+'</h3><strong>'+e(statuses[s.status])+'</strong>'+
-    '<p>'+e(s.reasons.join(' · ')||'偏好信息不足或未匹配')+'</p>'+(p?'<p>'+(s.historical?'历史参考 · ':'招生简章 · ')+e(p.year)+' 年</p><p>报名 '+e(p.registration)+'</p><p>'+e(p.condition)+'</p><p>专业 '+e(p.eligibleLanguages.join('、'))+'</p><a href="'+e(p.source)+'" target="_blank" rel="noopener noreferrer">查看官方简章 ↗</a>':'<p>'+e(s.referenceYear+' 年资料 · '+s.referenceNote+(s.historicalLanguages?.length?' 历史招生语种：'+s.historicalLanguages.join('、'):'') )+'</p><a href="'+e(s.source)+'">'+e(s.sourceLabel)+'</a>')+
+    '<p>'+e([...(s.firstChoice?['本人首选']:[]),...s.reasons].join(' · ')||'偏好信息不足或未匹配')+'</p>'+(p?'<p>'+(s.historical?'历史参考 · ':'招生简章 · ')+e(p.year)+' 年</p><p>报名 '+e(p.registration)+'</p><p>'+e(p.condition)+'</p><p>专业 '+e(p.eligibleLanguages.join('、'))+'</p><a href="'+e(p.source)+'" target="_blank" rel="noopener noreferrer">查看官方简章 ↗</a>':'<p>'+e(s.referenceYear+' 年资料 · '+s.referenceNote+(s.historicalLanguages?.length?' 历史招生语种：'+s.historicalLanguages.join('、'):'') )+'</p><a href="'+e(s.source)+'">'+e(s.sourceLabel)+'</a>')+
     '<div class="toolbar"><a href="'+e(s.notices)+'" target="_blank" rel="noopener noreferrer">查招生资料 ↗</a>'+(s.hasSchoolHub?'<a href="#school/'+e(s.id)+'">学校训练</a>':'<a href="#oral">通用口试训练</a>')+(s.task?'<a href="#task/'+e(s.id)+'/'+e(s.task.id)+'">专项练习 · '+e(s.task.title)+'</a>':'')+'</div></article>';
   }).join('')+'</div></section>'+(analysis.scores?'<section class="hub-panel"><h2>自报证据质量</h2><p>自评、具体经历、可核对记录分别计 0.5、0.75、1 分，未知为 0。按每维两项取平均。</p>'+analysis.scores.map((s,i)=>'第 '+(i+1)+' 维 '+Math.round(100*s.quality)+'%').join(' · ')+'</section>':'')+'<section class="hub-panel"><h2>日程冲突</h2>'+
   (!analysis.conflicts.length?'<p>至少填写两场考试，才能比较日程。</p>':'<ul>'+analysis.conflicts.map(c=>{
