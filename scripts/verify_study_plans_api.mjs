@@ -20,8 +20,14 @@ try{
  const feedback={action:'feedback',version,taskId:id,status:'done',actualMinutes:12,note:'Reviewed',outcome:'good'};
  const race=await Promise.all([call('A',feedback),call('A',feedback)]);assert.deepEqual(race.map(x=>x.status).sort(),[200,409]);saved=race.find(x=>x.status===200);version=saved.body.version;
  assert.equal(saved.body.plan.tasks[0].review.level,1);assert.equal(saved.body.plan.tasks[0].actualMinutes,12);
- const read=await call('A');assert.equal(read.body.weekStats.done,1);assert.equal(read.body.weekStats.actualMinutes,12);assert.ok(read.body.candidates[0].due>date);
+ const read=await call('A');assert.equal(read.body.weekStats.done,1);assert.equal(read.body.weekStats.actualMinutes,12);assert.equal(read.body.weekStats.tracks['阅读研究'].actual,12);assert.deepEqual(read.body.attempts,[]);assert.ok(read.body.candidates[0].due>date);
  assert.equal((await call('A',{action:'save',...body,version,budgetMinutes:0})).status,409);
+ assert.equal((await call('A',{action:'feedback',version,taskId:id,status:'done',actualMinutes:12,evidenceId:'nonexistent'})).status,404);
+ await db.prepare("INSERT INTO archive_records(id,owner_id,kind,school_id,title,payload,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)").bind('attempt-B','B','written-attempt','pku','B attempt','{}',new Date().toISOString(),new Date().toISOString()).run();
+ assert.equal((await call('A',{action:'feedback',version,taskId:id,status:'done',actualMinutes:12,evidenceId:'attempt-B'})).status,404);
+ await db.prepare("INSERT INTO archive_records(id,owner_id,kind,school_id,title,payload,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)").bind('attempt-A','A','written-attempt','pku','A attempt','{}',new Date().toISOString(),new Date().toISOString()).run();
+ assert.deepEqual((await call('A')).body.attempts.map(a=>a.id),['attempt-A']);
+ const linked=await call('A',{action:'feedback',version,taskId:id,status:'done',actualMinutes:12,evidenceId:'attempt-A',note:'Reviewed'});assert.equal(linked.status,200,JSON.stringify(linked.body));version=linked.body.version;assert.equal(linked.body.plan.tasks[0].evidence.id,'attempt-A');
  const extra=await call('A',{action:'extra',version,id:'extra-fixture',title:'Extra',subject:'英语',track:'通用',actualMinutes:null,note:'Recorded'});assert.equal(extra.status,200,JSON.stringify(extra.body));version=extra.body.version;
  const ref=await call('A',{action:'reflection',version,challenge:'Time',judgment:'Focus',next:'Review'});assert.equal(ref.status,200,JSON.stringify(ref.body));version=ref.body.version;
  assert.equal((await call('A')).body.plan.reflection.next,'Review');assert.equal((await call('B')).body.plan.reflection.next,'');

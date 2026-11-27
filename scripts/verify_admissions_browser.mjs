@@ -67,6 +67,11 @@ try{
   await js("document.querySelector('[data-sp-save]').click()");
   await until("!!document.querySelector('[data-sp-task]') && document.querySelector('[data-sp-message]').innerText.includes('已保存')");
   await js("window.__previousPage=true");await send('Page.reload');await until("!window.__previousPage");await until("document.querySelector('[data-sp-tasks]')?.innerText.includes('Browser study')");
+  await js("document.querySelector('[data-sp-done]').click()");
+  await until("document.querySelector('[data-sp-done]')?.checked && document.querySelector('[data-sp-message]')?.innerText.includes('已保存')");
+  await js("document.querySelector('[data-sp-tab=week]').click()");
+  await until("document.querySelector('[data-sp-body]').innerText.includes('备考主线投入')");
+
   await js("document.querySelector('[data-sp-tab=reflection]').click();document.querySelector('[data-sp-reflection] [name=challenge]').value='Browser reflection';document.querySelector('[data-sp-reflection] button').click()");
   await until("document.querySelector('[data-sp-message]')?.innerText.includes('已保存')");
   await js("document.querySelector('[data-sp-tab=tasks]').click()");

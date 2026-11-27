@@ -70,12 +70,12 @@ export function reflection(plan:DayPlan,b:any):DayPlan{
 }
 export function stats(plans:DayPlan[]){
  const totals=plans.map(p=>progress(p.tasks));const count=(key:"planned"|"done"|"partial"|"skipped"|"total")=>totals.reduce((n,t)=>n+t[key],0);const total=count("total"),done=count("done");const counts={planned:count("planned"),done,partial:count("partial"),skipped:count("skipped"),total,completion:total?done/total:null};
- const bySubject:Record<string,{planned:number;actual:number;reported:number}>={};
+ const bySubject:Record<string,{planned:number;actual:number;reported:number}>=Object.create(null),byTrack:Record<string,{planned:number;actual:number;reported:number}>=Object.create(null);
  let actual=0,reported=0,plannedMinutes=0,recordCount=0,breakMinutes=0;
  for(const p of plans){
   breakMinutes+=p.tasks.reduce((n,t)=>n+t.breakBefore,0);
-  for(const t of p.tasks){plannedMinutes+=t.minutes;const s=bySubject[t.subject]??={planned:0,actual:0,reported:0};s.planned+=t.minutes;recordCount++;if(t.actualMinutes!==null){s.actual+=t.actualMinutes;s.reported++;actual+=t.actualMinutes;reported++;}}
-  for(const t of p.extra){const s=bySubject[t.subject]??={planned:0,actual:0,reported:0};recordCount++;if(t.actualMinutes!==null){s.actual+=t.actualMinutes;s.reported++;actual+=t.actualMinutes;reported++;}}
+  for(const t of p.tasks){plannedMinutes+=t.minutes;const s=bySubject[t.subject]??={planned:0,actual:0,reported:0},track=byTrack[t.track]??={planned:0,actual:0,reported:0};s.planned+=t.minutes;track.planned+=t.minutes;recordCount++;if(t.actualMinutes!==null){s.actual+=t.actualMinutes;s.reported++;track.actual+=t.actualMinutes;track.reported++;actual+=t.actualMinutes;reported++;}}
+  for(const t of p.extra){const s=bySubject[t.subject]??={planned:0,actual:0,reported:0},track=byTrack[t.track]??={planned:0,actual:0,reported:0};recordCount++;if(t.actualMinutes!==null){s.actual+=t.actualMinutes;s.reported++;track.actual+=t.actualMinutes;track.reported++;actual+=t.actualMinutes;reported++;}}
  }
- return {...counts,actualMinutes:reported?actual:null,reported,recordCount,plannedMinutes,breakMinutes,days:plans.length,daysWithCompletion:plans.filter(p=>p.tasks.some(t=>t.status==="done")).length,subjects:bySubject};
+ return {...counts,actualMinutes:reported?actual:null,reported,recordCount,plannedMinutes,breakMinutes,days:plans.length,daysWithCompletion:plans.filter(p=>p.tasks.some(t=>t.status==="done")).length,subjects:bySubject,tracks:byTrack};
 }
