@@ -149,17 +149,17 @@ try{
 
   await send('Page.navigate',{url:base+'/index.html#references'});
   await until("!!document.querySelector('[data-ref-editor]')");
-  await js("document.querySelector('[data-ref-editor] [name=title]').value='Browser paper';document.querySelector('[data-ref-editor] [name=authors]').value='Author';document.querySelector('[data-ref-editor] [name=year]').value='2024';document.querySelector('[data-ref-editor] [name=doi]').value='10.1234/browser';document.querySelector('[data-ref-editor] button.btn.primary').click()");
+  await js("document.querySelector('[data-ref-editor] [name=title]').value='Browser paper';document.querySelector('[data-ref-editor] [name=authors]').value='Author';document.querySelector('[data-ref-editor] [name=year]').value='2024';document.querySelector('[data-ref-editor] [name=doi]').value='10.1234/browser';document.querySelector('[data-ref-editor] [name=status]').value='reading';document.querySelector('[data-ref-editor] button.btn.primary').click()");
   await until("document.querySelector('[data-ref-message]')?.innerText.includes('已保存') && !!document.querySelector('[data-ref-select]')");
   await js("document.querySelector('[data-ref-select]').click()");
-  await until("document.querySelector('[data-ref-editor] [name=title]')?.value==='Browser paper'");
+  await until("document.querySelector('[data-ref-editor] [name=title]')?.value==='Browser paper' && document.querySelector('[data-ref-editor] [name=status]')?.value==='reading'");
   await js("document.querySelector('[data-ref-export] [name=format]').value='bibtex';document.querySelector('[data-ref-export] button').click()");
   await until("document.querySelector('[data-ref-output]')?.value.includes('10.1234/browser')");
   await js("window.__refReload=true");await send('Page.reload');await until("!window.__refReload");await until("!!document.querySelector('[data-ref-select]')");
   await js("document.querySelector('[data-ref-select]').click()");
-  await until("document.querySelector('[data-ref-editor] [name=title]')?.value==='Browser paper'");
-  await js("document.querySelector('[data-ref-editor] [name=title]').value='Edited browser paper';document.querySelector('[data-ref-editor] button.btn.primary').click()");
-  await until("document.querySelector('[data-ref-message]')?.innerText.includes('已保存') && document.querySelector('[data-ref-editor] [name=title]')?.value==='Edited browser paper'");
+  await until("document.querySelector('[data-ref-editor] [name=title]')?.value==='Browser paper' && document.querySelector('[data-ref-editor] [name=status]')?.value==='reading'");
+  await js("document.querySelector('[data-ref-editor] [name=title]').value='Edited browser paper';document.querySelector('[data-ref-editor] [name=status]').value='read';document.querySelector('[data-ref-editor] button.btn.primary').click()");
+  await until("document.querySelector('[data-ref-message]')?.innerText.includes('已保存') && document.querySelector('[data-ref-editor] [name=title]')?.value==='Edited browser paper' && document.querySelector('[data-ref-editor] [name=status]')?.value==='read'");
   assert.equal(await js("document.querySelector('.ref-workspace').scrollWidth<=document.querySelector('.ref-workspace').clientWidth+2"),true);
   socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
   await js("document.querySelector('[data-ref-delete]').click()");
