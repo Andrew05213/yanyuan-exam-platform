@@ -104,5 +104,25 @@ try{
  assert.throws(()=>sourceSelection([{kind:'publication',id:p,version:'1'}],'private'));
  assert.deepEqual(parseExpansion('{"terms":["物哀","mono no aware"]}'),['物哀','mono no aware']);
  assert.equal(requests,5);assert.deepEqual((await Promise.all(inspections)).filter(Boolean),[], 'Mock provider request privacy assertions');mock.assertNoPendingInterceptors();
+
+ const qp='/api/ai-questions',bankApi='/api/question-bank';
+ const grounded={subject:'语文',type:'cn-subjective',count:1,difficulty:'进阶',topic:'物哀',ground:{scope:'private',sources:[{kind:'private',id:'note_shared',version}]}};
+ const previewQ=await call(qp,'A',{...grounded,action:'preview',requestId:crypto.randomUUID()});assert.equal(previewQ.status,200,JSON.stringify(previewQ.data));
+ assert.equal(previewQ.data.sources[0].paragraphs[0].text,'物哀 mono no aware もののあはれ');
+ assert.equal((await call(qp,'B',{...grounded,ground:{scope:'private',sources:[{kind:'private',id:'note_hidden',version}]},action:'preview',requestId:crypto.randomUUID()})).status,404);
+ assert.equal((await call(qp,'A',{...grounded,requestId:crypto.randomUUID(),fingerprint:previewQ.data.fingerprint})).status,409);
+ const generated={items:[{title:'材料理解',text:'',questions:[{stem:'解释物哀这一概念。',analysis:'依据所选片段进行解释。',tag:'文学',options:[],answer:'',reference:'结合所给概念与语境回答。',evidence:[{source:'S1',paragraph:1,quote:'物哀'}]}]}]};
+ stub(generated,body=>{assert.ok(body.includes('物哀 mono no aware'));assert.ok(!body.includes('PRIVATE_A'));});
+ const answerQ=await call(qp,'A',{...grounded,requestId:crypto.randomUUID(),fingerprint:previewQ.data.fingerprint,confirm:true});assert.equal(answerQ.status,200,JSON.stringify(answerQ.data));
+ const item=answerQ.data.items[0];assert.equal(item.questions[0].evidence[0].paragraph,1);assert.equal(item.questions[0].evidence[0].version,version);assert.ok(item.sourceJobId);
+ assert.equal((await call(bankApi,'B',{items:[item]})).status,404);
+ assert.equal((await call(bankApi,'A',{items:[{...item,questions:[{...item.questions[0],evidence:[{...item.questions[0].evidence[0],quote:'fake'}]}]}]})).status,409);
+ assert.equal((await call(bankApi,'A',{items:[item]})).status,201);
+ const stored=await call(bankApi,'A');assert.deepEqual(stored.data.items.find(x=>x.id===item.id).item,item);
+ stub({...generated,items:[{...generated.items[0],questions:[{...generated.items[0].questions[0],evidence:[{source:'S1',paragraph:1,quote:'invented'}]}]}]});
+ const bad=await call(qp,'A',{...grounded,requestId:crypto.randomUUID(),fingerprint:previewQ.data.fingerprint,confirm:true});assert.equal(bad.status,502);
+ assert.deepEqual((await Promise.all(inspections)).filter(Boolean),[]);mock.assertNoPendingInterceptors();
+ console.log('PASS: grounded generation, preview consent, exact paragraph evidence, job ownership, bank persistence and forged citation rejection.');
+
  console.log('PASS: local multilingual search, private owner scope, public visibility, explicit exact preview, model reuse, quote verification, keyword expansion and metered isolated calls.');
 }finally{await mf.dispose();await mock.close();}

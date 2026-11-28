@@ -2,6 +2,8 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "../../../db/index";
 import { questionBank } from "../../../db/schema";
 import { principal, sameOrigin, fail, AccessError, privateHeaders, readLimitedText } from "../../../lib/user-access";
+import {adminDb} from "../../../lib/admin-access";
+import {verifySavedGroundEvidence} from "../../../lib/grounded-question-sources";
 import { BankContractError, AI_SUBJECTS, validateBankItem, parseStoredItem } from "../../../lib/question-bank-contracts";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +67,15 @@ export async function POST(request: Request) {
     const list = (body as { items?: unknown })?.items;
     if (!Array.isArray(list) || !list.length || list.length > 20) return reply({ error: "每次保存 1 至 20 组题目。" }, 400);
     const items = list.map((entry) => validateBankItem(entry));
+    const jobs=new Map<string,any[]>(),groundEvidence:Parameters<typeof verifySavedGroundEvidence>[2]=[];
+    for(const item of items){if(!item.sourceJobId)continue;
+      let generated=jobs.get(item.sourceJobId);
+      if(!generated){const row=await adminDb().prepare("SELECT result FROM ai_question_jobs WHERE id=? AND owner_id=? AND status='succeeded'").bind(item.sourceJobId,user.id).first<{result:string}>();if(!row)throw new AccessError("材料出题记录不存在。",404);generated=JSON.parse(row.result) as any[];jobs.set(item.sourceJobId,generated);}
+      const original=generated.find(x=>x.id===item.id);
+      if(!original||JSON.stringify(validateBankItem(original))!==JSON.stringify(item))throw new AccessError("材料出题结果与原始生成记录不一致。",409);
+      groundEvidence.push(...item.questions.flatMap(q=>q.evidence||[]));
+    }
+    await verifySavedGroundEvidence(request,user.id,groundEvidence);
     const db = getDb();
     const ids = items.map((item) => item.id);
     const conflicts = await db

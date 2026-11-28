@@ -797,7 +797,7 @@ export const communityCatalog:ResearchCatalogItem[]=[
     "sources": []
   }
 ];
-export const languageLabel=(id?:string|null)=>researchLanguages.find(x=>x.id===id)?.label||"未分类";
+export const languageLabel=(id?:string|null)=>id==="cross"?"跨语言":researchLanguages.find(x=>x.id===id)?.label||"未分类";
 export const disciplineLabel=(id?:string|null)=>researchDisciplines.find(x=>x.id===id)?.label||"未分类";
 export const catalogItem=(id?:string|null)=>communityCatalog.find(x=>x.id===id);
 export function filterCatalog(language="",discipline="",query=""){
@@ -805,3 +805,95 @@ export function filterCatalog(language="",discipline="",query=""){
  return communityCatalog.filter(x=>(!language||x.languageId===language)&&(!discipline||x.discipline===discipline)&&terms.every(t=>[x.title,x.summary,x.question,x.keywords,languageLabel(x.languageId),disciplineLabel(x.discipline)].join(" ").toLowerCase().includes(t)));
 }
 export const catalogDescription=(item:ResearchCatalogItem)=>[item.summary,"研究问题："+item.question,"建议检索词："+item.keywords,"目录版本："+item.version,...item.sources.map(s=>"检索入口（非已核对原文）："+s.name+" "+s.url)].join("\n");
+
+export const crossThemes=[
+  {
+    "id": "cross-modernity",
+    "title": "近代化与国家建构",
+    "discipline": "history",
+    "question": "不同地区如何在制度输入与本土经验之间形成近代国家？",
+    "itemIds": [
+      "ja-history",
+      "de-history",
+      "en-history",
+      "fr-history",
+      "es-history",
+      "ru-history"
+    ]
+  },
+  {
+    "id": "cross-literature",
+    "title": "小说叙事与现代主体",
+    "discipline": "literature",
+    "question": "叙事距离与人物内心怎样影响对个人与社会的判断？",
+    "itemIds": [
+      "ja-literature",
+      "de-literature",
+      "en-literature",
+      "fr-literature",
+      "es-literature",
+      "ru-literature"
+    ]
+  },
+  {
+    "id": "cross-philosophy",
+    "title": "自由、责任与公共理性",
+    "discipline": "thought",
+    "question": "不同思想传统怎样论证自由与共同体义务？",
+    "itemIds": [
+      "ja-thought",
+      "de-thought",
+      "en-thought",
+      "fr-thought",
+      "es-thought",
+      "ru-thought"
+    ]
+  },
+  {
+    "id": "cross-identity",
+    "title": "语言、身份与文化多样性",
+    "discipline": "society",
+    "question": "语言实践、教育制度和社会认同有何关联？",
+    "itemIds": [
+      "ja-society",
+      "de-society",
+      "en-society",
+      "fr-society",
+      "es-society",
+      "ru-society"
+    ]
+  },
+  {
+    "id": "cross-institutions",
+    "title": "制度、产业与公共政策",
+    "discipline": "politics",
+    "question": "如何控制历史背景、统计口径与制度差异？",
+    "itemIds": [
+      "ja-politics",
+      "de-politics",
+      "en-politics",
+      "fr-politics",
+      "es-politics",
+      "ru-politics"
+    ]
+  },
+  {
+    "id": "cross-translation",
+    "title": "翻译中的语境、概念与文化",
+    "discipline": "language",
+    "question": "如何处理不同语言的语用和概念无法直接对应的情况？",
+    "itemIds": [
+      "ja-language",
+      "de-language",
+      "en-language",
+      "fr-language",
+      "es-language",
+      "ru-language"
+    ]
+  }
+];
+export type CrossTheme=typeof crossThemes[number];
+export const crossTheme=(id?:string|null)=>crossThemes.find(t=>t.id===id);
+export const crossItems=(theme:CrossTheme)=>theme.itemIds.map(id=>catalogItem(id)).filter((item):item is ResearchCatalogItem=>!!item);
+export const crossLanguageIds=(theme:CrossTheme)=>[...new Set(crossItems(theme).map(x=>x.languageId))];
+export const crossDescription=(theme:CrossTheme)=>["比较研究问题："+theme.question,"比较路径：",...crossItems(theme).map(x=>languageLabel(x.languageId)+" · "+x.title+" · "+x.keywords),"请分别查证原始资料，注明时期、作者、版本和证据局限。目录导读并非具体文献全文。"].join("\n");

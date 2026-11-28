@@ -2,7 +2,7 @@ import {requireCommunity} from "../../../../lib/community-access";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { storage } from "../../../../db/store";
 import { visible, viewer, publicationVisible, publicationViewer } from "../../../../lib/research-community";
-import {researchLanguages,researchDisciplines,catalogItem} from "../../../literature/research-catalog";
+import {researchLanguages,researchDisciplines,catalogItem,crossTheme,crossThemes,crossLanguageIds} from "../../../literature/research-catalog";
 import { AccessError, fail, privateHeaders, readLimitedText, sameOrigin } from "../../../../lib/user-access";
 
 const pageSize=20;
@@ -59,8 +59,10 @@ export async function GET(request:Request){
       return json({topic:{...topicView,mine:ownerId===user.userId},publications:rows.results.slice(0,pageSize).map(row=>view(row,user.userId)),nextOffset:rows.results.length>pageSize&&offset+pageSize<=10000?offset+pageSize:null});
     }
     const q=field(params.get("q")??"",100,false);
-    const languageId=classification(params.get("languageId"),researchLanguages,"语言"),discipline=classification(params.get("discipline"),researchDisciplines,"学科");
-    const rows=await db.prepare("SELECT t.id,t.title,t.description,t.language_id AS languageId,t.discipline,t.catalog_id AS catalogId,t.created_at AS createdAt,(SELECT count(*) FROM research_publications p WHERE p.topic_id=t.id AND "+visible("p","publication")+") AS noteCount FROM research_topics t WHERE instr(lower(t.title||' '||t.description),lower(?))>0 AND (? IS NULL OR t.language_id=?) AND (? IS NULL OR t.discipline=?) AND "+visible("t","topic")+" ORDER BY t.created_at DESC,t.id DESC LIMIT ? OFFSET ?").bind(...viewer(user.userId),q,languageId,languageId,discipline,discipline,...viewer(user.userId),pageSize+1,offset).all();
+    const languageId=classification(params.get("languageId"),[...researchLanguages,{id:"cross"}],"语言"),discipline=classification(params.get("discipline"),researchDisciplines,"学科");
+    const linked=languageId&&languageId!=="cross"?crossThemes.filter(t=>crossLanguageIds(t).includes(languageId)).map(t=>t.id):[];
+    const langClause=languageId?(linked.length?" AND (t.language_id=? OR (t.language_id='cross' AND t.catalog_id IN ("+linked.map(()=>"?").join(",")+")))":" AND t.language_id=?"):"";
+    const rows=await db.prepare("SELECT t.id,t.title,t.description,t.language_id AS languageId,t.discipline,t.catalog_id AS catalogId,t.created_at AS createdAt,(SELECT count(*) FROM research_publications p WHERE p.topic_id=t.id AND "+visible("p","publication")+") AS noteCount FROM research_topics t WHERE instr(lower(t.title||' '||t.description),lower(?))>0"+langClause+" AND (? IS NULL OR t.discipline=?) AND "+visible("t","topic")+" ORDER BY t.created_at DESC,t.id DESC LIMIT ? OFFSET ?").bind(...viewer(user.userId),q,...(languageId?[languageId,...linked]:[]),discipline,discipline,...viewer(user.userId),pageSize+1,offset).all();
     return json({topics:rows.results.slice(0,pageSize),nextOffset:rows.results.length>pageSize&&offset+pageSize<=10000?offset+pageSize:null});
   }catch(error){return fail(error,"研究社区暂时不可用。");}
 }
@@ -77,9 +79,9 @@ export async function POST(request:Request){
     if(body.action!=="withdraw")await requireCommunity(request,user.userId,"write");
     if(body.action==="createTopic"){
       const title=field(body.title,160),description=field(body.description??"",2000,false),id=crypto.randomUUID();
-      const languageId=classification(body.languageId,researchLanguages,"语言"),discipline=classification(body.discipline,researchDisciplines,"学科");
+      const languageId=classification(body.languageId,[...researchLanguages,{id:"cross"}],"语言"),discipline=classification(body.discipline,researchDisciplines,"学科");
       const catalogId=body.catalogId===undefined||body.catalogId===null||body.catalogId===""?null:field(body.catalogId,100);
-      if(catalogId){const item=catalogItem(catalogId);if(!item||item.languageId!==languageId||item.discipline!==discipline)throw new AccessError("关联研究目录与分类不一致。",400);}
+      if(catalogId){const item=catalogItem(catalogId),theme=crossTheme(catalogId);if(!(item&&item.languageId===languageId&&item.discipline===discipline)&&!(theme&&languageId==="cross"&&theme.discipline===discipline))throw new AccessError("关联研究目录与分类不一致。",400);}else if(languageId==="cross")throw new AccessError("跨语言议题须选择比较专题。",400);
       const result=await db.prepare("INSERT INTO research_topics(id,owner_id,title,description,created_at,language_id,discipline,catalog_id) SELECT ?,?,?,?,?,?,?,? WHERE (SELECT count(*) FROM research_topics WHERE owner_id=?)<30").bind(id,user.userId,title,description,now,languageId,discipline,catalogId,user.userId).run();
       if(!result.meta.changes)throw new AccessError("每个账号最多创建30个议题。",429);
       return json({id,title,description,languageId,discipline,catalogId,createdAt:now,noteCount:0,mine:true},201);

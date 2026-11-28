@@ -3,6 +3,8 @@
 // (the browser receives the same shapes, so the checks are deliberately plain
 // and dependency free).
 
+import {validateQuestionEvidence,type QuestionEvidence} from "./grounded-question-contract.ts";
+
 export const AI_SUBJECTS = ["英语", "日本国别", "文学口试", "语文", "数学"] as const;
 export type AiSubject = (typeof AI_SUBJECTS)[number];
 
@@ -31,6 +33,7 @@ export type BankQuestion = {
   accepted?: string[];
   guide: string[];
   followups: string[];
+  evidence?:QuestionEvidence[];
 };
 
 export type BankItem = {
@@ -43,6 +46,7 @@ export type BankItem = {
   text: string;
   paragraphs: string[];
   questions: BankQuestion[];
+  sourceJobId?:string;
 };
 
 export type BankRecord = BankItem & {
@@ -255,13 +259,17 @@ export function validateBankItem(raw: unknown): BankItem {
     const value = question as Record<string, unknown>;
     if (value.id !== `${entry.id}:q${index + 1}`) throw new BankContractError(`第 ${index + 1} 题编号不连续。`);
     const normalised = normaliseQuestion(value, index, section);
-    return { ...normalised, id: value.id as string };
+    let evidence:QuestionEvidence[]|undefined;
+    if(value.evidence!==undefined){try{evidence=validateQuestionEvidence(value.evidence);}catch(error){throw new BankContractError((error as Error).message);}}
+    return { ...normalised, id: value.id as string, ...(evidence?{evidence}:{}) };
   });
   const passage=text(entry.text,MAX_TEXT,"阅读原文",{required:false});
   if(!passageSections.has(section)&&questions.length!==1&&!section.startsWith("oral-")){
     throw new BankContractError("该题型每组只能包含一道题。");
   }
   validateMaterial(section,passage,questions.length);
+  const sourced=questions.some(q=>q.evidence),sourceJobId=entry.sourceJobId;
+  if(sourced&&(!questions.every(q=>q.evidence)||typeof sourceJobId!=="string"||!/^gen-[a-f0-9]{64}$/.test(sourceJobId))||!sourced&&sourceJobId!==undefined)throw new BankContractError("材料出题来源记录不完整。");
   return {
     id: entry.id,
     subject,
@@ -272,6 +280,7 @@ export function validateBankItem(raw: unknown): BankItem {
     text: passage,
     paragraphs: stringList(entry.paragraphs, 40, "段落", 2000),
     questions,
+    ...(sourced?{sourceJobId:sourceJobId as string}:{}),
   };
 }
 
