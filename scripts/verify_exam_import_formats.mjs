@@ -19,6 +19,18 @@ const acrossPages=parsePages([
 ]);
 assert.deepEqual(acrossPages.questions.map(q=>[q.sourcePage,q.answer]),[[1,'B'],[2,'C']]);
 assert.deepEqual(acrossPages.questions[0].options,['甲','乙','丙','丁']);
+const repeatedHeader=parsePages([
+ 'Practice English Examination\n1. Cross-page question\nA. One\nB. Two',
+ 'Practice English Examination\nC. Three\nD. Four\nAnswer: B'
+]);
+assert.deepEqual(repeatedHeader.questions[0].options,['One','Two','Three','Four']);
+assert.deepEqual(repeatedHeader.warnings,[]);
+const ambiguousTopLine=parsePages([
+ '1. Cross-page question\nA. One\nB. Two',
+ 'a possible continuation\nC. Three\nD. Four\nAnswer: B'
+]);
+assert.equal(ambiguousTopLine.questions[0].options[1],'Two\na possible continuation');
+assert.ok(ambiguousTopLine.warnings.some(item=>item.includes('页首文字')));
 const repeated=parsePages([
  '1. 第一节\nA. 甲 B. 乙 C. 丙 D. 丁',
  '1. 第二节\nA. 春 B. 夏 C. 秋 D. 冬\n答案：D',
@@ -59,4 +71,17 @@ await pdfUI.extractPdf({});
 assert.equal(saved.approved,false);
 assert.deepEqual(saved.groups.map(g=>[g.locator,g.questions[0].sourceNumber,g.questions[0].sourcePage]),[['第1页',1,1],['第2页',1,2]]);
 assert.equal(saved.groups[0].pdfPages.length,2);
+const recatalog=vm.runInNewContext(code+'\nExamImports',{
+ readExamPdf:async()=>[question+'答案：B'],
+ ExamImportParser:globalThis.ExamImportParser,
+ confirm:()=>true,
+ PublicApp:{refreshPrivateImports:async()=>transitions.push('refresh')}
+});
+const transitions=[];
+recatalog.record={id:'sample',revision:2,filename:'test.pdf',approved:true,groups:saved.groups};
+recatalog.controller=new AbortController();
+recatalog.request=async(query,body)=>{assert.equal(body.approved,false);transitions.push('save');};
+recatalog.load=async()=>{transitions.push('reload');};
+await recatalog.extractPdf({});
+assert.deepEqual(transitions,['save','refresh','reload']);
 console.log('PASS: cross-page PDF questions, multiline keys, repeated numbering and lossless JSON validation.');
