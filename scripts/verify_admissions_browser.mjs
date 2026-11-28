@@ -228,6 +228,9 @@ try{
   await js("document.querySelector('[data-ei-parse]').click();document.querySelector('[data-ei-group-form] [name=locator]').value='page 1';document.querySelector('[data-ei-group-form] [name=locator]').dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[data-ei-confirm]').checked=true;document.querySelector('[data-ei-approve]').click()");
   await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已确认入私人题库')");
   assert.equal(await js("TierStudio.data.items.some(x=>x.importId&&x.source.includes('Synthetic source 2026')&&x.questions[0].answer==='B')"),true);
+  const trace=await js("(()=>{const u=TierStudio.data.items.find(x=>x.importId);const c={schema:'tiers-v1',schoolId:'pku',subject:'英语',minutes:20,name:'Import provenance fixture',topics:[],fullReadingSets:false,excludeAttempted:false,excludeGenerated:false,excludeMaterials:false,rows:[{section:'mc',tier:u.tier,count:1}]};const p=DifficultyEngine.makePacket({...TierStudio.data,items:[u]},c,Hub.data,{},()=>0.5);const b=p.blocks[0],h=StudyFlow.blockHTML(b,1,false),md=StudyFlow.packetMarkdown(p);return {q:b.questions[0].originalNumber,html:h.includes('Synthetic source 2026')&&h.includes('原题1')&&h.includes('data-import-source'),markdown:md.includes('Synthetic source 2026')&&md.includes('原题1')}})()");
+  assert.deepEqual(trace,{q:1,html:true,markdown:true});
+  assert.equal(await js("ExamImportParser.parse('1. Question?\\nA. One B. Two C. Three D. Four\\n答案：B\\n参考答案：1.C').questions[0].answer"),'');
   await js("window.__eiReload=true");await send('Page.reload');await until("!window.__eiReload");await until("!!document.querySelector('[data-ei-file]')");
   await js("document.querySelector('[data-ei-file]').click()");
   await until("document.querySelector('[data-ei-edit]').innerText.includes('Synthetic source 2026') || document.querySelector('[data-ei-meta] [name=source]')?.value==='Synthetic source 2026'");

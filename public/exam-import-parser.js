@@ -23,8 +23,8 @@ function parse(raw){
   if(opts.length!==4||opts.map(x=>x[1]).join("")!=="ABCD"){warnings.push("第 "+b.number+" 题不是可安全自动识别的四选一，需人工录入。");continue;}
   const stem=content.slice(0,opts[0].index).trim(),options=opts.map((x,i)=>content.slice(x.index+x[0].length,i+1<opts.length?opts[i+1].index:content.length).trim());
   if(!stem||options.some(x=>!x)){warnings.push("第 "+b.number+" 题题干或选项缺失。");continue;}
-  const answer=a?.[1]?.toUpperCase()||key.get(b.number)||"";
-  if(a&&key.has(b.number)&&key.get(b.number)!==a[1].toUpperCase())warnings.push("第 "+b.number+" 题答案冲突，请核对。");
+  let answer=a?.[1]?.toUpperCase()||key.get(b.number)||"";
+  if(a&&key.has(b.number)&&key.get(b.number)!==a[1].toUpperCase()){answer="";warnings.push("第 "+b.number+" 题答案冲突，已清空待核对。");}
   if(!answer)warnings.push("第 "+b.number+" 题缺少答案，不能未经核对入库。");
   questions.push({sourceNumber:b.number,kind:"mc",stem,options,answer,analysis:analysis?.[1]?.trim()||"",tag:""});
  }
