@@ -13,8 +13,9 @@ export const materials = sqliteTable("materials", {
 export const researchTopics = sqliteTable("research_topics", {
   id:text("id").primaryKey(), ownerId:text("owner_id").notNull(),
   title:text("title").notNull(), description:text("description").notNull(),
+  languageId:text("language_id"),discipline:text("discipline"),catalogId:text("catalog_id"),
   createdAt:text("created_at").notNull(),
-}, t=>[index("research_topics_created_idx").on(t.createdAt,t.id),index("research_topics_owner_idx").on(t.ownerId)]);
+}, t=>[index("research_topics_created_idx").on(t.createdAt,t.id),index("research_topics_owner_idx").on(t.ownerId),index("research_topics_classification_idx").on(t.languageId,t.discipline,t.createdAt)]);
 export const researchPublications = sqliteTable("research_publications", {
   id:text("id").primaryKey(), topicId:text("topic_id").notNull(),
   ownerId:text("owner_id").notNull(), entryId:text("entry_id").notNull(),
