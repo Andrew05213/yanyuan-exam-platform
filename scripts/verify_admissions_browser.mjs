@@ -75,7 +75,7 @@ try{
   try{const r=await response;if(r.error)throw Error(r.error.message);return r.result;}finally{pending.delete(id);}
  }
  async function js(expression){const r=await send('Runtime.evaluate',{expression,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description);return r.result.value;}
- async function until(expr){for(let i=0;i<120;i++){if(await js(expr))return;await new Promise(r=>setTimeout(r,100));}throw Error('Timed out: '+expr+' '+await js('document.body.innerText.slice(-900)'));}
+ async function until(expr){for(let i=0;i<120;i++){try{if(await js(expr))return;}catch(e){if(!/Inspected target navigated or closed|Execution context was destroyed|Cannot find context with specified id/.test(String(e.message)))throw e;}await new Promise(r=>setTimeout(r,100));}throw Error('Timed out: '+expr+' '+await js('document.body.innerText.slice(-900)'));}
  for(const width of [1280,390]){
   await send('Emulation.setDeviceMetricsOverride',{width,height:850,deviceScaleFactor:1,mobile:width===390});
   await send('Page.navigate',{url:base+'/index.html#admissions'});
@@ -164,6 +164,19 @@ try{
   socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
   await js("document.querySelector('[data-ref-delete]').click()");
   await until("document.querySelector('[data-ref-message]')?.innerText.includes('已保存') && !document.querySelector('[data-ref-select]')");
+  await send('Page.navigate',{url:base+'/index.html#deep-research'});
+  await until("!!document.querySelector('[data-dr-editor]')");
+  await js("document.querySelector('[data-dr-editor] [name=title]').value='Browser research';document.querySelector('[data-dr-editor] [name=question]').value='Compare evidence';document.querySelector('[data-dr-editor] button.btn.primary').click()");
+  await until("document.querySelector('[data-dr-message]')?.innerText.includes('已保存') && !!document.querySelector('[data-dr-search]')");
+  await js("window.__drReload=true");await send('Page.reload');await until("!window.__drReload");await until("!!document.querySelector('[data-dr-task]')");
+  await js("document.querySelector('[data-dr-task]').click()");
+  await until("document.querySelector('[data-dr-editor] [name=title]')?.value==='Browser research'");
+  await js("document.querySelector('[data-dr-search] [name=terms]').value='fixture';document.querySelector('[data-dr-search] button').click()");
+  await until("document.querySelector('[data-dr-message]')?.innerText.includes('检索到')");
+  assert.equal(await js("document.querySelector('.dr-workspace').scrollWidth<=document.querySelector('.dr-workspace').clientWidth+2"),true);
+  socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
+  await js("document.querySelector('[data-dr-delete]').click()");
+  await until("document.querySelector('[data-dr-message]')?.innerText.includes('已保存') && !document.querySelector('[data-dr-task]')");
   await db.prepare("DELETE FROM private_reference_libraries WHERE user_id=?").bind('browser-fixture').run();
   await db.prepare("DELETE FROM private_knowledge_graphs WHERE user_id=?").bind('browser-fixture').run();
   // Reset the isolated fixture's week so the second viewport exercises creation rather than reuse.
