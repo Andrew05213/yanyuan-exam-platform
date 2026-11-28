@@ -169,6 +169,13 @@
       "when": 1795860000000,
       "tag": "0023_private_knowledge_graphs",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1795870000000,
+      "tag": "0024_private_reference_libraries",
+      "breakpoints": true
     }
   ]
 }

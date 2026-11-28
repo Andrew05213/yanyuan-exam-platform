@@ -1,10 +1,10 @@
 'use strict';
 const KnowledgeGraph={
  serial:0,controller:null,root:null,data:null,busy:false,query:null,zoom:1,
- kinds:{resource:'资料',author:'署名',era:'时代',topic:'主题标签',note:'笔记',project:'研究项目',weakness:'历史错题知识点',concept:'自定义概念'},
- relations:{related_to:'相关',supports:'支持',contrasts:'对照或反驳',cites:'引用',defines:'定义',authored_by:'署名',classified_in:'时代分类',has_theme:'资料主题',note_on:'笔记对应资料',tagged_with:'笔记标签',project_note:'项目关联笔记',observed_wrong_tag:'实际错题标签'},
+ kinds:{resource:'资料',author:'署名',era:'时代',topic:'主题标签',note:'笔记',project:'研究项目',weakness:'历史错题知识点',concept:'自定义概念',reference:'学术文献'},
+ relations:{related_to:'相关',supports:'支持',contrasts:'对照或反驳',cites:'引用',defines:'定义',authored_by:'署名',classified_in:'时代分类',has_theme:'资料主题',note_on:'笔记对应资料',tagged_with:'笔记标签',project_note:'项目关联笔记',observed_wrong_tag:'实际错题标签',reference_note:'文献关联笔记',reference_project:'文献关联项目'},
  manual:['related_to','supports','contrasts','cites','defines'],
- colors:{resource:'#426D9B',author:'#8769A7',era:'#8A7650',topic:'#B28C45',note:'#42957E',project:'#B76C4F',weakness:'#6D8197',concept:'#244A75'},
+ colors:{resource:'#426D9B',author:'#8769A7',era:'#8A7650',topic:'#B28C45',note:'#42957E',project:'#B76C4F',weakness:'#6D8197',concept:'#244A75',reference:'#8B6742'},
  e(v){return escapeHTML(String(v??''));},
  leave(){this.serial++;this.controller?.abort();this.controller=null;this.root=null;this.data=null;this.busy=false;this.query=null;},
  render(){
@@ -39,7 +39,7 @@ const KnowledgeGraph={
   root.querySelectorAll('[data-kg-node]').forEach(b=>{b.onclick=()=>this.load({focus:b.dataset.kgNode,edgeOffset:0,relation:''});});
  },
  href(n){
-  return /^(\/literature|\/reading-notes#note\/[A-Za-z0-9_-]+|#projects|#mistakes)$/.test(n.href)?n.href:'';
+  return /^(\/literature|\/reading-notes#note\/[A-Za-z0-9_-]+|#projects|#mistakes|#references)$/.test(n.href)?n.href:'';
  },
  detail(root){
   const d=this.data,q=this.query,f=d.focus,e=v=>this.e(v);

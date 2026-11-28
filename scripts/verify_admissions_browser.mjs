@@ -147,13 +147,31 @@ try{
   await js("document.querySelector('[data-kg-delete-concept]').click()");
   await until("document.querySelector('[data-kg-message]')?.innerText.includes('已保存') && document.querySelectorAll('[data-kg-node]').length===1");
 
+  await send('Page.navigate',{url:base+'/index.html#references'});
+  await until("!!document.querySelector('[data-ref-editor]')");
+  await js("document.querySelector('[data-ref-editor] [name=title]').value='Browser paper';document.querySelector('[data-ref-editor] [name=authors]').value='Author';document.querySelector('[data-ref-editor] [name=year]').value='2024';document.querySelector('[data-ref-editor] [name=doi]').value='10.1234/browser';document.querySelector('[data-ref-editor] [name=status]').value='reading';document.querySelector('[data-ref-editor] button.btn.primary').click()");
+  await until("document.querySelector('[data-ref-message]')?.innerText.includes('已保存') && !!document.querySelector('[data-ref-select]')");
+  await js("document.querySelector('[data-ref-select]').click()");
+  await until("document.querySelector('[data-ref-editor] [name=title]')?.value==='Browser paper' && document.querySelector('[data-ref-editor] [name=status]')?.value==='reading'");
+  await js("document.querySelector('[data-ref-export] [name=format]').value='bibtex';document.querySelector('[data-ref-export] button').click()");
+  await until("document.querySelector('[data-ref-output]')?.value.includes('10.1234/browser')");
+  await js("window.__refReload=true");await send('Page.reload');await until("!window.__refReload");await until("!!document.querySelector('[data-ref-select]')");
+  await js("document.querySelector('[data-ref-select]').click()");
+  await until("document.querySelector('[data-ref-editor] [name=title]')?.value==='Browser paper' && document.querySelector('[data-ref-editor] [name=status]')?.value==='reading'");
+  await js("document.querySelector('[data-ref-editor] [name=title]').value='Edited browser paper';document.querySelector('[data-ref-editor] [name=status]').value='read';document.querySelector('[data-ref-editor] button.btn.primary').click()");
+  await until("document.querySelector('[data-ref-message]')?.innerText.includes('已保存') && document.querySelector('[data-ref-editor] [name=title]')?.value==='Edited browser paper' && document.querySelector('[data-ref-editor] [name=status]')?.value==='read'");
+  assert.equal(await js("document.querySelector('.ref-workspace').scrollWidth<=document.querySelector('.ref-workspace').clientWidth+2"),true);
+  socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
+  await js("document.querySelector('[data-ref-delete]').click()");
+  await until("document.querySelector('[data-ref-message]')?.innerText.includes('已保存') && !document.querySelector('[data-ref-select]')");
+  await db.prepare("DELETE FROM private_reference_libraries WHERE user_id=?").bind('browser-fixture').run();
   await db.prepare("DELETE FROM private_knowledge_graphs WHERE user_id=?").bind('browser-fixture').run();
   // Reset the isolated fixture's week so the second viewport exercises creation rather than reuse.
   await db.prepare("DELETE FROM study_day_plans WHERE user_id=?").bind('browser-fixture').run();
 
 
  }
- console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete, long-term preferences, weekly preview/save, private graph creation, search, linking, reload and navigation.');
+ console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete, long-term preferences, weekly preview/save, private graph and references create, search, link, export, edit, delete, reload and navigation.');
 }finally{
  try{socket?.close();await closeBrowser();}finally{
   app.closeAllConnections();app.close();

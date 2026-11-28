@@ -20,6 +20,8 @@ const suites=[
  'verify_research_network.mjs',
  'verify_private_knowledge_graph.mjs',
  'verify_private_knowledge_graph_api.mjs',
+ 'verify_references_core.mjs',
+ 'verify_references_api.mjs',
  'verify_research_assistant.mjs',
  'verify_today_workspace.mjs',
  'verify_study_planning_core.mjs',

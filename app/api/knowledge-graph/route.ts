@@ -2,6 +2,7 @@ import {storage} from "../../../db/store";
 import {principal,AccessError,privateHeaders,sameOrigin,readLimitedText,fail} from "../../../lib/user-access";
 import {works} from "../../literature/data";
 import {mergeMaterials,type MaterialRow} from "../../literature/materials";
+import {readLibrary} from "../../../lib/references/store";
 import {buildLearningReport} from "../../../lib/learning-report";
 import {blank,graph,pageGraph,mutate,type Input,type State} from "../../../lib/knowledge-graph/core.mjs";
 export const dynamic="force-dynamic";
@@ -12,12 +13,13 @@ const safe=(v:unknown):v is string=>typeof v==="string"&&/^[A-Za-z0-9_-]{1,100}$
 const hash=async (s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)))).map(x=>x.toString(16).padStart(2,"0")).join("");
 async function sources(db:Db,uid:string){
  // Load every override/deletion of a built-in resource so truncation never resurrects one.
- const [builtins,custom,notes,projects,records]=await Promise.all([
+ const [builtins,custom,notes,projects,records,library]=await Promise.all([
   db.prepare("SELECT id,data,deleted FROM materials WHERE user_id=? AND id IN (SELECT value FROM json_each(?))").bind(uid,JSON.stringify(works.map(w=>w.id))).all<MaterialRow>(),
   db.prepare("SELECT id,data,deleted FROM materials WHERE user_id=? AND deleted=0 AND id NOT IN (SELECT value FROM json_each(?)) ORDER BY id LIMIT 201").bind(uid,JSON.stringify(works.map(w=>w.id))).all<MaterialRow>(),
   db.prepare("SELECT id,title,work_id AS workId,tags,discipline,revision FROM entries WHERE user_id=? AND folder='active' ORDER BY updated_at DESC,id LIMIT 501").bind(uid).all<Input["notes"][number]>(),
   db.prepare("SELECT id,payload,revision FROM research_projects WHERE owner_id=? AND status='active' ORDER BY updated_at DESC,id LIMIT 201").bind(uid).all<{id:string;payload:string;revision:number}>(),
   db.prepare("SELECT id,length(cast(payload AS blob)) AS size FROM archive_records WHERE owner_id=? AND kind IN ('error-set','written-attempt') ORDER BY updated_at DESC,id LIMIT 2001").bind(uid).all<{id:string;size:number}>(),
+  readLibrary(db,uid),
  ]);
  const resources=await Promise.all(mergeMaterials([...builtins.results,...custom.results.slice(0,200)]).map(async r=>({id:r.id,title:r.title,author:r.author,era:r.era,theme:r.theme,version:await hash(JSON.stringify([r.title,r.author,r.era,r.theme,r.source]))})));
  const safeNotes=notes.results.slice(0,500).filter(n=>safe(n.id));
@@ -33,7 +35,7 @@ async function sources(db:Db,uid:string){
   rows.push(...r.results.map(v=>({...v,payload:JSON.parse(v.payload)})));
  }
  const report=buildLearningReport(rows);
- const input:Input={resources,notes:safeNotes,projects:inputProjects,weaknesses:report.tags};
+ const input:Input={resources,notes:safeNotes,projects:inputProjects,weaknesses:report.tags,references:library.state.items.map(r=>({id:r.id,title:r.title,revision:r.revision,authors:r.authors,year:r.year,tags:r.tags,noteIds:r.noteIds,projectIds:r.projectIds}))};
  return {input,limits:{notes:notes.results.length>500,projects:projects.results.length>200,resources:custom.results.length>200,wrongRecords:records.results.length>2000||ids.length<Math.min(2000,records.results.length),wrongTags:report.tags.length>=30}};
 }
 function error(e:unknown){
