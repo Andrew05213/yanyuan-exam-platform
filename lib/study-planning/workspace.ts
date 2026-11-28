@@ -46,6 +46,19 @@ export function draft(current:DayPlan,body:any,sources:Source[]):DayPlan{
  const tasks:Task[]=[...locked.map((t,i)=>({...t,breakBefore:i?5:0})),...computed.tasks.map((t,i)=>({...byId.get(t.id)!,...t,breakBefore:i||locked.length?5:0,actualMinutes:null,note:""}))];
  return {...current,budgetMinutes:budget,tasks,deferred:computed.deferred,ruleVersion:computed.ruleVersion};
 }
+export function appendManualTask(plan:DayPlan,input:{id:unknown;title:unknown;minutes:unknown;expandBudget?:unknown}):DayPlan{
+ const task=manual({id:input.id,title:input.title,minutes:input.minutes,subject:"其他",track:"通用训练",priority:1});
+ if(plan.tasks.some(t=>t.id===task.id))throw bad();
+ const breakBefore=plan.tasks.length?5:0;
+ const required=plan.tasks.reduce((total,t)=>total+t.minutes+t.breakBefore,task.minutes+breakBefore);
+ if(required>180)throw new AccessError("已达到当天的时间上限。请选择更短的时长或其他日期。",400);
+ if(required>plan.budgetMinutes&&input.expandBudget!==true)throw new AccessError("所选时长超出当天剩余时间。请选择更短的时长或确认增加当天预算。",400);
+ return {
+  ...plan,
+  budgetMinutes:Math.max(plan.budgetMinutes,required),
+  tasks:[...plan.tasks,{...task,reason:"available_time",status:"planned",breakBefore,actualMinutes:null,note:""}],
+ };
+}
 export function feedback(plan:DayPlan,b:any,source:Source|undefined):DayPlan{
  if(!safeId(b?.taskId)||!["planned","done","partial","skipped"].includes(b?.status)||plan.date>today())throw bad();
  const old=plan.tasks.find(t=>t.id===b.taskId);if(!old)throw bad();

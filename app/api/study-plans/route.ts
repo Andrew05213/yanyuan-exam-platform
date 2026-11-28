@@ -1,7 +1,7 @@
 import {storage} from "../../../db/store";
 import {AccessError,principal,privateHeaders,readLimitedText,sameOrigin,fail} from "../../../lib/user-access";
 import {admissionPlan,assessAdmissions} from "../../../lib/admissions/plan";
-import {bad,stale,today,day,shift,weekStart,safeId,empty,draft,feedback,extra,reflection,stats,type Source,type DayPlan} from "../../../lib/study-planning/workspace";
+import {bad,stale,today,day,shift,weekStart,safeId,empty,draft,appendManualTask,feedback,extra,reflection,stats,type Source,type DayPlan} from "../../../lib/study-planning/workspace";
 import {preferences,defaults,weekPlans} from "../../../lib/study-planning/preferences";
 export const dynamic="force-dynamic";
 const reply=(data:unknown)=>Response.json(data,{headers:privateHeaders});
@@ -119,6 +119,14 @@ export async function POST(request:Request){
    const token=await tokenFor({uid:id,version:b.version,plan:next});
    if(b.action==="preview")return reply({plan:next,version:row?.version??null,token});
    if(b.token!==undefined&&b.token!==token)throw stale();return await persist(db,id,next,b.version);
+  }
+  if(b.action==="add-task"){
+   if(!row){
+    const setting=await prefRow(db,id);
+    const pref=setting?preferences(JSON.parse(setting.payload)):defaults();
+    plan.budgetMinutes=pref.budgets[(new Date(date+"T00:00:00Z").getUTCDay()+6)%7];
+   }
+   return await persist(db,id,appendManualTask(plan,b),b.version);
   }
   let next:DayPlan;
   switch(b.action){
