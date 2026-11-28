@@ -12,4 +12,15 @@ const pair=E.defaults('语文','pku',data,wf.profiles),ch=E.makePacket(data,pair
 const dup=E.defaults('英语','pku',data,wf.profiles);dup.topics=[];dup.fullReadingSets=false;dup.excludeAttempted=false;dup.rows=[{section:'reading',tier:'any',count:2},{section:'reading',tier:'tem8',count:2}];const pp=E.makePacket(data,dup,hub);assert.equal(new Set(pp.blocks.flatMap(b=>b.questions.map(q=>q.sourceId))).size,pp.count);
 const q=E.makePacket(data,E.defaults('英语','pku',data,wf.profiles),hub);assert(q.blocks.filter(b=>b.section==='mc').every(b=>b.questions.every(q=>q.points===2)));assert(q.blocks.filter(b=>b.section==='reading').every(b=>b.questions.every(q=>q.points===3)));assert(q.blocks.filter(b=>b.section==='cloze').every(b=>b.questions.every(q=>q.points===1)));
 assert.equal(E.migrate(wf.profiles.pku,data,wf.profiles).rows[0].tier,'any');const copy=JSON.parse(JSON.stringify(c));assert.deepEqual(E.migrate(copy,data,wf.profiles),copy);
+for(const school of hub.schools.filter(s=>s.subjects.includes('英语')&&!s.outlineOnly)){
+ const packet=E.makePacket(data,E.englishPractice(school.id,data,wf.profiles),hub,{},()=>0.5);
+ assert.deepEqual(Array.from(packet.blocks,b=>b.section),['reading','cloze','gap-seven','literary','writing','correction','zh-en','en-zh']);
+ const seven=packet.blocks.find(b=>b.section==='gap-seven');
+ assert.equal(Object.keys(seven.questions[0].paragraphs).length,7);
+ assert.equal(seven.questions[0].accepted[0].length,5);
+ const answers=Object.fromEntries(packet.blocks.flatMap(b=>b.questions.map(q=>[q.id,q.answer||q.accepted?.[0]||''])));
+ const score=ctx.WorkflowEngine.grade(packet,answers);
+ assert.equal(score.correct,packet.count-3);
+ assert.equal(score.pendingSubjective,3);
+}
 console.log('PASS: per-section exact tiers, all six school defaults, independent cloze/reading, mixed-tier allocation, no silent fallback, deduplication, intact paired Chinese texts, PKU weights and preset migration.');

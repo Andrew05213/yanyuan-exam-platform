@@ -6,6 +6,11 @@
  * then stored through /api/question-bank (owner-scoped D1 rows). */
 'use strict';
 
+const englishAITypes = [
+  ['reading','英语阅读',[3,4,5]], ['cloze','完形填空',[5,8,10]], ['gap-seven','七选五',[1]],
+  ['literary','英语文学与文化常识',[1,3,5]], ['writing','作文',[1,2]], ['correction','改错',[1,3,5]],
+  ['zh-en','中翻英',[1,2]], ['en-zh','英翻中',[1,2]], ['mc','词汇语法',[3,5,10]],
+].map(([id,label,counts])=>({id,label,counts}));
 const AIStudio = {
   data: null,
   state: {
@@ -80,7 +85,7 @@ const AIStudio = {
         <div class="tier-header-grid">
           <label>训练预设<select id="ai-preset"><option>自定义</option><option>北大日语方向 · 国别口试模拟</option><option>日本文学比较</option><option>专八难度英语阅读</option></select></label>
           <label>科目<select id="ai-subject" name="subject">
-            <option value="英语">英语阅读 / 词汇语法</option>
+            <option value="英语">英语</option>
             <option value="日本国别">日本国别</option>
             <option value="文学口试">文学口试</option>
           </select></label>
@@ -140,7 +145,7 @@ const AIStudio = {
     const typeEl = document.getElementById('ai-type');
     if (!subjectEl || !typeEl) return;
     const subjects = this.state.status?.subjects || [
-      { id: '英语', types: [{ id: 'reading', label: '英语阅读：完整篇章 + 小题', counts: [3, 4, 5] }, { id: 'mc', label: '词汇语法：单项选择', counts: [3, 5, 10] }] },
+      { id: '英语', types: englishAITypes },
       { id: '日本国别', types: [{ id: 'mc', label: '日本国别：单项选择', counts: [3, 5, 10] }] },
       { id: '文学口试', types: [{ id: 'oral', label: '文学口试：问答与追问', counts: [1, 2, 3] }] },
     ];
@@ -158,8 +163,8 @@ const AIStudio = {
     const subjectEl = document.getElementById('ai-subject');
     const subject = (this.state.status?.subjects || []).find((item) => item.id === subjectEl.value);
     const type = subject?.types.find((item) => item.id === typeEl.value);
-    const options = type?.counts || (typeEl.value === 'reading' ? [3, 4, 5] : typeEl.value === 'oral' ? [1, 2, 3] : [3, 5, 10]);
-    countEl.innerHTML = options.map((n) => `<option value="${n}">${n} 题</option>`).join('');
+    const options = type?.counts || (subjectEl.value==='英语'?englishAITypes.find(t=>t.id===typeEl.value)?.counts:undefined) || (typeEl.value === 'reading' ? [3, 4, 5] : typeEl.value === 'oral' ? [1, 2, 3] : [3, 5, 10]);
+    countEl.innerHTML = options.map((n) => `<option value="${n}">${n} ${typeEl.value==='gap-seven'?'篇':'题'}</option>`).join('');
   },
 
   async loadStatus() {
@@ -360,35 +365,24 @@ const AIStudio = {
   },
 
   writtenPacket(items, subject, minutes) {
-    const blocks = [];
-    const readings = items.filter((item) => item.section === 'reading');
-    for (const item of readings) {
-      blocks.push({
-        kind: 'reading',
-        title: item.title,
-        text: item.text,
-        paragraphs: item.paragraphs.length ? item.paragraphs : item.text.split(/\n\s*\n/),
-        source: item.sourceNote,
-        sourceUrl: '',
-        note: 'AI 生成 · 待审核',
-        questions: item.questions.map((question) => this.question(question)),
-      });
-    }
-    const singles = items.filter((item) => item.section !== 'reading');
-    if (singles.length) {
-      blocks.push({
-        kind: subject === '日本国别' ? 'country' : 'mc',
-        title: (subject === '日本国别' ? '日本国别' : '英语') + ' · AI 单项选择',
-        text: '',
-        paragraphs: [],
-        source: 'AI 生成；非官方真题',
-        sourceUrl: '',
-        note: 'AI 生成 · 待审核',
-        questions: singles.flatMap((item) => item.questions.map((question) => this.question(question))),
-      });
-    }
     let sequence = 0;
-    for (const block of blocks) for (const question of block.questions) question.id = ++sequence;
+    const blocks = items.map(item=>{
+      const translation=['zh-en','en-zh'].includes(item.section);
+      const questions=item.questions.map(q=>({...this.question(q,item),id:++sequence}));
+      let passage=translation?'':item.text;
+      if(item.section==='cloze'){
+        passage=passage.replace(/\[(\d+)\]/g,(match,number)=>`[${questions[Number(number)-1].id}]`);
+        questions.forEach(q=>{
+          q.stem='Choose the best expression for blank '+q.id+'.';
+          q.stemHtml=Hub.e(q.stem);
+        });
+      }
+      return {
+        kind:item.section,title:item.title,text:passage,
+        paragraphs:passage?passage.split(/\n\s*\n/):[],
+        source:item.sourceNote,sourceUrl:'',note:'AI 生成 · 待审核',questions,
+      };
+    });
     const total = sequence;
     if (!total || total > 100) throw Error('AI 题目数量须为 1 至 100 题。');
     let assigned = 0;
@@ -418,19 +412,23 @@ const AIStudio = {
     return packet;
   },
 
-  question(question) {
-    return {
-      kind: 'mc',
-      stem: question.stem,
-      options: question.options,
-      answer: question.answer,
-      analysis: question.analysis,
-      tag: question.tag,
-      sourceId: question.id,
-      stemHtml: Hub.e(question.stem),
-      optionsHtml: question.options.map((option) => Hub.e(option)),
-      analysisHtml: Hub.e(question.analysis),
+  question(question,item) {
+    const base={
+      stem:question.stem,analysis:question.analysis,tag:question.tag,sourceId:question.id,
+      stemHtml:Hub.e(question.stem),analysisHtml:Hub.e(question.analysis),
     };
+    switch(item.section){
+      case 'gap-seven':
+        return {...base,kind:'order',paragraphs:Object.fromEntries(question.options.map((option,i)=>['ABCDEFG'[i],option])),accepted:[question.answer]};
+      case 'correction':
+        return {...base,kind:'fill',accepted:question.accepted};
+      case 'writing':
+        return {...base,kind:'writing',reference:question.reference};
+      case 'zh-en': case 'en-zh':
+        return {...base,kind:'translation',text:item.text,reference:question.reference};
+      default:
+        return {...base,kind:'mc',options:question.options,answer:question.answer,optionsHtml:question.options.map(option=>Hub.e(option))};
+    }
   },
 
   oralPacket(items, minutes) {
@@ -518,7 +516,7 @@ const AIStudio = {
 
   previewItem(item) {
     const checked = this.state.selected.has(item.id) ? 'checked' : '';
-    const heading = item.section === 'reading' ? '英语阅读' : item.subject === '文学口试' ? '文学口试' : item.subject === '日本国别' ? '日本国别' : '词汇语法';
+    const heading = item.subject==='英语' ? englishAITypes.find(type=>type.id===item.section)?.label : item.subject;
     return `<article class="ai-preview-item">
       <header><label class="hub-check"><input type="checkbox" data-ai-select="${this.escape(item.id)}" ${checked}>选择</label>
         <span class="hub-record-kind">AI 生成 · 待审核</span><span class="version-pill">${this.escape(heading)} · ${this.escape(item.difficulty)}</span></header>
@@ -526,8 +524,8 @@ const AIStudio = {
       ${item.text ? `<details class="ai-passage"><summary>阅读原文（${item.text.length} 字符）</summary><div>${item.paragraphs.length ? item.paragraphs.map((p) => `<p>${this.escape(p)}</p>`).join('') : `<p>${this.escape(item.text)}</p>`}</div></details>` : ''}
       ${item.questions.map((question, index) => `<div class="ai-question">
         <p class="ai-stem"><b>${index + 1}.</b> ${this.escape(question.stem)}</p>
-        ${question.options.length ? `<ol class="ai-options">${question.options.map((option, i) => `<li><b>${'ABCD'[i]}</b>${this.escape(option)}</li>`).join('')}</ol>` : ''}
-        <p class="ai-answer">答案：${question.options.length ? this.escape(question.answer) : '口试（参考回答见下）'}</p>
+        ${question.options.length ? `<ol class="ai-options">${question.options.map((option, i) => `<li><b>${'ABCDEFG'[i]}</b>${this.escape(option)}</li>`).join('')}</ol>` : ''}
+        <p class="ai-answer">答案：${question.answer ? this.escape(question.answer) : question.accepted?.length ? this.escape(question.accepted.join(' / ')) : '参考回答见下'}</p>
         <p class="ai-analysis">解析：${this.escape(question.analysis)}</p>
         ${item.subject==='日本国别' ? '<details><summary>核查依据</summary><p>核对概念定义、年份及选项的唯一性。统计题可查 <a href="https://www.e-stat.go.jp/" target="_blank" rel="noreferrer">日本政府统计</a>，政策题可查 <a href="https://www.mhlw.go.jp/" target="_blank" rel="noreferrer">厚生劳动省</a>。这些是核查入口。</p></details>' : ''}
         ${question.reference ? `<p class="ai-reference">参考回答：${this.escape(question.reference)}</p>` : ''}

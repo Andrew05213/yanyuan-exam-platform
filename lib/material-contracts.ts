@@ -13,14 +13,26 @@ export function validateMaterial(body:any){
   const kind=q.kind||'mc',base:any={id:i+1,sourceNumber:i+1,kind,stem:field(q.stem,6000),analysis:field(q.analysis,12000),tag:field(q.tag||'用户分享',100)};
   if(kind==='mc'){if(!Array.isArray(q.options)||q.options.length!==4||!['A','B','C','D'].includes(q.answer))throw Error('选择题须有四个选项和一个A—D答案。');base.options=q.options.map((v:any)=>field(v,4000));base.answer=q.answer;}
   else if(kind==='fill'){if(!Array.isArray(q.accepted)||!q.accepted.length||q.accepted.length>12)throw Error('填空题须提供可接受答案。');base.accepted=q.accepted.map((v:any)=>field(v,300));}
-  else if(kind==='order'){if(!q.paragraphs||typeof q.paragraphs!=='object'||Array.isArray(q.paragraphs)||Object.keys(q.paragraphs).length<3||Object.keys(q.paragraphs).length>8||Object.keys(q.paragraphs).some(k=>!/^([A-H])$/.test(k)))throw Error('排序题须提供A—H段落。');base.paragraphs=Object.fromEntries(Object.entries(q.paragraphs).map(([k,v])=>[k,field(v,8000)]));const letters=Object.keys(base.paragraphs).sort().join('');if(!Array.isArray(q.accepted)||!q.accepted.length||q.accepted.some((v:any)=>typeof v!=='string'||v.split('').sort().join('')!==letters))throw Error('排序答案须恰好使用所有段落字母。');base.accepted=q.accepted;}
+  else if(kind==='order'){
+   if(!q.paragraphs||typeof q.paragraphs!=='object'||Array.isArray(q.paragraphs)||Object.keys(q.paragraphs).length<3||Object.keys(q.paragraphs).length>8||Object.keys(q.paragraphs).some(k=>!/^[A-H]$/.test(k)))throw Error('排序题须提供 A–H 段落。');
+   base.paragraphs=Object.fromEntries(Object.entries(q.paragraphs).map(([k,v])=>[k,field(v,8000)]));
+   const letters=Object.keys(base.paragraphs).sort().join('');
+   const validAnswer=(answer:unknown)=>{
+    if(typeof answer!=='string')return false;
+    if(section==='gap-seven')return letters==='ABCDEFG'&&/^[A-G]{5}$/.test(answer)&&new Set(answer).size===5;
+    return answer.split('').sort().join('')===letters;
+   };
+   if(!Array.isArray(q.accepted)||!q.accepted.length||!q.accepted.every(validAnswer))throw Error(section==='gap-seven'?'七选五须提供七个选项，答案为五个不同字母。':'排序答案须恰好使用所有段落字母。');
+   base.accepted=q.accepted;
+  }
   else if(kind==='writing'||kind==='translation'){base.text=field(q.text||'',20000,false);base.reference=field(q.reference||'',20000,false);}
   else throw Error('不支持的题型。');
-  const expected=section==='fill'?'fill':section==='ordering'?'order':section==='writing'?'writing':section==='translation'?'translation':'mc';
+  const expected=['fill','correction'].includes(section)?'fill':['ordering','gap-seven'].includes(section)?'order':section==='writing'?'writing':['translation','zh-en','en-zh'].includes(section)?'translation':'mc';
   if(kind!==expected)throw Error('题型与所选部分不符，请按部分分别发布。');
   return base;
  });
- if(['reading','cloze','modern','classical','poem'].includes(section)&&questions.length&&!text)throw Error('阅读、完形和语文题组须附完整配套正文。');
+ if(['reading','cloze','gap-seven','modern','classical','poem'].includes(section)&&questions.length&&!text)throw Error('阅读、完形和语文题组须附完整配套正文。');
+ if(section==='gap-seven'&&questions.length&&(questions.length!==1||[...text.matchAll(/\[(\d+)\]/g)].map(m=>m[1]).join(',')!=='1,2,3,4,5'))throw Error('七选五须有一个题组，正文按顺序包含[1]至[5]。');
  if(section==='cloze'&&questions.length){const blanks=[...text.matchAll(/\[(\d+)\]/g)].map(m=>Number(m[1]));if(new Set(blanks).size!==questions.length||questions.some((_:any,i:number)=>!blanks.includes(i+1)))throw Error('完形空号须从[1]开始，与题目一一对应。');}
  return {title,authorAlias:alias,subject,section,tier,payload:{schema:1,text,source,sourceUrl,reason,rights:body.rights,questions,fileIds:body.fileIds,sharedAt:new Date().toISOString()}};
 }
@@ -30,6 +42,6 @@ export function materialUnit(row:any){const p=publicMaterial(row);if(!p.active||
 // Passage tasks remain whole; individual-question sections count actual questions.
 export function materialUnits(row:any){
  const unit=materialUnit(row);if(!unit)return [];
- if(['reading','cloze','ordering','modern','classical','poem'].includes(unit.section))return [unit];
+ if(['reading','cloze','ordering','gap-seven','modern','classical','poem'].includes(unit.section))return [unit];
  return unit.questions.map((q:any)=>({...unit,id:unit.id+':q'+q.id,materialId:unit.id+':q'+q.id,questions:[q]}));
 }

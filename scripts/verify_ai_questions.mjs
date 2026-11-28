@@ -308,4 +308,56 @@ ok("personal-bank composition uses the chosen subject and difficulty",()=>assert
 await studio.compose("mixed");
 ok("mixed personal-bank composition retains the chosen difficulty",()=>assert.deepEqual(packet,["new","advanced"]));
 
+const catalog=JSON.parse(readFileSync(new URL("../public/difficulty.json",import.meta.url),"utf8"));
+const sections=["reading","cloze","gap-seven","literary","writing","correction","zh-en","en-zh"];
+const vmContext={
+ document:{getElementById:()=>({value:"Fixture"})},
+ Hub:{school:"pku",schoolById:()=>({name:"Fixture",track:"英语",short:"Fixture"}),e:String},
+};
+vmContext.WorkflowEngine=runInNewContext(readFileSync(new URL("../public/workflows-engine.js",import.meta.url),"utf8")+"\nWorkflowEngine",vmContext);
+const writingStudio=runInNewContext(readFileSync(new URL("../public/ai-questions.js",import.meta.url),"utf8")+"\nAIStudio",vmContext);
+function fixtureFor(section){
+ const unit=catalog.items.find(item=>item.section===section);
+ const item={title:unit.title,text:unit.text??"",questions:unit.questions.map(q=>({...q}))};
+ if(section==="reading"){
+  item.text=passage;
+  item.questions=JSON.parse(readingFixture(3)).items[0].questions;
+ }
+ if(section==="cloze"){
+  item.text="Students investigated a public problem before writing a report that explained their reasoning. "
+   +Array.from({length:5},(_,i)=>"["+(i+1)+"]").join(" ");
+  item.questions=JSON.parse(mcFixture(5)).items.map(unit=>unit.questions[0]);
+ }
+ if(section==="gap-seven"){
+  const q=item.questions[0];
+  q.options=Object.values(q.paragraphs);
+  q.answer=q.accepted[0];
+ }
+ if(["zh-en","en-zh"].includes(section))item.text=item.questions[0].text;
+ if(section==="writing")item.questions[0].reference="The discussion began with a shared problem and ended with a proposal.";
+ return item;
+}
+const englishItems=sections.flatMap(section=>{
+ const fixture=fixtureFor(section);
+ const plan=generationPlan({subject:"英语",type:section,difficulty:"进阶",count:fixture.questions.length,topic:"城市生活"});
+ const result=parseGeneration(JSON.stringify({items:[fixture]}),plan);
+ ok(section+" survives AI generation and personal bank validation",()=>assert.deepEqual(validateBankItem(result[0]),result[0]));
+ return result;
+});
+ok("AI questions from all eight sections make one valid paper",()=>{
+ const packet=writingStudio.writtenPacket(englishItems,"英语",60);
+ assert.deepEqual(Array.from(packet.blocks,b=>b.kind),sections);
+ assert.match(packet.blocks[1].text,/\[4\].*\[8\]/s);
+ assert.equal(Object.keys(packet.blocks[2].questions[0].paragraphs).length,7);
+ assert.equal(packet.blocks[4].questions[0].kind,"writing");
+ assert.equal(packet.blocks[5].questions[0].kind,"fill");
+ assert.match(packet.blocks[6].questions[0].text,/\p{Script=Han}/u);
+ assert.equal(packet.blocks[7].questions[0].kind,"translation");
+});
+rejects("seven options require five distinct answers",()=>{
+ const fixture=fixtureFor("gap-seven");
+ fixture.questions[0].answer="AAAAB";
+ return parseGeneration(JSON.stringify({items:[fixture]}),generationPlan({subject:"英语",type:"gap-seven",difficulty:"进阶",count:1,topic:"衔接"}));
+},/不重复/);
+
 console.log(`\n${passed} checks passed${process.exitCode ? ", with failures" : ""}.`);

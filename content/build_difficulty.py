@@ -1,5 +1,6 @@
 """Reviewed reference bands, deliberately conservative; no forced high-tier stock."""
 import json,copy,re
+from english_specialties import specialties
 from pathlib import Path
 R=Path(__file__).resolve().parents[1];P=R/'public'
 b=json.loads((P/'bank.json').read_text(encoding='utf-8'));h=json.loads((P/'schools.json').read_text(encoding='utf-8'));w=json.loads((P/'workflows.json').read_text(encoding='utf-8'))
@@ -7,7 +8,7 @@ tiers={
  '英语':[('cet4','四级','常用词汇、单层句法与直接信息定位'),('cet6','六级','较长句、学术常用词与局部推断'),('tem4','专四','语法细分、搭配辨析与篇章关系'),('postgrad','考研','论证关系、语境义与有约束的推断'),('tem8','专八','抽象论述、隐含立场与多处证据整合'),('tem8plus','专八加','在专八参照上提高词汇、句法、论证及干扰强度，须有独立依据')],
  '数学':[('gaokao-mid','高考中档题','常规概念、基本转化与有限步骤'),('gaokao-final','高考压轴题','参数分类、多条件整合与较长推理'),('foundation','强基数学','非常规方法、知识迁移与选拔性综合'),('competition1','一试数竞','竞赛一试参照，需典型竞赛知识与技巧'),('competition2','二试数竞','竞赛二试参照，重证明与深入构造，不能用普通单选题冒充')],
  '语文':[('gaokao','高考','常见语言知识、文本理解与有依据的分析'),('gaokao-plus','高考加','叙述距离、反讽、论证结构、跨篇比较与近似干扰'),('school-exam','语文校招难度','保送等校考的文学与文史综合参照，需相应样题校准'),('graduate','研究生考试难度','依具体专业与科目设置文史、文论或专题要求，不能仅靠生僻词判断')]}
-sections={'英语':[('mc','词汇与语法','题'),('reading','阅读理解','篇'),('cloze','完形填空','篇'),('fill','语法填空','题'),('ordering','语篇排序','组'),('translation','翻译','段'),('writing','写作','题')], '数学':[('algebra','代数与函数','题'),('geometry','几何与向量','题'),('counting','计数与概率','题'),('number','数论与离散','题')], '语文':[('modern','现代文阅读','组（每组10题）'),('classical','文言文阅读','组（每组10题）'),('poem','古诗阅读','组（每组5题）')]}
+sections={'英语':[('mc','词汇与语法','题'),('reading','阅读理解','篇'),('cloze','完形填空','篇'),('fill','语法填空','题'),('ordering','语篇排序','组'),('translation','翻译（综合）','段'),('zh-en','中翻英','段'),('en-zh','英翻中','段'),('writing','作文','题'),('gap-seven','七选五','篇'),('literary','英语文学与文化常识','题'),('correction','改错','题')], '数学':[('algebra','代数与函数','题'),('geometry','几何与向量','题'),('counting','计数与概率','题'),('number','数论与离散','题')], '语文':[('modern','现代文阅读','组（每组10题）'),('classical','文言文阅读','组（每组10题）'),('poem','古诗阅读','组（每组5题）')]}
 items=[]
 def add(id,subject,section,tier,questions,reason,**kw):
  questions=copy.deepcopy(questions)
@@ -40,7 +41,14 @@ for z,t in zip(w['clozes'],['postgrad','cet6','tem4']):
 families={1:'cet4',2:'cet4',3:'tem4',4:'tem4',5:'cet6',6:'tem4',7:'cet6',8:'tem4',9:'cet4',10:'cet6',11:'cet6',12:'tem4',13:'tem4',14:'cet6',15:'tem4',16:'cet4',17:'tem4',18:'cet6',19:'cet4',20:'cet6'}
 for q in w['fills']:add(q['sourceId'],'英语','fill',families[int(q['sourceId'].split('-')[1])],[q],'根据具体语法考点暂定：'+q['tag'],title=q['tag'])
 for z,t in zip(w['orders'],['postgrad','cet6']):add(z['materialId'],'英语','ordering',t,z['questions'],'按指代衔接、论证次序和段落功能暂定。',title=z['title'],materialId=z['materialId'])
-for z in w['translations']:add(z['materialId'],'英语','translation','cet6',z['questions'],'按当前短篇的信息转述、搭配与句间逻辑要求暂定。',title=z['title'],schoolIds=z['schoolIds'],materialId=z['materialId'])
+for z in w['translations']:
+ direction='zh-en' if z['questions'][0]['stem'].endswith('into English.') else 'en-zh'
+ for section in ['translation',direction]:
+  unit_id=z['materialId'] if section=='translation' else z['materialId']+':'+section
+  add(unit_id,'英语',section,'cet6',z['questions'],'按短篇的信息转述、搭配与句间逻辑要求暂定。',title=z['title'],source=z['source'],schoolIds=z['schoolIds'],materialId=z['materialId'])
+for unit_id,section,tier,title,source,text,q in specialties():
+ add(unit_id,'英语',section,tier,[dict(q,id=1,sourceId=unit_id+':1')],'按题目所需的文本或语言能力暂定。',title=title,source=source,text=text,materialId=unit_id)
+
 for z in w['writings']:add(z['materialId'],'英语','writing','cet6',z['questions'],'只标题目的任务要求；实际写作难度也取决于评分标准，不能等同成稿水平。',title=z['title'],schoolIds=z['schoolIds'],materialId=z['materialId'])
 # Paired modern/classical readings remain together: q10/q20 require both texts.
 chinese=[(next(p for p in b['papers'] if p['subject']=='语文'),'gaokao-plus')]

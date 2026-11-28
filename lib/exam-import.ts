@@ -20,6 +20,6 @@ export function units(row:any){
  return p.groups.flatMap((g:any)=>{
   const id="private-import:"+row.id+":g"+g.groupIndex+":r"+row.revision,source=row.source+" · 原文件："+row.filename+" · "+g.locator;
   const base={id,subject:g.subject,section:g.section,tier:g.tier,title:g.title,classificationStatus:"本人核对，难度为人工标注",reason:g.reason,text:g.text,paragraphs:g.text?g.text.split(/\n\s*\n/):[],source,sourceUrl:row.source_url,materialId:id,importId:row.id,sourceFile:row.filename,sourceHash:row.sha256,sourceLocator:g.locator,questions:g.questions.map((q:any)=>({...q,sourceId:"private-import:"+row.id+":g"+g.groupIndex+":q"+q.sourceNumber,originalNumber:q.sourceNumber,sourceNumber:g.section==="cloze"?q.id:q.sourceNumber,source:source+(q.sourcePage?" · PDF第"+q.sourcePage+"页":"")+" · 原题"+q.sourceNumber}))};
-  return ["reading","cloze","ordering","modern","classical","poem"].includes(g.section)?[base]:base.questions.map((q:any)=>({...base,id:id+":q"+q.id,materialId:id+":q"+q.id,questions:[q]}));
+  return ["reading","cloze","ordering","gap-seven","modern","classical","poem"].includes(g.section)?[base]:base.questions.map((q:any)=>({...base,id:id+":q"+q.id,materialId:id+":q"+q.id,questions:[q]}));
  });
 }
