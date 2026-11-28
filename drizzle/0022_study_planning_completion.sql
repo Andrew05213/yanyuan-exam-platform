@@ -18,3 +18,5 @@ END;
 CREATE TRIGGER study_reviews_delete AFTER DELETE ON study_day_plans BEGIN
  DELETE FROM study_review_events WHERE user_id=OLD.user_id AND day=OLD.day;
 END;
+--> statement-breakpoint
+CREATE TABLE study_review_reschedules(user_id text NOT NULL,task_id text NOT NULL,day text NOT NULL,due text NOT NULL,version text NOT NULL,updated_at text NOT NULL,PRIMARY KEY(user_id,task_id));

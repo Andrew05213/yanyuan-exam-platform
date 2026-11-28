@@ -62,7 +62,7 @@ try{
   await until("location.hash.startsWith('#task/') && !!document.querySelector('#screen h1') && !document.querySelector('.admissions-workspace')");
   await send('Page.navigate',{url:base+'/index.html#today'});
   await until("!!document.querySelector('[data-sp-add]')");
-  await js("document.querySelector('[data-sp-add]').click();document.querySelector('[data-sp-manual] [name=title]').value='Browser study';document.querySelector('[data-sp-preview]').click()");
+  await js("document.querySelector('[data-sp-budget]').value='60';document.querySelector('[data-sp-add]').click();document.querySelector('[data-sp-manual] [name=title]').value='Browser study';document.querySelector('[data-sp-preview]').click()");
   await until("!document.querySelector('[data-sp-save]').disabled");
   await js("document.querySelector('[data-sp-save]').click()");
   await until("!!document.querySelector('[data-sp-task]') && document.querySelector('[data-sp-message]').innerText.includes('已保存')");

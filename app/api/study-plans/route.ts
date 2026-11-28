@@ -16,21 +16,22 @@ async function candidateId(kind:string,sourceId:string){
 }
 async function sources(db:Db,uid:string,date:string):Promise<{items:Source[];truncated:boolean}>{
  // Strict owner scope for new planner, no legacy-owner fallback or shared project body.
- const [notes,errors,admissions,projects,reviews]=await Promise.all([
+ const [notes,errors,admissions,projects,reviews,overrides]=await Promise.all([
   db.prepare("SELECT id,title,review_on AS due FROM entries WHERE user_id=? AND folder='active' AND length(trim(content))>0 AND review_on IS NOT NULL AND review_on<>'' ORDER BY review_on,id LIMIT 61").bind(uid).all<{id:string;title:string;due:string}>(),
   db.prepare("SELECT id,title FROM archive_records WHERE owner_id=? AND kind='error-set' ORDER BY updated_at DESC,id LIMIT 41").bind(uid).all<{id:string;title:string}>(),
   db.prepare("SELECT payload FROM admissions_plans WHERE user_id=?").bind(uid).first<{payload:string}>(),
   db.prepare("SELECT p.id AS projectId,json_extract(p.payload,'$.title') AS projectTitle,json_extract(m.value,'$.id') AS milestoneId,json_extract(m.value,'$.title') AS title FROM research_projects p,json_each(p.payload,'$.milestones') m WHERE p.owner_id=? AND p.status='active' AND json_extract(m.value,'$.done')=0 ORDER BY p.updated_at DESC,p.id,m.key LIMIT 31").bind(uid).all<{projectId:string;projectTitle:string;milestoneId:string;title:string}>(),
-  db.prepare("SELECT e.task_id AS id,e.level,e.due FROM study_review_events e WHERE e.user_id=? AND e.day<=? AND e.day=(SELECT max(r.day) FROM study_review_events r WHERE r.user_id=e.user_id AND r.task_id=e.task_id AND r.day<=?) ORDER BY e.day DESC,e.task_id LIMIT 2001").bind(uid,date,date).all<{id:string;level:number;due:string}>(),
+  db.prepare("SELECT e.task_id AS id,e.level,e.due,e.occurred_at AS at FROM study_review_events e WHERE e.user_id=? AND e.day<=? AND e.day=(SELECT max(r.day) FROM study_review_events r WHERE r.user_id=e.user_id AND r.task_id=e.task_id AND r.day<=?) ORDER BY e.day DESC,e.task_id LIMIT 2001").bind(uid,date,date).all<{id:string;level:number;due:string;at:string}>(),
+  db.prepare("SELECT task_id AS id,due,version,updated_at AS at FROM study_review_reschedules WHERE user_id=? AND day<=? ORDER BY updated_at DESC LIMIT 2001").bind(uid,date).all<{id:string;due:string;version:string;at:string}>(),
  ]);
- const reviewMap=new Map<string,{level:number;due:string}>();for(const r of reviews.results)if(!reviewMap.has(r.id))reviewMap.set(r.id,r);
+ const reviewMap=new Map(reviews.results.map(r=>[r.id,r])),overrideMap=new Map(overrides.results.map(r=>[r.id,r]));
  const out:Source[]=[];
  async function add(kind:Source["kind"],sourceId:string,title:string,due:string|null,subject:string,track:string,href:string,sourceLabel:string,priority:number,minutes:number){
   if(!safeId(sourceId))return;
-  const id=await candidateId(kind,sourceId),saved=reviewMap.get(id);
+  const id=await candidateId(kind,sourceId),saved=reviewMap.get(id),override=overrideMap.get(id);
   // Keep source metadata current, private and short. Invalid historical dates are omitted.
   if(due!==null)try{day(due);}catch{return;}
-  out.push({id,kind,sourceId,title:title.trim().slice(0,200)||"未命名任务",due:saved?.due??due,subject,track:track.slice(0,80),href,sourceLabel,priority,minutes,level:saved?.level??0});
+  out.push({id,kind,sourceId,title:title.trim().slice(0,200)||"未命名任务",due:override&&(!saved||override.at>=saved.at)?override.due:saved?.due??due,subject,track:track.slice(0,80),href,sourceLabel,priority,minutes,level:saved?.level??0,rescheduleVersion:override?.version??null});
  }
  for(const n of notes.results.slice(0,60))await add("note-review",n.id,n.title,n.due,"研究","阅读研究","/reading-notes#note/"+encodeURIComponent(n.id),"到期笔记",2,15);
  for(const e of errors.results.slice(0,40))await add("error-review",e.id,e.title,date,"其他","通用训练","#mistakes","已保存错题组",1,20);
@@ -42,7 +43,19 @@ async function sources(db:Db,uid:string,date:string):Promise<{items:Source[];tru
   }
  }
  for(const p of projects.results.slice(0,30))await add("project",p.projectId+"_"+p.milestoneId,p.title,null,"研究",p.projectTitle,"#projects","本人研究里程碑",1,25);
- return {items:out,truncated:notes.results.length>60||errors.results.length>40||projects.results.length>30||reviews.results.length>2000};
+ return {items:out,truncated:notes.results.length>60||errors.results.length>40||projects.results.length>30||reviews.results.length>2000||overrides.results.length>2000};
+}
+async function reschedule(db:Db,uid:string,date:string,b:any){
+ if(date!==today()||!safeId(b.taskId))throw bad();
+ const due=day(b.due);if(due<date||due>shift(date,365))throw bad();
+ const pool=await sources(db,uid,date),source=pool.items.find(t=>t.id===b.taskId&&["note-review","error-review"].includes(t.kind));
+ if(!source)throw new AccessError("复习来源不可用。",404);
+ const expected=b.rescheduleVersion;
+ if(expected!==source.rescheduleVersion)throw stale();
+ const version=crypto.randomUUID(),stamp=new Date().toISOString();
+ const q=expected===null?db.prepare("INSERT INTO study_review_reschedules(user_id,task_id,day,due,version,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(user_id,task_id) DO NOTHING").bind(uid,source.id,date,due,version,stamp):db.prepare("UPDATE study_review_reschedules SET day=?,due=?,version=?,updated_at=? WHERE user_id=? AND task_id=? AND version=?").bind(date,due,version,stamp,uid,source.id,expected);
+ if(!(await q.run()).meta.changes)throw stale();
+ return reply({ok:true,due,rescheduleVersion:version});
 }
 async function prefRow(db:Db,uid:string){return db.prepare("SELECT payload,version FROM study_plan_preferences WHERE user_id=?").bind(uid).first<{payload:string;version:string}>();}
 async function savePreferences(db:Db,uid:string,b:any){
@@ -96,6 +109,7 @@ export async function POST(request:Request){
  try{
   const {id}=principal(request);sameOrigin(request);const b=JSON.parse(await readLimitedText(request,60000)),date=dateInput(b?.date),db=storage();
   if(b.action==="preferences")return await savePreferences(db,id,b);
+  if(b.action==="reschedule")return await reschedule(db,id,date,b);
   if(b.action==="week-preview"||b.action==="week-save")return await weekAction(db,id,date,b);
   const row=await readDay(db,id,date);
   if((row?.version??null)!==b.version)throw stale();

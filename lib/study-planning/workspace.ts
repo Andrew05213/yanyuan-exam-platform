@@ -16,7 +16,7 @@ export function minutes(v:unknown,nullable=false):number|null{
  if(nullable&&v===null)return null;
  if(typeof v!=="number"||!Number.isSafeInteger(v)||v<0||v>1440)throw bad();return v;
 }
-export type Source=Candidate&{subject:string;track:string;href:string;sourceLabel:string;level:number};
+export type Source=Candidate&{subject:string;track:string;href:string;sourceLabel:string;level:number;rescheduleVersion?:string|null};
 export type Task=Scheduled&{subject:string;track:string;href:string;sourceLabel:string;level:number;actualMinutes:number|null;note:string;review?:{outcome:string;level:number;due:string;at:string};evidence?:{id:string;kind:string}};
 export type Extra={id:string;title:string;subject:string;track:string;actualMinutes:number|null;note:string};
 export type Reflection={challenge:string;judgment:string;next:string};
