@@ -4,6 +4,8 @@ import { readExecutionProfile } from "./execution-profile.mjs";
 
 const [command, ...args] = process.argv.slice(2);
 if (!["dev", "build"].includes(command)) throw new Error("Expected dev or build.");
+// The browser imports PDF.js and the OCR worker as same-origin static assets.
+await import("./prepare-ocr.mjs");
 const managedLinux = readExecutionProfile() === "managed-linux";
 if (command === "build" || process.env.YANYUAN_LAN_AUTH === "1") {
   const result = spawnSync(process.execPath, [

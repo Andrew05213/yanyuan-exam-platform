@@ -27,3 +27,14 @@ for(const [dir,label] of [[tess,'tesseract'],[core,'tesseract-core']]){
   if(name)await fs.copyFile(path.join(dir,name),path.join(out,label+'-LICENSE.txt'));
 }
 console.log('Prepared self-hosted OCR worker, four core variants and English/Chinese language data.');
+
+// Serve PDF.js from the same origin as the already self-hosted OCR models.
+const pdfRoot=path.dirname(require.resolve('pdfjs-dist/package.json'));
+const pdfOut=path.join(out,'pdf');
+await fs.mkdir(pdfOut,{recursive:true});
+for(const name of ['pdf','pdf.worker']){
+ await fs.copyFile(path.join(pdfRoot,'build',name+'.min.mjs'),path.join(pdfOut,name+'.js'));
+}
+for(const name of ['cmaps','standard_fonts','wasm','LICENSE']){
+ await fs.cp(path.join(pdfRoot,name),path.join(pdfOut,name),{recursive:true});
+}

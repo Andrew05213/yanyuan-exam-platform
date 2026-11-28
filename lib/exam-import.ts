@@ -8,16 +8,18 @@ export function groups(v:unknown,source:{source:string;sourceUrl:string}){
  let total=0;return v.map((g:any,i)=>{
   const locator=field(g.locator,150),questions=g.questions;if(!Array.isArray(questions)||!questions.length)throw Error("题组必须含题目。");total+=questions.length;if(total>100)throw Error("每份文件最多100题。");
   const numbers=questions.map((q:any)=>q.sourceNumber);if(numbers.some((n:any)=>!Number.isSafeInteger(n)||n<1||n>10000)||new Set(numbers).size!==numbers.length)throw Error("原卷题号必须为不重复的正整数。");
+  const pages=questions.map((q:any)=>q.sourcePage);
+  if(pages.some((page:any)=>page!=null&&(!Number.isSafeInteger(page)||page<1||page>120)))throw Error("PDF 页码无效。");
   const input=validateMaterial({...g,source:source.source,sourceUrl:source.sourceUrl,rights:"permission",shareConfirmed:true,fileIds:[],authorAlias:"private",reason:field(g.reason??"上传者人工核对分级，非官方难度核验",1000),questions:questions.map((q:any)=>({...q,analysis:field(q.analysis??"",12000,false)||"原卷未提供解析；未补造。"}))});
   if(input.payload.questions.some((q:any)=>q.kind==="mc"&&new Set(q.options.map((x:string)=>x.trim())).size!==4))throw Error("选项重复。");
-  return {title:input.title,subject:input.subject,section:input.section,tier:input.tier,locator,reason:input.payload.reason,text:input.payload.text,questions:input.payload.questions.map((q:any,j:number)=>({...q,sourceNumber:numbers[j]})),groupIndex:i+1};
+  return {title:input.title,subject:input.subject,section:input.section,tier:input.tier,locator,reason:input.payload.reason,text:input.payload.text,questions:input.payload.questions.map((q:any,j:number)=>({...q,sourceNumber:numbers[j],...(pages[j]!=null?{sourcePage:pages[j]}:{})})),groupIndex:i+1};
  });
 }
 export function units(row:any){
  const p=JSON.parse(row.payload);if(!p.approved)return [];
  return p.groups.flatMap((g:any)=>{
   const id="private-import:"+row.id+":g"+g.groupIndex+":r"+row.revision,source=row.source+" · 原文件："+row.filename+" · "+g.locator;
-  const base={id,subject:g.subject,section:g.section,tier:g.tier,title:g.title,classificationStatus:"本人核对，难度为人工标注",reason:g.reason,text:g.text,paragraphs:g.text?g.text.split(/\n\s*\n/):[],source,sourceUrl:row.source_url,materialId:id,importId:row.id,sourceFile:row.filename,sourceHash:row.sha256,sourceLocator:g.locator,questions:g.questions.map((q:any)=>({...q,sourceId:"private-import:"+row.id+":g"+g.groupIndex+":q"+q.sourceNumber,originalNumber:q.sourceNumber,sourceNumber:g.section==="cloze"?q.id:q.sourceNumber,source:source+" · 原题"+q.sourceNumber}))};
+  const base={id,subject:g.subject,section:g.section,tier:g.tier,title:g.title,classificationStatus:"本人核对，难度为人工标注",reason:g.reason,text:g.text,paragraphs:g.text?g.text.split(/\n\s*\n/):[],source,sourceUrl:row.source_url,materialId:id,importId:row.id,sourceFile:row.filename,sourceHash:row.sha256,sourceLocator:g.locator,questions:g.questions.map((q:any)=>({...q,sourceId:"private-import:"+row.id+":g"+g.groupIndex+":q"+q.sourceNumber,originalNumber:q.sourceNumber,sourceNumber:g.section==="cloze"?q.id:q.sourceNumber,source:source+(q.sourcePage?" · PDF第"+q.sourcePage+"页":"")+" · 原题"+q.sourceNumber}))};
   return ["reading","cloze","ordering","modern","classical","poem"].includes(g.section)?[base]:base.questions.map((q:any)=>({...base,id:id+":q"+q.id,materialId:id+":q"+q.id,questions:[q]}));
  });
 }
