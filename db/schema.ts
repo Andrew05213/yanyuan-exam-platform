@@ -128,3 +128,14 @@ export * from "./literature-schema";
 export const studyDayPlans=sqliteTable("study_day_plans",{
  userId:text("user_id").notNull(),day:text("day").notNull(),version:text("version").notNull(),payload:text("payload").notNull(),updatedAt:text("updated_at").notNull(),
 },t=>[primaryKey({columns:[t.userId,t.day]})]);
+
+export const studyPlanPreferences=sqliteTable("study_plan_preferences",{
+ userId:text("user_id").primaryKey().notNull(),version:text("version").notNull(),payload:text("payload").notNull(),updatedAt:text("updated_at").notNull(),
+});
+export const studyReviewEvents=sqliteTable("study_review_events",{
+ userId:text("user_id").notNull(),day:text("day").notNull(),taskId:text("task_id").notNull(),kind:text("kind").notNull(),sourceId:text("source_id").notNull(),outcome:text("outcome").notNull(),level:integer("level").notNull(),due:text("due").notNull(),occurredAt:text("occurred_at").notNull(),
+},t=>[primaryKey({columns:[t.userId,t.day,t.taskId]}),index("study_review_events_latest_idx").on(t.userId,t.taskId,t.day)]);
+
+export const studyReviewReschedules=sqliteTable("study_review_reschedules",{
+ userId:text("user_id").notNull(),taskId:text("task_id").notNull(),day:text("day").notNull(),due:text("due").notNull(),version:text("version").notNull(),updatedAt:text("updated_at").notNull(),
+},t=>[primaryKey({columns:[t.userId,t.taskId]})]);
