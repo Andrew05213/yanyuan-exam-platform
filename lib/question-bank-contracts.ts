@@ -3,11 +3,13 @@
 // (the browser receives the same shapes, so the checks are deliberately plain
 // and dependency free).
 
-export const AI_SUBJECTS = ["英语", "日本国别", "文学口试"] as const;
+export const AI_SUBJECTS = ["英语", "日本国别", "文学口试", "语文", "数学"] as const;
 export type AiSubject = (typeof AI_SUBJECTS)[number];
 
 export const AI_SECTIONS: Record<AiSubject, string[]> = {
   英语: ["reading", "cloze", "gap-seven", "literary", "writing", "correction", "zh-en", "en-zh", "mc"],
+  语文: ["cn-mc","cn-multiple","cn-indefinite","cn-subjective","cn-modern","cn-classical","cn-poem","cn-language","cn-literary","cn-writing"],
+  数学: ["math-multiple","math-indefinite","math-mc","math-fill","math-solution"],
   日本国别: ["country"],
   文学口试: ["oral-reading", "oral-country", "oral-speech"],
 };
@@ -62,7 +64,9 @@ const MAX_ITEMS = 20;
 const MAX_QUESTIONS = 30;
 
 const translationSections = new Set(["zh-en","en-zh"]);
-const passageSections = new Set(["reading","cloze","gap-seven"]);
+const chinesePassages = new Set(["cn-modern","cn-classical","cn-poem"]);
+const subjectiveSections = new Set(["cn-subjective","cn-modern","cn-classical","cn-poem","cn-writing","math-solution"]);
+const passageSections = new Set(["reading","cloze","gap-seven",...chinesePassages]);
 
 export class BankContractError extends Error {}
 
@@ -110,21 +114,25 @@ export function normaliseQuestion(raw: unknown, index: number, section: string):
     };
   }
   const base = {id:`q${index+1}`,stem,analysis,tag,reference:"",guide:[],followups:[]};
-  if(section==="writing"||translationSections.has(section)){
+  if(section==="writing"||translationSections.has(section)||subjectiveSections.has(section)){
     return {...base,options:[],answer:"",reference:text(entry.reference,MAX_REFERENCE,"参考答案")};
   }
-  if(section==="correction"){
-    const accepted=stringList(entry.accepted,8,"可接受答案",80,{required:true});
-    if(!accepted.length)throw new BankContractError("改错题须给出至少一个可接受答案。");
+  if(section==="correction"||section==="math-fill"){
+    const accepted=stringList(entry.accepted,8,"可接受答案",section==="math-fill"?240:80,{required:true});
+    if(!accepted.length)throw new BankContractError("填空或改错题须给出至少一个可接受答案。");
     return {...base,options:[],answer:"",accepted};
   }
   const seven=section==="gap-seven",size=seven?7:4;
   const options=stringList(entry.options,size,`第 ${index+1} 题选项`,MAX_OPTION,{required:true});
   if(options.length!==size)throw new BankContractError(`第 ${index+1} 题必须正好 ${size} 个选项。`);
   if(new Set(options.map(option=>option.toLowerCase())).size!==size)throw new BankContractError(`第 ${index+1} 题选项重复。`);
-  const answer=typeof entry.answer==="string"?entry.answer.trim().toUpperCase():"";
+  let answer=typeof entry.answer==="string"?entry.answer.trim().toUpperCase():"";
   if(seven){
     if(!/^[A-G]{5}$/.test(answer)||new Set(answer).size!==5)throw new BankContractError("七选五答案须有五个互不重复的 A–G 字母。");
+  } else if (section.endsWith("-multiple")||section.endsWith("-indefinite")) {
+    const min=section.endsWith("-multiple")?2:1;
+    if(!/^[A-D]{1,4}$/.test(answer)||answer.length<min||new Set(answer).size!==answer.length)throw new BankContractError(`选择答案须含 ${min} 至 4 个互不重复的 A–D 字母。`);
+    answer=[...answer].sort().join("");
   } else if (!/^[ABCD]$/.test(answer)) {
     throw new BankContractError(`第 ${index+1} 题答案必须是 A/B/C/D。`);
   }
@@ -159,6 +167,12 @@ function refersToMissingPassage(stem: string): boolean {
 }
 
 function validateMaterial(section:string,passage:string,count:number){
+  if(chinesePassages.has(section)){
+    const han=(passage.match(/\p{Script=Han}/gu)||[]).length;
+    const min=section==="cn-poem"?16:section==="cn-classical"?60:200;
+    if(han<min)throw new BankContractError("语文阅读材料缺失、过短或语种不符。");
+  }
+  if((section.startsWith("math-")||section.startsWith("cn-"))&&!chinesePassages.has(section)&&passage.trim())throw new BankContractError("独立题不得附加无关材料，请把必要条件写入题干。");
   if(section==="reading"&&passage.length<300)throw new BankContractError("阅读原文过短，无法作为完整篇章。");
   if(translationSections.has(section)){
     const hasChinese=/[\p{Script=Han}]/u.test(passage);
@@ -208,6 +222,13 @@ export function validateGeneratedItems(raw: unknown, request: { subject: AiSubje
       throw new BankContractError("日本国别题必须使用中文题干，请重试。");
     }
   }
+  if(request.subject==="语文"||request.subject==="数学"){
+    const stems=items.flatMap(item=>item.questions.map(q=>q.stem));
+    if(new Set(stems).size!==stems.length)throw new BankContractError("题干重复，请重试。");
+    if(stems.some(stem=>!/\p{Script=Han}/u.test(stem)))throw new BankContractError("请使用中文题干。");
+    if(!chinesePassages.has(request.section)&&stems.some(refersToMissingPassage))throw new BankContractError("题干引用了不存在的上文，请重试。");
+    for(const item of items){item.sourceNote="AI 生成；非官方真题，未经人工审核。";item.paragraphs=item.text?item.text.split(/\n\s*\n/):[];}
+  }
   const bannedOption = /以上(都|均|皆)|all of the above|none of the above/i;
   if (items.some((item) => item.questions.some((question) => question.options.some((option) => bannedOption.test(option))))) {
     throw new BankContractError("选项不得使用“以上都对/以上都不对”这类无法区分的表述。");
@@ -237,7 +258,7 @@ export function validateBankItem(raw: unknown): BankItem {
     return { ...normalised, id: value.id as string };
   });
   const passage=text(entry.text,MAX_TEXT,"阅读原文",{required:false});
-  if(section!=="reading"&&section!=="cloze"&&questions.length!==1&&!section.startsWith("oral-")){
+  if(!passageSections.has(section)&&questions.length!==1&&!section.startsWith("oral-")){
     throw new BankContractError("该题型每组只能包含一道题。");
   }
   validateMaterial(section,passage,questions.length);

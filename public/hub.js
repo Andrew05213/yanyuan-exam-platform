@@ -234,7 +234,7 @@ const Hub={
     if(raw==null||packet.kind!=='written')return null;
     if(typeof raw!=='object'||Array.isArray(raw))throw Error('作答备份格式不完整。');
     const questions=new Map(packet.blocks.flatMap(b=>b.questions).map(q=>[String(q.id),q])),answers={},manualScores={};
-    for(const [id,value] of Object.entries(raw.answers||{})){const q=questions.get(id);if(!q||typeof value!=='string'||value.length>40000||((!q.kind||q.kind==='mc')&&!['','A','B','C','D'].includes(value)))throw Error('备份含无效的题号或作答。');answers[id]=value;}
+    for(const [id,value] of Object.entries(raw.answers||{})){const q=questions.get(id);if(!q||typeof value!=='string'||value.length>40000||((!q.kind||q.kind==='mc')&&!['','A','B','C','D'].includes(value))||(['multiple','indefinite'].includes(q.kind)&&value!==''&&(!/^[A-D]{1,4}$/.test(value)||new Set(value).size!==value.length)))throw Error('备份含无效的题号或作答。');answers[id]=value;}
     for(const [id,value] of Object.entries(raw.manualScores||{})){const q=questions.get(id);if(!q||!['writing','translation'].includes(q.kind))throw Error('备份含无效的主观题评分。');if(value==='')continue;if(!['number','string'].includes(typeof value)||!String(value).trim()||!Number.isFinite(Number(value))||Number(value)<0||Number(value)>q.points)throw Error('备份含无效的主观题评分。');manualScores[id]=value;}
     return {answers,manualScores,elapsedSeconds:Number.isFinite(raw.elapsedSeconds)?Math.max(0,Math.min(raw.elapsedSeconds,packet.minutes*60)):0};
   },
