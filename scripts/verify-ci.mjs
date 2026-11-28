@@ -13,6 +13,7 @@ const suites=[
  'verify_learning_report.mjs',
  'verify_reviews.mjs',
  'verify_multilingual_notes.mjs',
+ 'verify_world_literature.mjs',
  'verify_academic_format.mjs',
  'verify_note_versions.mjs',
  'verify_research_community.mjs',

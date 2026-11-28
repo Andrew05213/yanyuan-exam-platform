@@ -48,6 +48,12 @@ try {
       await db.prepare(sql).run();
     }
   }
+  const materials='/api/literature/materials';
+  const getMaterials=async who=>{const r=await mf.dispatchFetch('https://study.test'+materials,{headers:{'oai-authenticated-user-id':who,'oai-authenticated-user-email':who+'@example.test'}});assert.equal(r.status,200);return r.json();};
+  const catalog=await getMaterials('A');const hamlet=catalog.find(w=>w.id==='world_en-hamlet');assert.equal(hamlet.languageId,'en');assert.equal(catalog.find(w=>w.id==='genji').languageId,'ja');
+  const putMaterial=async value=>mf.dispatchFetch('https://study.test'+materials,{method:'PUT',headers:{'oai-authenticated-user-id':'A','oai-authenticated-user-email':'A@example.test','content-type':'application/json','origin':'https://study.test'},body:JSON.stringify(value)});
+  assert.equal((await putMaterial({...hamlet,languageId:'invalid'})).status,400);const changed={...hamlet,title:'QA private Hamlet',originalTitle:'Hamlet QA'};assert.equal((await putMaterial(changed)).status,200);assert.equal((await getMaterials('A')).find(w=>w.id===hamlet.id).originalTitle,'Hamlet QA');assert.equal((await getMaterials('B')).find(w=>w.id===hamlet.id).originalTitle,'Hamlet');
+  console.log('PASS: world literature metadata persists privately and legacy Japanese IDs remain stable.');
   const notes='/api/literature/entries',bank='/api/question-bank',questions='/api/ai-questions',review='/api/literature/feedback';
   const legacy=(await call(notes,'migration-check')).body[0];
   assert.deepEqual([legacy.id,legacy.content,legacy.folder,legacy.revision,legacy.language],['legacy-note','原正文','active',1,null]);

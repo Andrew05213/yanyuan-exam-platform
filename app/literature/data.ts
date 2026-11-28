@@ -1,4 +1,5 @@
 import { researchCatalog } from "./research";
+import {worldWorks,metadataFor,type LiteratureMaterial} from "./world-literature";
 
 export const eras = [
 {title:"上代",date:"奈良时代及以前",text:"从神话、歌谣与《万叶集》入手，比较神话叙事如何建立王权谱系，以及和歌怎样写出个人与日常经验。"},
@@ -26,4 +27,4 @@ const originalWorks = [
 {"id": "japan_stats_isolation", "title": "独居、社会孤立与社区支持", "theme": "社会关系", "author": "江新兴、魏奎", "era": "近现代", "question": "独居与孤立如何分别测量？", "guide": "对照文章中的社区参与措施，列出服务覆盖人数、持续参与率与健康结果，说明哪项指标能够支持你的结论。", "brief": "对照文章中的社区参与措施，列出服务覆盖人数、持续参与率与健康结果，说明哪项指标能够支持你的结论。", "angles": ["界定研究对象", "说明论文的材料与方法", "提出还需要核实的证据"], "source": "https://dbyx.cbpt.cnki.net/portal/journal/portal/client/paper/838044e1db0aca8063f455b8e01b9e01", "sourceName": "日本高龄者“孤独死”现象的应对措施 ·《东北亚学刊》2020年第2期"},
 ];
 
-export const works = [...researchCatalog, ...originalWorks.filter(work => work.id !== "genji")];
+export const works:LiteratureMaterial[] = [...researchCatalog, ...originalWorks.filter(work => work.id !== "genji")].map((w):LiteratureMaterial=>{const item=w as LiteratureMaterial;return {...item,...metadataFor({...item,languageId:"ja",category:item.category??(item.id.startsWith("japan_stats_")?"近现代社会":"文学")})};}).concat(worldWorks);
