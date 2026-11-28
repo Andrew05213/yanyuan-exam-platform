@@ -29,22 +29,22 @@ const ExamImports={
   if((record.approved||record.groups?.length||this.groups.some(g=>g.questions?.length))&&!confirm('重新识别会替换现有题组并转为待审核，继续吗？'))return;
   const pages=await readExamPdf(file,{signal,recognize:canvas=>this.imageText(canvas),progress:t=>this.msg(t)});
   signal.throwIfAborted();
-  const result=ExamImportParser.parse(pages.join('\n'),100);
-  const locations=new Map();
-  pages.forEach((text,index)=>{
-   for(const match of text.normalize('NFKC').matchAll(/^\s*(\d{1,3})[.、)]\s*\S/gm)){
-    if(!locations.has(+match[1]))locations.set(+match[1],index+1);
-   }
-  });
-  const questions=result.questions.map(q=>({...q,sourcePage:locations.get(q.sourceNumber)}));
-  const groups=[];
-  for(let i=0;i<Math.max(1,questions.length);i+=50){
-   const batch=questions.slice(i,i+50),first=batch[0]?.sourcePage,last=batch.at(-1)?.sourcePage;
-   groups.push({title:record.filename.slice(0,135)+' · '+(groups.length+1),subject:'英语',section:'mc',tier:'tem4',
-    locator:first?'第'+first+'–'+last+'页':'全卷（待定位）',reason:'自动导入，科目、题型与难度待核对',text:'',questions:batch});
+  const {questions,warnings}=ExamImportParser.parsePages(pages);
+  const batches=[[]];
+  for(const question of questions){
+   const batch=batches.at(-1);
+   if(batch.length===50||batch.some(item=>item.sourceNumber===question.sourceNumber))batches.push([]);
+   batches.at(-1).push(question);
   }
+  if(batches.length>10)throw Error('识别得到超过10个题组，请按原卷分节拆分后导入。');
+  const groups=batches.map((batch,index)=>{
+   const first=batch[0]?.sourcePage,last=batch.at(-1)?.sourcePage;
+   const locator=first===last?(first?'第'+first+'页':'全卷（待定位）'):'第'+first+'–'+last+'页';
+   return {title:record.filename.slice(0,135)+' · '+(index+1),subject:'英语',section:'mc',tier:'tem4',
+    locator,reason:'自动导入，科目、题型与难度待核对',text:'',questions:batch};
+  });
   groups[0].pdfPages=pages;
-  groups[0].pdfWarnings=result.warnings;
+  groups[0].pdfWarnings=warnings;
   const message='已自动保存待审核：'+pages.length+'页，识别出'+questions.length+'道四选一。请核对科目、难度和答案；其余内容见逐页原文。';
   await this.request({}, {action:'save',id:record.id,revision:record.revision,source:record.source,sourceUrl:record.sourceUrl,
    rights:record.rights,confirm:true,approved:false,reviewConfirmed:false,groups});
