@@ -11,7 +11,7 @@ const englishAITypes = [
   ['literary','英语文学与文化常识',[1,3,5]], ['writing','作文',[1,2]], ['correction','改错',[1,3,5]],
   ['zh-en','中翻英',[1,2]], ['en-zh','英翻中',[1,2]], ['mc','词汇语法',[3,5,10]],
 ].map(([id,label,counts])=>({id,label,counts}));
-const newAITypes = {"语文":[{"id":"cn-modern","label":"现代文阅读（简答）","counts":[2,3,4]},{"id":"cn-classical","label":"文言文阅读（理解与翻译）","counts":[2,3,4]},{"id":"cn-poem","label":"古诗词鉴赏（简答）","counts":[1,2,3]},{"id":"cn-language","label":"语言文字运用（单选）","counts":[3,5,10]},{"id":"cn-literary","label":"文学文化常识（单选）","counts":[3,5,10]},{"id":"cn-writing","label":"语文作文","counts":[1,2]}],"数学":[{"id":"math-mc","label":"数学单项选择","counts":[3,5,10]},{"id":"math-fill","label":"数学填空","counts":[3,5,10]},{"id":"math-solution","label":"数学解答与证明","counts":[1,2,3,5]}]};
+const newAITypes = {"语文":[{"id":"cn-mc","label":"语文单项选择","counts":[1,3,5,10]},{"id":"cn-multiple","label":"语文多项选择","counts":[1,3,5,10]},{"id":"cn-indefinite","label":"语文不定项选择","counts":[1,3,5,10]},{"id":"cn-subjective","label":"语文主观题（独立材料与简答）","counts":[1,2,3,5]},{"id":"cn-modern","label":"现代文阅读（简答）","counts":[2,3,4]},{"id":"cn-classical","label":"文言文阅读（理解与翻译）","counts":[2,3,4]},{"id":"cn-poem","label":"古诗词鉴赏（简答）","counts":[1,2,3]},{"id":"cn-language","label":"语言文字运用（单选）","counts":[3,5,10]},{"id":"cn-literary","label":"文学文化常识（单选）","counts":[3,5,10]},{"id":"cn-writing","label":"语文作文","counts":[1,2]}],"数学":[{"id":"math-multiple","label":"数学多项选择","counts":[1,3,5,10]},{"id":"math-indefinite","label":"数学不定项选择","counts":[1,3,5,10]},{"id":"math-mc","label":"数学单项选择","counts":[3,5,10]},{"id":"math-fill","label":"数学填空","counts":[3,5,10]},{"id":"math-solution","label":"数学综合大题与证明","counts":[1,2,3,5]}]};
 const AIStudio = {
   data: null,
   state: {
@@ -402,7 +402,7 @@ const AIStudio = {
       subject,
       schoolId: Hub.school,
       schoolName: (school?.name || '') + ' · ' + (school?.track || ''),
-      title: (school?.short || '训练') + ' · AI 专题 · ' + (document.getElementById('ai-topic')?.value || ''),
+      title: (school?.short || '训练') + ' · '+subject+' · AI 专题 · ' + (document.getElementById('ai-topic')?.value || ''),
       createdAt: new Date().toISOString(),
       minutes,
       count: total,
@@ -410,7 +410,7 @@ const AIStudio = {
       config: { schema: 'ai-topic-v1', schoolId: Hub.school, subject, minutes, count: total, topic: document.getElementById('ai-topic')?.value || '' },
       difficultyVersion: 'ai-topic-v1',
       blocks,
-      note: '本卷题目由 AI 生成，标注“待审核”，不代表官方真题或已审核题源；解析与答案请自行核对。组卷、作答、错题与档案流程与现有训练卷一致。',
+      note: '本卷题目由 AI 生成，标注“待审核”，不代表官方真题或已审核题源；解析与答案请自行核对。多选和不定项按完全正确计分，不计部分分；主观题可参照解析自评。',
     };
     WorkflowEngine.validatePacket(packet);
     return packet;
@@ -426,12 +426,14 @@ const AIStudio = {
         return {...base,kind:'order',paragraphs:Object.fromEntries(question.options.map((option,i)=>['ABCDEFG'[i],option])),accepted:[question.answer]};
       case 'math-fill': case 'correction':
         return {...base,kind:'fill',accepted:question.accepted};
-      case 'cn-modern': case 'cn-classical': case 'cn-poem': case 'cn-writing': case 'math-solution':
+      case 'cn-subjective': case 'cn-modern': case 'cn-classical': case 'cn-poem': case 'cn-writing': case 'math-solution':
         return {...base,kind:'writing',reference:question.reference};
       case 'writing':
         return {...base,kind:'writing',reference:question.reference};
       case 'zh-en': case 'en-zh':
         return {...base,kind:'translation',text:item.text,reference:question.reference};
+      case 'cn-multiple': case 'math-multiple': case 'cn-indefinite': case 'math-indefinite':
+        return {...base,kind:item.section.endsWith('-multiple')?'multiple':'indefinite',options:question.options,answer:question.answer,optionsHtml:question.options.map(option=>Hub.e(option))};
       default:
         return {...base,kind:'mc',options:question.options,answer:question.answer,optionsHtml:question.options.map(option=>Hub.e(option))};
     }

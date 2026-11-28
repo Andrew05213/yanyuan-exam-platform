@@ -385,4 +385,34 @@ for(const [subject,type,label,counts] of newSpecs){
 }
 rejects("Chinese subject cannot use English cloze",()=>generationPlan({subject:"语文",type:"cloze",difficulty:"进阶",topic:"阅读",count:5}),/题型/);
 
+
+for(const [subject,type,label,counts] of [["语文","cn-mc","语文单项选择",[1,3,5,10]],["语文","cn-multiple","语文多项选择",[1,3,5,10]],["语文","cn-indefinite","语文不定项选择",[1,3,5,10]],["语文","cn-subjective","语文主观题（独立材料与简答）",[1,2,3,5]],["数学","math-multiple","数学多项选择",[1,3,5,10]],["数学","math-indefinite","数学不定项选择",[1,3,5,10]]]){
+ const count=counts[0], plan=generationPlan({subject,type,difficulty:"进阶",topic:"专题",count});
+ const isMulti=type.endsWith("-multiple"),isIndefinite=type.endsWith("-indefinite"),isSubjective=type==="cn-subjective";
+ const raw={items:[{title:label,text:"",questions:[{stem:"请判断下列说法",options:isSubjective?[]:["甲","乙","丙","丁"],answer:isSubjective?"":isMulti||isIndefinite?"CA":"B",analysis:"逐项说明条件与结论",tag:"考点",...(isSubjective?{reference:"完整参考答案"}:{})}]}]};
+ const items=parseGeneration(JSON.stringify(raw),plan);
+ ok(label+" round trip and packet type",()=>{
+  assert.deepEqual(validateBankItem(items[0]),items[0]);
+  const p=writingStudio.writtenPacket(items,subject,60);
+  assert.equal(p.blocks[0].questions[0].kind,isSubjective?"writing":isMulti?"multiple":isIndefinite?"indefinite":"mc");
+  if(isMulti||isIndefinite){
+   assert.equal(items[0].questions[0].answer,"AC");
+   assert.equal(vmContext.WorkflowEngine.grade(p,{1:"CA"}).objectiveScore,100);
+   assert.equal(vmContext.WorkflowEngine.grade(p,{1:"A"}).objectiveScore,0);
+   assert.equal(vmContext.WorkflowEngine.grade(p,{1:"ACC"}).objectiveScore,0);
+   assert.equal(vmContext.WorkflowEngine.grade(p,{1:"ACD"}).objectiveScore,0);
+   assert.equal(vmContext.WorkflowEngine.parseErrors("1AD",p).entries[0].selected,"AD");
+   assert.equal(vmContext.WorkflowEngine.parseErrors("1CA",p).consistent.length,1);
+  }
+  if(isSubjective){assert.equal(vmContext.WorkflowEngine.grade(p,{1:"回答"}).total,null);assert.equal(vmContext.WorkflowEngine.grade(p,{1:"回答"},{1:60}).total,60);}
+ });
+ if(isMulti||isIndefinite){
+  raw.items[0].questions[0].answer="AA";
+  rejects(label+" rejects repeated answer letters",()=>parseGeneration(JSON.stringify(raw),plan),/互不重复/);
+  raw.items[0].questions[0].answer="A";
+  if(isMulti)rejects(label+" rejects one correct letter",()=>parseGeneration(JSON.stringify(raw),plan),/2 至 4/);
+  else ok(label+" permits one correct letter",()=>assert.equal(parseGeneration(JSON.stringify(raw),plan)[0].questions[0].answer,"A"));
+ }
+}
+
 console.log(`\n${passed} checks passed${process.exitCode ? ", with failures" : ""}.`);

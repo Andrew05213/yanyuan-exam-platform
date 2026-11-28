@@ -8,8 +8,8 @@ export type AiSubject = (typeof AI_SUBJECTS)[number];
 
 export const AI_SECTIONS: Record<AiSubject, string[]> = {
   英语: ["reading", "cloze", "gap-seven", "literary", "writing", "correction", "zh-en", "en-zh", "mc"],
-  语文: ["cn-modern","cn-classical","cn-poem","cn-language","cn-literary","cn-writing"],
-  数学: ["math-mc","math-fill","math-solution"],
+  语文: ["cn-mc","cn-multiple","cn-indefinite","cn-subjective","cn-modern","cn-classical","cn-poem","cn-language","cn-literary","cn-writing"],
+  数学: ["math-multiple","math-indefinite","math-mc","math-fill","math-solution"],
   日本国别: ["country"],
   文学口试: ["oral-reading", "oral-country", "oral-speech"],
 };
@@ -65,7 +65,7 @@ const MAX_QUESTIONS = 30;
 
 const translationSections = new Set(["zh-en","en-zh"]);
 const chinesePassages = new Set(["cn-modern","cn-classical","cn-poem"]);
-const subjectiveSections = new Set(["cn-modern","cn-classical","cn-poem","cn-writing","math-solution"]);
+const subjectiveSections = new Set(["cn-subjective","cn-modern","cn-classical","cn-poem","cn-writing","math-solution"]);
 const passageSections = new Set(["reading","cloze","gap-seven",...chinesePassages]);
 
 export class BankContractError extends Error {}
@@ -126,9 +126,13 @@ export function normaliseQuestion(raw: unknown, index: number, section: string):
   const options=stringList(entry.options,size,`第 ${index+1} 题选项`,MAX_OPTION,{required:true});
   if(options.length!==size)throw new BankContractError(`第 ${index+1} 题必须正好 ${size} 个选项。`);
   if(new Set(options.map(option=>option.toLowerCase())).size!==size)throw new BankContractError(`第 ${index+1} 题选项重复。`);
-  const answer=typeof entry.answer==="string"?entry.answer.trim().toUpperCase():"";
+  let answer=typeof entry.answer==="string"?entry.answer.trim().toUpperCase():"";
   if(seven){
     if(!/^[A-G]{5}$/.test(answer)||new Set(answer).size!==5)throw new BankContractError("七选五答案须有五个互不重复的 A–G 字母。");
+  } else if (section.endsWith("-multiple")||section.endsWith("-indefinite")) {
+    const min=section.endsWith("-multiple")?2:1;
+    if(!/^[A-D]{1,4}$/.test(answer)||answer.length<min||new Set(answer).size!==answer.length)throw new BankContractError(`选择答案须含 ${min} 至 4 个互不重复的 A–D 字母。`);
+    answer=[...answer].sort().join("");
   } else if (!/^[ABCD]$/.test(answer)) {
     throw new BankContractError(`第 ${index+1} 题答案必须是 A/B/C/D。`);
   }
