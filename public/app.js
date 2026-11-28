@@ -247,7 +247,7 @@ function setupNavigation(){
 }
 async function boot(){
   try{
-    const paths=['bank.json','schools.json','workflows.json','difficulty.json','exam-standards.json','/api/session'];let loaded=0;
+    const paths=['bank.json','schools.json','workflows.json','difficulty.json?v=2','exam-standards.json','/api/session'];let loaded=0;
     const [data,schools,workflows,difficulty,standards,session]=await Promise.all(paths.map(async path=>{
       const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
       try{const r=await fetch(path,{signal:controller.signal,...(path==='/api/session'?{credentials:'same-origin',cache:'no-store'}:{})});if(!r.ok)throw Error('内容加载失败');const data=await r.json();const status=document.querySelector('.loading-state');if(status)status.textContent='正在打开资料库（'+(++loaded)+'/'+paths.length+'）…';return data;}catch(e){if(e.name==='AbortError')throw Error('连接超时，请刷新重试。');throw e;}finally{clearTimeout(timer);}

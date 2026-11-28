@@ -1,6 +1,7 @@
 (function(root){
 'use strict';
 const clone=x=>JSON.parse(JSON.stringify(x));
+const englishSections=['reading','cloze','gap-seven','literary','writing','correction','zh-en','en-zh'];
 const cjk=['modern','classical','poem'];
 function passageKey(x){return ['modern','classical','poem','reading','cloze'].includes(x.section)&&x.text?'text:'+x.text.replace(/\s+/g,' ').trim():x.materialId||null;}
 function validate(c,data){
@@ -48,6 +49,11 @@ function defaults(subject,schoolId,data,profiles){
  else{let remain=20;c.rows=data.sections[subject].map(s=>{const stock=data.items.filter(x=>x.subject===subject&&x.section===s.id).length;const count=Math.min(s.id==='algebra'?8:4,stock,remain);remain-=count;return {section:s.id,tier:'any',count};});if(remain)c.rows[0].count+=remain;}
  return c;
 }
+function englishPractice(schoolId,data,profiles){
+ const config=defaults('英语',schoolId,data,profiles);
+ return {...config,name:'英语八题型综合练习',topics:[],fullReadingSets:false,excludeAttempted:false,
+  rows:englishSections.map(section=>({section,tier:'any',count:1}))};
+}
 function migrate(c,data,profiles){if(c.schema==='tiers-v1'){validate(c,data);return clone(c);}const n=defaults('英语',c.schoolId,data,profiles);const map={reading:'readingCount',mc:'mcCount',fill:'fillCount',cloze:'clozeCount',ordering:'orderCount',translation:'translationCount',writing:'writingCount'};for(const r of n.rows)if(Number.isInteger(c[map[r.section]]))r.count=c[map[r.section]];for(const f of ['name','minutes','topics','excludeAttempted','excludeGenerated','excludeMaterials'])if(c[f]!==undefined)n[f]=clone(c[f]);return n;}
-root.DifficultyEngine={validate,label,available,plan,preview,makePacket,defaults,migrate,clone};
+root.DifficultyEngine={validate,label,available,plan,preview,makePacket,defaults,englishPractice,migrate,clone};
 })(typeof window!=='undefined'?window:globalThis);

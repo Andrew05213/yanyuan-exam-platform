@@ -53,6 +53,6 @@ def apply_workflows(data):
 
 
 def apply_difficulty(data):
-    extend_scope([item for item in data['items'] if item['section'] in ['reading', 'translation']])
+    extend_scope([item for item in data['items'] if item['section'] in ['reading', 'translation', 'zh-en', 'en-zh']])
     return data
 

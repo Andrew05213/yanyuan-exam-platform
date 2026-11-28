@@ -7,7 +7,7 @@ export const AI_SUBJECTS = ["英语", "日本国别", "文学口试"] as const;
 export type AiSubject = (typeof AI_SUBJECTS)[number];
 
 export const AI_SECTIONS: Record<AiSubject, string[]> = {
-  英语: ["reading", "mc"],
+  英语: ["reading", "cloze", "gap-seven", "literary", "writing", "correction", "zh-en", "en-zh", "mc"],
   日本国别: ["country"],
   文学口试: ["oral-reading", "oral-country", "oral-speech"],
 };
@@ -26,6 +26,7 @@ export type BankQuestion = {
   analysis: string;
   tag: string;
   reference: string;
+  accepted?: string[];
   guide: string[];
   followups: string[];
 };
@@ -59,6 +60,9 @@ const MAX_TITLE = 160;
 const MAX_TAG = 80;
 const MAX_ITEMS = 20;
 const MAX_QUESTIONS = 30;
+
+const translationSections = new Set(["zh-en","en-zh"]);
+const passageSections = new Set(["reading","cloze","gap-seven"]);
 
 export class BankContractError extends Error {}
 
@@ -105,22 +109,26 @@ export function normaliseQuestion(raw: unknown, index: number, section: string):
       followups: stringList(entry.followups, 6, `第 ${index + 1} 题追问`, 400),
     };
   }
-  const options = stringList(entry.options, 4, `第 ${index + 1} 题选项`, MAX_OPTION, { required: true });
-  if (options.length !== 4) throw new BankContractError(`第 ${index + 1} 题必须正好 4 个选项。`);
-  if (new Set(options.map((option) => option.toLowerCase())).size !== 4) throw new BankContractError(`第 ${index + 1} 题选项重复。`);
-  const answer = typeof entry.answer === "string" ? entry.answer.trim().toUpperCase() : "";
-  if (!/^[ABCD]$/.test(answer)) throw new BankContractError(`第 ${index + 1} 题答案必须是 A/B/C/D。`);
-  return {
-    id: `q${index + 1}`,
-    stem,
-    options,
-    answer,
-    analysis,
-    tag,
-    reference: "",
-    guide: [],
-    followups: [],
-  };
+  const base = {id:`q${index+1}`,stem,analysis,tag,reference:"",guide:[],followups:[]};
+  if(section==="writing"||translationSections.has(section)){
+    return {...base,options:[],answer:"",reference:text(entry.reference,MAX_REFERENCE,"参考答案")};
+  }
+  if(section==="correction"){
+    const accepted=stringList(entry.accepted,8,"可接受答案",80,{required:true});
+    if(!accepted.length)throw new BankContractError("改错题须给出至少一个可接受答案。");
+    return {...base,options:[],answer:"",accepted};
+  }
+  const seven=section==="gap-seven",size=seven?7:4;
+  const options=stringList(entry.options,size,`第 ${index+1} 题选项`,MAX_OPTION,{required:true});
+  if(options.length!==size)throw new BankContractError(`第 ${index+1} 题必须正好 ${size} 个选项。`);
+  if(new Set(options.map(option=>option.toLowerCase())).size!==size)throw new BankContractError(`第 ${index+1} 题选项重复。`);
+  const answer=typeof entry.answer==="string"?entry.answer.trim().toUpperCase():"";
+  if(seven){
+    if(!/^[A-G]{5}$/.test(answer)||new Set(answer).size!==5)throw new BankContractError("七选五答案须有五个互不重复的 A–G 字母。");
+  } else if (!/^[ABCD]$/.test(answer)) {
+    throw new BankContractError(`第 ${index+1} 题答案必须是 A/B/C/D。`);
+  }
+  return {...base,options,answer};
 }
 
 export function normaliseItem(raw: unknown, subject: AiSubject, difficulty: AiDifficulty, section: string): BankItem {
@@ -150,6 +158,20 @@ function refersToMissingPassage(stem: string): boolean {
   return /根据上(?:文|述)|上文|(?<![日英中古译])文中|(?<!日)本文|阅读材料|according to the (?:passage|text)/i.test(stem);
 }
 
+function validateMaterial(section:string,passage:string,count:number){
+  if(section==="reading"&&passage.length<300)throw new BankContractError("阅读原文过短，无法作为完整篇章。");
+  if(translationSections.has(section)){
+    const hasChinese=/[\p{Script=Han}]/u.test(passage);
+    if(passage.length<20||(section==="zh-en"?!hasChinese:hasChinese))throw new BankContractError("翻译原文缺失、过短或语种不符。");
+  }
+  if(section==="cloze"||section==="gap-seven"){
+    const blanks=[...passage.matchAll(/\[(\d+)\]/g)];
+    const expected=section==="gap-seven"?5:count;
+    if(passage.length<100||blanks.length!==expected||blanks.some((match,i)=>Number(match[1])!==i+1)){
+      throw new BankContractError(`正文须依次包含 [1] 至 [${expected}]，每个空号只出现一次。`);
+    }
+  }
+}
 export function validateGeneratedItems(raw: unknown, request: { subject: AiSubject; section: string; difficulty: AiDifficulty; count: number }): BankItem[] {
   if (!raw || typeof raw !== "object") throw new BankContractError("模型未返回题目对象。");
   const payload = raw as Record<string, unknown>;
@@ -158,15 +180,15 @@ export function validateGeneratedItems(raw: unknown, request: { subject: AiSubje
   const items = list.map((entry) => normaliseItem(entry, request.subject, request.difficulty, request.section));
   const total = items.reduce((sum, item) => sum + item.questions.length, 0);
   if (total !== request.count) throw new BankContractError(`题量不一致：要求 ${request.count} 题，收到 ${total} 题。`);
-  if (request.section === "reading") {
-    if (items.length !== 1) throw new BankContractError("英语阅读每次生成 1 篇完整文章。");
-    if (items[0].text.length < 300) throw new BankContractError("阅读原文过短，无法作为完整篇章。");
-  } else if (items.some((item) => item.questions.length !== 1)) {
-    throw new BankContractError("单项选择题每组只能包含 1 题。");
+  if(passageSections.has(request.section)){
+    if(items.length!==1)throw new BankContractError("每次须生成一个完整篇章。");
+  }else if(items.some(item=>item.questions.length!==1)){
+    throw new BankContractError("该题型每组只能包含一道题。");
   }
+  for(const item of items)validateMaterial(item.section,item.text,item.questions.length);
   const sourceIds = items.flatMap((item) => item.questions.map((question) => question.id));
   if (new Set(sourceIds).size !== sourceIds.length) throw new BankContractError("题目编号重复。");
-  if (request.section === "country" || request.section === "mc") {
+  if (request.section === "country" || request.section === "mc" || request.section === "literary") {
     if (items.some((item) => item.text.trim() || item.paragraphs.length)) {
       throw new BankContractError("知识型客观题不应附阅读材料，请重试。");
     }
@@ -214,11 +236,11 @@ export function validateBankItem(raw: unknown): BankItem {
     const normalised = normaliseQuestion(value, index, section);
     return { ...normalised, id: value.id as string };
   });
-  if (section === "reading") {
-    if (typeof entry.text !== "string" || entry.text.trim().length < 300) throw new BankContractError("阅读篇章过短。");
-  } else if (questions.length !== 1 && !section.startsWith("oral-")) {
-    throw new BankContractError("单项选择题每组只能包含 1 题。");
+  const passage=text(entry.text,MAX_TEXT,"阅读原文",{required:false});
+  if(section!=="reading"&&section!=="cloze"&&questions.length!==1&&!section.startsWith("oral-")){
+    throw new BankContractError("该题型每组只能包含一道题。");
   }
+  validateMaterial(section,passage,questions.length);
   return {
     id: entry.id,
     subject,
@@ -226,7 +248,7 @@ export function validateBankItem(raw: unknown): BankItem {
     difficulty,
     sourceNote: text(entry.sourceNote, 200, "来源说明"),
     title: text(entry.title, MAX_TITLE, "题组标题"),
-    text: text(entry.text, MAX_TEXT, "阅读原文", { required: false }),
+    text: passage,
     paragraphs: stringList(entry.paragraphs, 40, "段落", 2000),
     questions,
   };

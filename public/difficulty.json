@@ -113,12 +113,37 @@
       },
       {
         "id": "translation",
-        "label": "翻译",
+        "label": "翻译（综合）",
+        "unit": "段"
+      },
+      {
+        "id": "zh-en",
+        "label": "中翻英",
+        "unit": "段"
+      },
+      {
+        "id": "en-zh",
+        "label": "英翻中",
         "unit": "段"
       },
       {
         "id": "writing",
-        "label": "写作",
+        "label": "作文",
+        "unit": "题"
+      },
+      {
+        "id": "gap-seven",
+        "label": "七选五",
+        "unit": "篇"
+      },
+      {
+        "id": "literary",
+        "label": "英语文学与文化常识",
+        "unit": "题"
+      },
+      {
+        "id": "correction",
+        "label": "改错",
         "unit": "题"
       }
     ],
@@ -8120,7 +8145,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-zh-en-lab",
@@ -8139,6 +8164,47 @@
         }
       ],
       "title": "实验室开放日 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-zh-en-lab"
+    },
+    {
+      "id": "written-zh-en-lab:zh-en",
+      "subject": "英语",
+      "section": "zh-en",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-zh-en-lab",
+          "kind": "translation",
+          "stem": "Translate the following passage into English.",
+          "text": "我们希望这次实验室开放日能够让中学生看到，科学研究并不总是从一个漂亮的答案开始。很多时候，研究者先发现原来的解释无法说明某个现象，再重新设计实验。参观者不仅可以观察仪器，也可以询问失败的数据为何仍然值得保留。判断一项研究的价值，不能只看结果是否符合预期，还要看方法是否可靠、问题是否因此变得更加清楚。",
+          "reference": "We hope this laboratory open day will show secondary school students that scientific research does not always begin with an elegant answer. Researchers often start by discovering that an existing explanation cannot account for a particular phenomenon, and then redesign their experiments. Visitors can not only observe the equipment but also ask why data from unsuccessful attempts are still worth keeping. The value of a study should be judged not simply by whether its results meet expectations, but also by whether its methods are reliable and its research question becomes clearer.",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "实验室开放日：laboratory open day",
+            "说明现象：account for a phenomenon",
+            "符合预期：meet expectations"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "实验室开放日 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8159,7 +8225,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-en-zh-lab",
@@ -8178,6 +8244,47 @@
         }
       ],
       "title": "实验室开放日 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-en-zh-lab"
+    },
+    {
+      "id": "written-en-zh-lab:en-zh",
+      "subject": "英语",
+      "section": "en-zh",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-en-zh-lab",
+          "kind": "translation",
+          "stem": "Translate the following passage into Chinese.",
+          "text": "We hope this laboratory open day will show secondary school students that scientific research does not always begin with an elegant answer. Researchers often start by discovering that an existing explanation cannot account for a particular phenomenon, and then redesign their experiments. Visitors can not only observe the equipment but also ask why data from unsuccessful attempts are still worth keeping. The value of a study should be judged not simply by whether its results meet expectations, but also by whether its methods are reliable and its research question becomes clearer.",
+          "reference": "我们希望这次实验室开放日能够让中学生看到，科学研究并不总是从一个漂亮的答案开始。很多时候，研究者先发现原来的解释无法说明某个现象，再重新设计实验。参观者不仅可以观察仪器，也可以询问失败的数据为何仍然值得保留。判断一项研究的价值，不能只看结果是否符合预期，还要看方法是否可靠、问题是否因此变得更加清楚。",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "实验室开放日：laboratory open day",
+            "说明现象：account for a phenomenon",
+            "符合预期：meet expectations"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "实验室开放日 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8198,7 +8305,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-zh-en-heritage",
@@ -8217,6 +8324,47 @@
         }
       ],
       "title": "传统技艺与年轻人 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-zh-en-heritage"
+    },
+    {
+      "id": "written-zh-en-heritage:zh-en",
+      "subject": "英语",
+      "section": "zh-en",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-zh-en-heritage",
+          "kind": "translation",
+          "stem": "Translate the following passage into English.",
+          "text": "让传统技艺重新进入年轻人的生活，未必意味着把每一种产品都做得更时髦。如果学习过程仍然昂贵，工作机会仍然有限，短期的网络热度就很难变成稳定的传承。博物馆、学校和社区可以共同提供入门课程，让学习者先理解材料与工序，再尝试新的设计。真正值得关注的，不只是有多少人看过一段视频，而是有多少人愿意继续学习，以及手艺人能否获得合理的报酬。",
+          "reference": "Bringing traditional crafts back into young people’s lives does not necessarily mean making every product more fashionable. If training remains expensive and job opportunities limited, short-lived online popularity is unlikely to lead to sustained transmission. Museums, schools and communities can jointly offer introductory courses, enabling learners to understand materials and processes before experimenting with new designs. What matters is not merely how many people watch a video, but how many choose to keep learning and whether craftspeople receive fair pay.",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "传统技艺：traditional crafts",
+            "传承：transmission",
+            "合理报酬：fair pay"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "传统技艺与年轻人 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8237,7 +8385,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-en-zh-heritage",
@@ -8256,6 +8404,47 @@
         }
       ],
       "title": "传统技艺与年轻人 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-en-zh-heritage"
+    },
+    {
+      "id": "written-en-zh-heritage:en-zh",
+      "subject": "英语",
+      "section": "en-zh",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-en-zh-heritage",
+          "kind": "translation",
+          "stem": "Translate the following passage into Chinese.",
+          "text": "Bringing traditional crafts back into young people’s lives does not necessarily mean making every product more fashionable. If training remains expensive and job opportunities limited, short-lived online popularity is unlikely to lead to sustained transmission. Museums, schools and communities can jointly offer introductory courses, enabling learners to understand materials and processes before experimenting with new designs. What matters is not merely how many people watch a video, but how many choose to keep learning and whether craftspeople receive fair pay.",
+          "reference": "让传统技艺重新进入年轻人的生活，未必意味着把每一种产品都做得更时髦。如果学习过程仍然昂贵，工作机会仍然有限，短期的网络热度就很难变成稳定的传承。博物馆、学校和社区可以共同提供入门课程，让学习者先理解材料与工序，再尝试新的设计。真正值得关注的，不只是有多少人看过一段视频，而是有多少人愿意继续学习，以及手艺人能否获得合理的报酬。",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "传统技艺：traditional crafts",
+            "传承：transmission",
+            "合理报酬：fair pay"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "传统技艺与年轻人 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8276,7 +8465,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-zh-en-team",
@@ -8295,6 +8484,47 @@
         }
       ],
       "title": "国际工程合作 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-zh-en-team"
+    },
+    {
+      "id": "written-zh-en-team:zh-en",
+      "subject": "英语",
+      "section": "zh-en",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-zh-en-team",
+          "kind": "translation",
+          "stem": "Translate the following passage into English.",
+          "text": "在国际工程项目中，语言能力的作用不仅是把一个词换成另一个词。来自不同背景的成员，可能对同一个截止日期、质量标准或风险提示有不同的理解。为了减少误会，团队应当共同记录关键决定，明确责任，并请各方复述自己的理解。发现分歧后，首先需要确认问题来自技术判断、工作安排还是语言表达，而不是立即把它解释成某一种文化的特点。",
+          "reference": "In international engineering projects, language skills involve more than replacing one word with another. Team members from different backgrounds may interpret the same deadline, quality standard or risk warning differently. To reduce misunderstandings, teams should keep a shared record of key decisions, clarify responsibilities and ask participants to restate their understanding. When a disagreement arises, the first step is to determine whether it concerns technical judgment, working arrangements or wording, rather than immediately attributing it to a particular culture.",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "截止日期：deadline",
+            "复述理解：restate one’s understanding",
+            "归因于：attribute ... to ..."
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "国际工程合作 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8315,7 +8545,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-en-zh-team",
@@ -8334,6 +8564,47 @@
         }
       ],
       "title": "国际工程合作 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-en-zh-team"
+    },
+    {
+      "id": "written-en-zh-team:en-zh",
+      "subject": "英语",
+      "section": "en-zh",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-en-zh-team",
+          "kind": "translation",
+          "stem": "Translate the following passage into Chinese.",
+          "text": "In international engineering projects, language skills involve more than replacing one word with another. Team members from different backgrounds may interpret the same deadline, quality standard or risk warning differently. To reduce misunderstandings, teams should keep a shared record of key decisions, clarify responsibilities and ask participants to restate their understanding. When a disagreement arises, the first step is to determine whether it concerns technical judgment, working arrangements or wording, rather than immediately attributing it to a particular culture.",
+          "reference": "在国际工程项目中，语言能力的作用不仅是把一个词换成另一个词。来自不同背景的成员，可能对同一个截止日期、质量标准或风险提示有不同的理解。为了减少误会，团队应当共同记录关键决定，明确责任，并请各方复述自己的理解。发现分歧后，首先需要确认问题来自技术判断、工作安排还是语言表达，而不是立即把它解释成某一种文化的特点。",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "截止日期：deadline",
+            "复述理解：restate one’s understanding",
+            "归因于：attribute ... to ..."
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "国际工程合作 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8354,7 +8625,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-zh-en-city",
@@ -8373,6 +8644,47 @@
         }
       ],
       "title": "城市更新中的居民 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-zh-en-city"
+    },
+    {
+      "id": "written-zh-en-city:zh-en",
+      "subject": "英语",
+      "section": "zh-en",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-zh-en-city",
+          "kind": "translation",
+          "stem": "Translate the following passage into English.",
+          "text": "一条老街经过整修后可能吸引更多游客，但这并不自动意味着原来的居民生活得更好。租金上涨、日常商店减少或公共空间被占用，都可能改变社区的关系。评估城市更新时，除了计算新增的收入，还应该听取长期居住者的意见，观察他们能否继续方便地生活。保护一座城市的记忆，既包括保存建筑，也包括让普通人的生活有延续下去的空间。",
+          "reference": "Renovating an old street may attract more visitors, but this does not automatically mean that its original residents are better off. Rising rents, fewer everyday shops and the occupation of public space can all reshape community relationships. Urban renewal should be assessed not only by the additional revenue it generates, but also by listening to long-term residents and examining whether they can continue to live conveniently. Preserving a city’s memory involves both conserving its buildings and leaving room for ordinary lives to continue.",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "城市更新：urban renewal",
+            "长期居民：long-term residents",
+            "延续：continue / sustain"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "城市更新中的居民 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8393,7 +8705,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-en-zh-city",
@@ -8412,6 +8724,47 @@
         }
       ],
       "title": "城市更新中的居民 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-en-zh-city"
+    },
+    {
+      "id": "written-en-zh-city:en-zh",
+      "subject": "英语",
+      "section": "en-zh",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-en-zh-city",
+          "kind": "translation",
+          "stem": "Translate the following passage into Chinese.",
+          "text": "Renovating an old street may attract more visitors, but this does not automatically mean that its original residents are better off. Rising rents, fewer everyday shops and the occupation of public space can all reshape community relationships. Urban renewal should be assessed not only by the additional revenue it generates, but also by listening to long-term residents and examining whether they can continue to live conveniently. Preserving a city’s memory involves both conserving its buildings and leaving room for ordinary lives to continue.",
+          "reference": "一条老街经过整修后可能吸引更多游客，但这并不自动意味着原来的居民生活得更好。租金上涨、日常商店减少或公共空间被占用，都可能改变社区的关系。评估城市更新时，除了计算新增的收入，还应该听取长期居住者的意见，观察他们能否继续方便地生活。保护一座城市的记忆，既包括保存建筑，也包括让普通人的生活有延续下去的空间。",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "城市更新：urban renewal",
+            "长期居民：long-term residents",
+            "延续：continue / sustain"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "城市更新中的居民 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8432,7 +8785,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-zh-en-education",
@@ -8451,6 +8804,47 @@
         }
       ],
       "title": "学习与提问 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-zh-en-education"
+    },
+    {
+      "id": "written-zh-en-education:zh-en",
+      "subject": "英语",
+      "section": "zh-en",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-zh-en-education",
+          "kind": "translation",
+          "stem": "Translate the following passage into English.",
+          "text": "跨学科学习的困难，有时不在于学生知道得太少，而在于不同学科使用证据的方式并不相同。文学研究可以从一个词语的细微差别提出问题，实验科学则需要考虑测量与重复验证。两种方法都要求严谨，但严谨并不总是表现为同一种形式。大学教育可以帮助学生认识这些差异，并学会在进入一个新领域时，先询问什么样的证据能够支持自己的判断。",
+          "reference": "The difficulty of interdisciplinary learning sometimes lies not in how little students know, but in the different ways disciplines use evidence. Literary studies may begin with a subtle difference between words, while experimental science must consider measurement and replication. Both require rigour, although rigour does not always take the same form. University education can help students recognise these differences and learn, when entering a new field, to ask what kind of evidence would support their judgment.",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "跨学科学习：interdisciplinary learning",
+            "重复验证：replication",
+            "严谨：rigour"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "学习与提问 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8471,7 +8865,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-en-zh-education",
@@ -8490,6 +8884,47 @@
         }
       ],
       "title": "学习与提问 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-en-zh-education"
+    },
+    {
+      "id": "written-en-zh-education:en-zh",
+      "subject": "英语",
+      "section": "en-zh",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-en-zh-education",
+          "kind": "translation",
+          "stem": "Translate the following passage into Chinese.",
+          "text": "The difficulty of interdisciplinary learning sometimes lies not in how little students know, but in the different ways disciplines use evidence. Literary studies may begin with a subtle difference between words, while experimental science must consider measurement and replication. Both require rigour, although rigour does not always take the same form. University education can help students recognise these differences and learn, when entering a new field, to ask what kind of evidence would support their judgment.",
+          "reference": "跨学科学习的困难，有时不在于学生知道得太少，而在于不同学科使用证据的方式并不相同。文学研究可以从一个词语的细微差别提出问题，实验科学则需要考虑测量与重复验证。两种方法都要求严谨，但严谨并不总是表现为同一种形式。大学教育可以帮助学生认识这些差异，并学会在进入一个新领域时，先询问什么样的证据能够支持自己的判断。",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "跨学科学习：interdisciplinary learning",
+            "重复验证：replication",
+            "严谨：rigour"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "学习与提问 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8510,7 +8945,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-zh-en-climate",
@@ -8529,6 +8964,47 @@
         }
       ],
       "title": "气候信息的沟通 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-zh-en-climate"
+    },
+    {
+      "id": "written-zh-en-climate:zh-en",
+      "subject": "英语",
+      "section": "zh-en",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-zh-en-climate",
+          "kind": "translation",
+          "stem": "Translate the following passage into English.",
+          "text": "向公众解释环境风险时，只给出一个平均值往往不够。同样的变化可能对不同地区、职业和年龄群体产生不同影响。如果信息过于技术化，人们可能无法理解；如果为了吸引注意而夸大结论，又可能损害信任。有效的沟通应当说明目前知道什么、仍有哪些不确定性，以及个人和公共机构分别能够采取什么行动。承认不确定性，并不意味着否认采取行动的必要。",
+          "reference": "When environmental risks are explained to the public, an average figure is often not enough. The same change can affect regions, occupations and age groups differently. Information that is too technical may be difficult to understand, while exaggerating conclusions to attract attention can undermine trust. Effective communication should explain what is currently known, what remains uncertain, and what individuals and public institutions can each do. Acknowledging uncertainty does not mean denying the need for action.",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "平均值：an average figure",
+            "损害信任：undermine trust",
+            "不确定性：uncertainty"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "气候信息的沟通 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8549,7 +9025,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-en-zh-climate",
@@ -8568,6 +9044,47 @@
         }
       ],
       "title": "气候信息的沟通 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-en-zh-climate"
+    },
+    {
+      "id": "written-en-zh-climate:en-zh",
+      "subject": "英语",
+      "section": "en-zh",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-en-zh-climate",
+          "kind": "translation",
+          "stem": "Translate the following passage into Chinese.",
+          "text": "When environmental risks are explained to the public, an average figure is often not enough. The same change can affect regions, occupations and age groups differently. Information that is too technical may be difficult to understand, while exaggerating conclusions to attract attention can undermine trust. Effective communication should explain what is currently known, what remains uncertain, and what individuals and public institutions can each do. Acknowledging uncertainty does not mean denying the need for action.",
+          "reference": "向公众解释环境风险时，只给出一个平均值往往不够。同样的变化可能对不同地区、职业和年龄群体产生不同影响。如果信息过于技术化，人们可能无法理解；如果为了吸引注意而夸大结论，又可能损害信任。有效的沟通应当说明目前知道什么、仍有哪些不确定性，以及个人和公共机构分别能够采取什么行动。承认不确定性，并不意味着否认采取行动的必要。",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "平均值：an average figure",
+            "损害信任：undermine trust",
+            "不确定性：uncertainty"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "气候信息的沟通 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8588,7 +9105,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-zh-en-museum",
@@ -8607,6 +9124,47 @@
         }
       ],
       "title": "博物馆的多语种展签 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-zh-en-museum"
+    },
+    {
+      "id": "written-zh-en-museum:zh-en",
+      "subject": "英语",
+      "section": "zh-en",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-zh-en-museum",
+          "kind": "translation",
+          "stem": "Translate the following passage into English.",
+          "text": "一块好的多语种展签，不应假定每位参观者都了解展品背后的历史。直接翻译专有名词，有时只能让文字显得完整，却不能帮助理解。策展人和译者需要共同决定，哪些背景必须说明，哪些细节可以放在延伸阅读中。篇幅有限时，最重要的不是把所有信息塞进去，而是让观众知道自己正在看什么、它为什么重要，以及可以到哪里进一步核实。",
+          "reference": "A good multilingual museum label should not assume that every visitor knows the history behind an object. Directly translating proper names may make a text appear complete without making it understandable. Curators and translators need to decide together which background information is essential and which details can be left for further reading. When space is limited, the priority is not to squeeze in every fact, but to help visitors understand what they are looking at, why it matters and where they can verify the information.",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "展签：museum label",
+            "策展人：curator",
+            "延伸阅读：further reading"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "博物馆的多语种展签 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8627,7 +9185,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-en-zh-museum",
@@ -8646,6 +9204,47 @@
         }
       ],
       "title": "博物馆的多语种展签 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-en-zh-museum"
+    },
+    {
+      "id": "written-en-zh-museum:en-zh",
+      "subject": "英语",
+      "section": "en-zh",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-en-zh-museum",
+          "kind": "translation",
+          "stem": "Translate the following passage into Chinese.",
+          "text": "A good multilingual museum label should not assume that every visitor knows the history behind an object. Directly translating proper names may make a text appear complete without making it understandable. Curators and translators need to decide together which background information is essential and which details can be left for further reading. When space is limited, the priority is not to squeeze in every fact, but to help visitors understand what they are looking at, why it matters and where they can verify the information.",
+          "reference": "一块好的多语种展签，不应假定每位参观者都了解展品背后的历史。直接翻译专有名词，有时只能让文字显得完整，却不能帮助理解。策展人和译者需要共同决定，哪些背景必须说明，哪些细节可以放在延伸阅读中。篇幅有限时，最重要的不是把所有信息塞进去，而是让观众知道自己正在看什么、它为什么重要，以及可以到哪里进一步核实。",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "展签：museum label",
+            "策展人：curator",
+            "延伸阅读：further reading"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "博物馆的多语种展签 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8666,7 +9265,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-zh-en-mobility",
@@ -8685,6 +9284,47 @@
         }
       ],
       "title": "交换学习的意义 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-zh-en-mobility"
+    },
+    {
+      "id": "written-zh-en-mobility:zh-en",
+      "subject": "英语",
+      "section": "zh-en",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-zh-en-mobility",
+          "kind": "translation",
+          "stem": "Translate the following passage into English.",
+          "text": "海外交换的价值，并不只取决于去过多少地方。如果学生始终只与来自同一背景的人交往，新的环境也可能只是旧习惯的延伸。学校可以鼓励交换生参加本地项目，与不同专业的同学合作，并定期记录自己的误解与修正。真正的跨文化能力不是记住一张礼仪清单，而是在不熟悉的情境中，能够耐心询问、核实自己的假设，并尊重他人解释自身经历的权利。",
+          "reference": "The value of an overseas exchange does not depend only on how many places a student visits. If students interact exclusively with people from the same background, a new setting may simply extend old habits. Universities can encourage exchange students to join local projects, work with peers from other disciplines and regularly record their misunderstandings and corrections. Intercultural competence is not a checklist of etiquette. It is the ability to ask patient questions in unfamiliar situations, test one’s assumptions and respect other people’s right to explain their own experience.",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "海外交换：overseas exchange",
+            "核实假设：test one’s assumptions",
+            "跨文化能力：intercultural competence"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "交换学习的意义 · Chinese to English",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8705,7 +9345,7 @@
       "section": "translation",
       "tier": "cet6",
       "classificationStatus": "编辑暂定",
-      "reason": "按当前短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
       "questions": [
         {
           "sourceId": "written-en-zh-mobility",
@@ -8724,6 +9364,7 @@
         }
       ],
       "title": "交换学习的意义 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
       "schoolIds": [
         "pku",
         "speit",
@@ -8737,6 +9378,241 @@
         "fudan"
       ],
       "materialId": "written-en-zh-mobility"
+    },
+    {
+      "id": "written-en-zh-mobility:en-zh",
+      "subject": "英语",
+      "section": "en-zh",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按短篇的信息转述、搭配与句间逻辑要求暂定。",
+      "questions": [
+        {
+          "sourceId": "written-en-zh-mobility",
+          "kind": "translation",
+          "stem": "Translate the following passage into Chinese.",
+          "text": "The value of an overseas exchange does not depend only on how many places a student visits. If students interact exclusively with people from the same background, a new setting may simply extend old habits. Universities can encourage exchange students to join local projects, work with peers from other disciplines and regularly record their misunderstandings and corrections. Intercultural competence is not a checklist of etiquette. It is the ability to ask patient questions in unfamiliar situations, test one’s assumptions and respect other people’s right to explain their own experience.",
+          "reference": "海外交换的价值，并不只取决于去过多少地方。如果学生始终只与来自同一背景的人交往，新的环境也可能只是旧习惯的延伸。学校可以鼓励交换生参加本地项目，与不同专业的同学合作，并定期记录自己的误解与修正。真正的跨文化能力不是记住一张礼仪清单，而是在不熟悉的情境中，能够耐心询问、核实自己的假设，并尊重他人解释自身经历的权利。",
+          "analysis": "参考译文不代表唯一译法。先检查信息、逻辑关系和限定语，再检查术语与自然表达；本题不自动判断语义得分。",
+          "learningPoints": [
+            "海外交换：overseas exchange",
+            "核实假设：test one’s assumptions",
+            "跨文化能力：intercultural competence"
+          ],
+          "tag": "笔译",
+          "level": "进阶"
+        }
+      ],
+      "title": "交换学习的意义 · English to Chinese",
+      "source": "ChatGPT 原创训练材料",
+      "schoolIds": [
+        "pku",
+        "speit",
+        "thu",
+        "ruc",
+        "bfsu",
+        "zju",
+        "whu",
+        "sisu",
+        "nju",
+        "fudan"
+      ],
+      "materialId": "written-en-zh-mobility"
+    },
+    {
+      "id": "en-seven-oak",
+      "subject": "英语",
+      "section": "gap-seven",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按题目所需的文本或语言能力暂定。",
+      "questions": [
+        {
+          "kind": "order",
+          "stem": "Choose five sentences (A–G) for gaps [1]–[5]. Enter the five letters in order. Two options are extra.",
+          "paragraphs": {
+            "A": "They found a problem that extra height would not solve.",
+            "B": "The result pointed to a broader lesson.",
+            "C": "Several cafés had stopped selling hot drinks.",
+            "D": "The students asked the office to try a cheaper solution first.",
+            "E": "Both suggestions could be tested without rebuilding the stop.",
+            "F": "They measured the effect with a simple observation.",
+            "G": "The bus drivers changed to a new uniform in April."
+          },
+          "accepted": [
+            "DAEFB"
+          ],
+          "tag": "段落衔接",
+          "analysis": "[1] D 承接加高站牌的方案，引出先观察；[2] A 概括亲身测试发现，后句解释；[3] E 回指两项建议；[4] F 引出计数方法；[5] B 归纳经验，引出设计原则。C、G偏离论述。",
+          "id": 1,
+          "sourceId": "en-seven-oak:1"
+        }
+      ],
+      "title": "Finding the bus stop",
+      "source": "原创训练材料",
+      "text": "For several months, the residents of Oak Street had complained that the bus stop was hard to find. The transport office planned to install a taller sign. [1]\n\nA group of students tried the route with older residents on a rainy afternoon. [2] Many passengers could see the sign from the café but did not know which side of the road their bus would use.\n\nThe students suggested putting a route map in the café window and adding arrows at the crossing. [3] The office tested these changes for one week.\n\n[4] Volunteers counted how often newcomers stopped to ask for directions. After the changes, the questions became less frequent.\n\n[5] Before deciding what to build, designers should watch how people use the service.",
+      "materialId": "en-seven-oak"
+    },
+    {
+      "id": "en-lit-austen",
+      "subject": "英语",
+      "section": "literary",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按题目所需的文本或语言能力暂定。",
+      "questions": [
+        {
+          "kind": "mc",
+          "stem": "In which novel do the Bennets learn that Netherfield Park has been let?",
+          "options": [
+            "Emma",
+            "Pride and Prejudice",
+            "Persuasion",
+            "Mansfield Park"
+          ],
+          "answer": "B",
+          "tag": "英国小说",
+          "analysis": "《傲慢与偏见》开篇，班纳特太太向丈夫谈起尼日斐花园的新租客。",
+          "id": 1,
+          "sourceId": "en-lit-austen:1"
+        }
+      ],
+      "title": "Austen and the novel",
+      "source": "Jane Austen, Pride and Prejudice (1813), chapter 1",
+      "text": "",
+      "materialId": "en-lit-austen"
+    },
+    {
+      "id": "en-lit-dickens",
+      "subject": "英语",
+      "section": "literary",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按题目所需的文本或语言能力暂定。",
+      "questions": [
+        {
+          "kind": "mc",
+          "stem": "Which narrator explains that his childhood pronunciation turned his name into 'Pip'?",
+          "options": [
+            "David Copperfield",
+            "Oliver Twist",
+            "Pip",
+            "Esther Summerson"
+          ],
+          "answer": "C",
+          "tag": "英国小说",
+          "analysis": "《远大前程》第一章由主人公皮普回顾自己的名字以及绰号由来。",
+          "id": 1,
+          "sourceId": "en-lit-dickens:1"
+        }
+      ],
+      "title": "A Dickens narrator",
+      "source": "Charles Dickens, Great Expectations (1860–1861), chapter 1",
+      "text": "",
+      "materialId": "en-lit-dickens"
+    },
+    {
+      "id": "en-edit-agreement",
+      "subject": "英语",
+      "section": "correction",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按题目所需的文本或语言能力暂定。",
+      "questions": [
+        {
+          "kind": "fill",
+          "stem": "Replace the one incorrect word: The list of suggested readings are on the noticeboard.",
+          "accepted": [
+            "is"
+          ],
+          "tag": "主谓一致",
+          "analysis": "将 are 改成 is。中心主语是单数 list，of suggested readings 是修饰语。",
+          "id": 1,
+          "sourceId": "en-edit-agreement:1"
+        }
+      ],
+      "title": "Subject–verb agreement",
+      "source": "原创训练材料",
+      "text": "",
+      "materialId": "en-edit-agreement"
+    },
+    {
+      "id": "en-edit-preposition",
+      "subject": "英语",
+      "section": "correction",
+      "tier": "tem4",
+      "classificationStatus": "编辑暂定",
+      "reason": "按题目所需的文本或语言能力暂定。",
+      "questions": [
+        {
+          "kind": "fill",
+          "stem": "Replace the one incorrect word: We agreed with a date for the next meeting.",
+          "accepted": [
+            "on",
+            "upon"
+          ],
+          "tag": "动词与介词",
+          "analysis": "约定日期用 agree on/upon a date。agree with 常搭配人、观点或判断。",
+          "id": 1,
+          "sourceId": "en-edit-preposition:1"
+        }
+      ],
+      "title": "Prepositions in context",
+      "source": "原创训练材料",
+      "text": "",
+      "materialId": "en-edit-preposition"
+    },
+    {
+      "id": "en-essay-feedback",
+      "subject": "英语",
+      "section": "writing",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按题目所需的文本或语言能力暂定。",
+      "questions": [
+        {
+          "kind": "writing",
+          "stem": "Write about 200 words. Should schools give students time to revise a piece of work after receiving feedback? State your position, consider one objection, and use a specific example.",
+          "reference": "",
+          "analysis": "明确主张，解释反馈如何改变一次具体修改。回应一个真实的反对意见，例如教师的工作量，并说明你的方案在什么条件下可行。",
+          "tag": "论证与反驳",
+          "id": 1,
+          "sourceId": "en-essay-feedback:1"
+        }
+      ],
+      "title": "Feedback before the final draft",
+      "source": "原创训练材料",
+      "text": "",
+      "materialId": "en-essay-feedback"
+    },
+    {
+      "id": "en-culture-matariki",
+      "subject": "英语",
+      "section": "literary",
+      "tier": "cet6",
+      "classificationStatus": "编辑暂定",
+      "reason": "按题目所需的文本或语言能力暂定。",
+      "questions": [
+        {
+          "kind": "mc",
+          "stem": "In Māori culture, which occasion is associated with the seasonal rising of the star cluster known as Matariki?",
+          "options": [
+            "The Māori New Year",
+            "Waitangi Day",
+            "Anzac Day",
+            "King's Birthday"
+          ],
+          "answer": "A",
+          "tag": "新西兰文化",
+          "analysis": "Matariki 是与毛利新年相关的星团。它在特定季节重新出现，是许多毛利社群纪念这一时节的标志。",
+          "id": 1,
+          "sourceId": "en-culture-matariki:1"
+        }
+      ],
+      "title": "Matariki in Aotearoa New Zealand",
+      "source": "Te Ara – The Encyclopedia of New Zealand, Matariki (The Māori New Year)",
+      "text": "",
+      "materialId": "en-culture-matariki"
     },
     {
       "id": "writing-pku",
