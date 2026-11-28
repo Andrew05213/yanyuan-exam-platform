@@ -48,7 +48,12 @@ const ExamImports={
   const message='已自动保存待审核：'+pages.length+'页，识别出'+questions.length+'道四选一。请核对科目、难度和答案；其余内容见逐页原文。';
   await this.request({}, {action:'save',id:record.id,revision:record.revision,source:record.source,sourceUrl:record.sourceUrl,
    rights:record.rights,confirm:true,approved:false,reviewConfirmed:false,groups});
-  if(!signal.aborted)await this.load(record.id,message);
+  let warning='';
+  if(record.approved){
+   try{await PublicApp.refreshPrivateImports();}
+   catch{warning=' 库存刷新失败，组卷时将重新读取。';}
+  }
+  if(!signal.aborted)await this.load(record.id,message+warning);
  },
  validateQuestions(questions){
   if(!Array.isArray(questions)||questions.length>50||questions.some(q=>!q||typeof q!=='object'||Array.isArray(q)||(q.kind==='mc'&&q.options!=null&&!Array.isArray(q.options))))throw Error('每组最多50题，请核对题目格式和选择题选项数组。');

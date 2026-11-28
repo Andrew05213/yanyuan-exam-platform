@@ -8,6 +8,26 @@ function parse(raw){
 function parsePages(pages,limit=100,keepRepeatedNumbers=true){
  const normalized=pages.map(page=>String(page??"").replace(/\r\n?/g,"\n").normalize("NFKC"));
  if(normalized.join("\n").length>60000)throw Error("一次识别最多60000字，请分段处理。");
+ const questionStart=/^(\d{1,3})[.、)]\s*(.+)$/;
+ const optionStart=/^[A-D][.、)]\s*/;
+ const pageNumber=/^(?:第\s*\d+\s*页(?:\s*[/，,]\s*共?\s*\d+\s*页)?|[-–—]\s*\d+\s*[-–—])$/;
+ const answerHeading=/^(?:参考答案|答案汇总|Answer\s*key)(?=$|\s|[:：])\s*[:：]?\s*(.*)$/i;
+ const pageLines=normalized.map(text=>{
+  const lines=text.split("\n").map(line=>line.trim()).filter(Boolean);
+  if(pageNumber.test(lines[0]))lines.shift();
+  if(pageNumber.test(lines.at(-1)))lines.pop();
+  return lines;
+ });
+ // A repeated first line is treated as a header only if it is also seen before a new question.
+ const topLines=new Map();
+ for(const [first,second] of pageLines){
+  if(!second||questionStart.test(first)||optionStart.test(first)||
+     answerHeading.test(first)||/^(?:答案|Answer|解析|Explanation)\s*[:：]/i.test(first))continue;
+  const evidence=topLines.get(first)||{pages:0,beforeQuestion:false};
+  evidence.pages++;
+  evidence.beforeQuestion ||= questionStart.test(second);
+  topLines.set(first,evidence);
+ }
  const blocks=[],warnings=[],key=new Map(),counts=new Map();
  let current=null,inAnswerKey=false;
  const answerPairs=/(\d{1,3})(?:\s*[.、:)]\s*|\s+)([A-D])\b/gi;
@@ -18,13 +38,15 @@ function parsePages(pages,limit=100,keepRepeatedNumbers=true){
    key.get(number).add(match[2].toUpperCase());
   }
  }
- normalized.forEach((text,index)=>{
-  const lines=text.trim().split("\n");
-  for(const [lineIndex,rawLine] of lines.entries()){
-   const line=rawLine.trim();
-   if(!line)continue;
-   if((lineIndex===0||lineIndex===lines.length-1)&&/^(?:第\s*\d+\s*页(?:\s*[/，,]\s*共?\s*\d+\s*页)?|[-–—]\s*\d+\s*[-–—])$/.test(line))continue;
-   const heading=line.match(/^(?:参考答案|答案汇总|Answer\s*key)(?=$|\s|[:：])\s*[:：]?\s*(.*)$/i);
+ pageLines.forEach((lines,index)=>{
+  const header=topLines.get(lines[0]);
+  if(header?.pages>1&&header.beforeQuestion)lines=lines.slice(1);
+  if(current&&lines.length&&!questionStart.test(lines[0])&&!optionStart.test(lines[0])&&!answerHeading.test(lines[0])){
+   const firstItem=lines.findIndex(line=>questionStart.test(line)||optionStart.test(line));
+   if(firstItem>0&&optionStart.test(lines[firstItem]))warnings.push("第 "+(index+1)+" 页页首文字可能属于页眉或跨页正文，请核对第 "+current.number+" 题。");
+  }
+  for(const line of lines){
+   const heading=line.match(answerHeading);
    if(heading&&(!current||!/^[A-D]$/i.test(heading[1]))){
     current=null;
     inAnswerKey=true;
@@ -35,7 +57,7 @@ function parsePages(pages,limit=100,keepRepeatedNumbers=true){
     const remaining=line.replace(answerPairs,"").replace(/[\s,，、;；]+/g,"");
     if(!remaining){saveAnswers(line);continue;}
    }
-   const q=line.match(/^(\d{1,3})[.、)]\s*(.+)$/);
+   const q=line.match(questionStart);
    if(q){
     inAnswerKey=false;
     const number=Number(q[1]);
