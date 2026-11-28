@@ -420,6 +420,7 @@ const AIStudio = {
     const base={
       stem:question.stem,analysis:question.analysis,tag:question.tag,sourceId:question.id,
       stemHtml:Hub.e(question.stem),analysisHtml:Hub.e(question.analysis),
+      ...(question.evidence?.length?{evidence:question.evidence}:{}),
     };
     switch(item.section){
       case 'gap-seven':
@@ -449,7 +450,7 @@ const AIStudio = {
         prompt: question.stem || item.title,
         guide: question.guide && question.guide.length ? question.guide : ['先给出判断，再举一个可核查的例子。'],
         followups: question.followups || [],
-        reference: question.reference || question.analysis || '',
+        reference: (question.reference || question.analysis || '')+(question.evidence?.length?"\n\n材料依据（生成时快照，待审核）：\n"+question.evidence.map(e=>e.title+" · "+e.version+" · 第"+e.paragraph+"段："+e.quote).join("\n"):""),
         text: item.text || '',
         level: item.difficulty,
         source: { label: item.sourceNote, kind: 'AI 生成' },
@@ -534,7 +535,7 @@ const AIStudio = {
         <p class="ai-stem"><b>${index + 1}.</b> ${this.escape(question.stem)}</p>
         ${question.options.length ? `<ol class="ai-options">${question.options.map((option, i) => `<li><b>${'ABCDEFG'[i]}</b>${this.escape(option)}</li>`).join('')}</ol>` : ''}
         <p class="ai-answer">答案：${question.answer ? this.escape(question.answer) : question.accepted?.length ? this.escape(question.accepted.join(' / ')) : '参考回答见下'}</p>
-        <p class="ai-analysis">解析：${this.escape(question.analysis)}</p>
+        <p class="ai-analysis">解析：${this.escape(question.analysis)}</p>${question.evidence?.length?`<details><summary>材料依据（生成时快照）</summary>${question.evidence.map(e=>`<p>${this.escape(e.title)} · ${this.escape(e.version)} · 第${e.paragraph}段：${this.escape(e.quote)}</p>`).join('')}</details>`:''}
         ${item.subject==='日本国别' ? '<details><summary>核查依据</summary><p>核对概念定义、年份及选项的唯一性。统计题可查 <a href="https://www.e-stat.go.jp/" target="_blank" rel="noreferrer">日本政府统计</a>，政策题可查 <a href="https://www.mhlw.go.jp/" target="_blank" rel="noreferrer">厚生劳动省</a>。这些是核查入口。</p></details>' : ''}
         ${question.reference ? `<p class="ai-reference">参考回答：${this.escape(question.reference)}</p>` : ''}
         ${question.guide?.length ? `<p class="hub-form-note">思路：${question.guide.map((guide) => this.escape(guide)).join('；')}</p>` : ''}
@@ -570,7 +571,7 @@ const AIStudio = {
     return `<article class="ai-bank-row">
       <div class="ai-bank-main"><span class="hub-record-kind">${this.escape(item.subject)} · ${this.escape(item.difficulty)}</span>
         <h3>${this.escape(item.title)}</h3>
-        <p>${item.questions.length} 题 · ${this.escape(status)} · 保存于 ${Hub.dateText(record.updatedAt, true)}</p></div>
+        <p>${item.questions.length} 题 · ${item.sourceJobId?'资料驱动 · ':''}${this.escape(status)} · 保存于 ${Hub.dateText(record.updatedAt, true)}</p></div>
       <div class="ai-bank-actions">
         ${record.reviewStatus === 'approved' ? '' : `<button class="btn secondary" type="button" data-ai-action="approve" data-id="${this.escape(record.id)}" data-revision="${record.revision}">标记已审核</button>`}
         <button class="btn secondary" type="button" data-ai-action="remove" data-id="${this.escape(record.id)}" data-revision="${record.revision}">删除</button>

@@ -6,6 +6,7 @@ import {TopicNetwork,NoteNetwork} from "./research-network";
 import {ResearchAssistant} from "./research-assistant";
 import {CommunityCatalog} from "./community-catalog";
 import {CrossThemes} from "./cross-themes";
+import {GroundedQuestions} from "./grounded-questions";
 import {researchLanguages,researchDisciplines,languageLabel,disciplineLabel,catalogDescription,catalogItem,crossTheme,crossDescription,type CrossTheme,type ResearchCatalogItem} from "./research-catalog";
 
 type Topic={id:string;title:string;description:string;createdAt:string;noteCount?:number;mine?:boolean;languageId?:string|null;discipline?:string|null;catalogId?:string|null};
@@ -26,6 +27,7 @@ export function Community({entries,createNote,refreshNotes}:{entries:Entry[];cre
  const [query,setQuery]=useState(""),[submittedQuery,setSubmittedQuery]=useState(""),[topicOffset,setTopicOffset]=useState(0),[topicNext,setTopicNext]=useState<number|null>(null),[noteOffset,setNoteOffset]=useState(0),[noteNext,setNoteNext]=useState<number|null>(null);
  const [title,setTitle]=useState(""),[description,setDescription]=useState(""),[creating,setCreating]=useState(false),[entryId,setEntryId]=useState(""),[confirmed,setConfirmed]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const [topicLanguage,setTopicLanguage]=useState(""),[topicDiscipline,setTopicDiscipline]=useState(""),[draftLanguage,setDraftLanguage]=useState(""),[draftDiscipline,setDraftDiscipline]=useState(""),[draftCatalog,setDraftCatalog]=useState("");
+ const [questionTopic,setQuestionTopic]=useState("");
  const serial=useRef(0),lock=useRef(false);
  const eligible=entries.filter(n=>n.folder==="active"&&n.content.trim()&&n.updated_at);
  const selected=eligible.find(n=>n.id===entryId);
@@ -66,14 +68,16 @@ export function Community({entries,createNote,refreshNotes}:{entries:Entry[];cre
   try{await request("",{action:"withdraw",id:note.id});setDetail(null);await openTopic(topic.id);setNotice("已撤回公开版本，私人笔记不受影响。");}
   catch(e){setError(message(e));}finally{lock.current=false;setBusy(false);}
  }
+ function openQuestions(title:string){setQuestionTopic(title);document.getElementById("grounded-questions")?.scrollIntoView({block:"start"});}
  function prepareCross(theme:CrossTheme){setTitle(theme.title);setDescription(crossDescription(theme));setDraftLanguage("cross");setDraftDiscipline(theme.discipline);setDraftCatalog(theme.id);setCreating(true);}
  function prepare(item:ResearchCatalogItem){setTitle(item.title);setDescription(catalogDescription(item));setDraftLanguage(item.languageId);setDraftDiscipline(item.discipline);setDraftCatalog(item.id);setCreating(true);}
  return <section className="research-community">
   <div className="section-heading"><div><h2>研究议题与共享笔记</h2><p>围绕同一问题独立研究。只有获邀的成员可阅读共享内容，不自动公开私人笔记。</p></div><button type="button" className="primary" disabled={busy} onClick={()=>setCreating(v=>!v)}>{creating?"取消":"创建议题"}</button></div>
   <p className="community-privacy">请仅发布有权分享的学术内容，不要填写真实姓名、联系方式、个人档案或他人的私人信息。公开内容可能被其他用户复制；撤回不能收回已经复制的内容。</p>
   <div className="research-guide"><h3>研究工作台</h3><p>先选择或创建议题，再撰写私人笔记；主动发布后可批注、引用、比较观点并整理共享书目。AI 分析须逐次确认材料。</p><div className="community-controls"><a href="#research-ideas">浏览研究议题</a><a href="#research-ai-panel" onClick={e=>{e.preventDefault();const panel=document.getElementById("research-ai-panel");const details=panel?.querySelector("details");if(details)details.open=true;panel?.scrollIntoView({block:"start"});}}>AI 学术助手</a></div></div>
-  <CommunityCatalog busy={busy} onTopic={prepare} onNote={item=>createNote({id:"catalog-"+item.id,title:item.title,description:catalogDescription(item),createdAt:"",languageId:item.languageId,discipline:item.discipline,catalogId:item.id})}/>
-  <CrossThemes busy={busy} onTopic={prepareCross} onNote={theme=>createNote({id:"catalog-"+theme.id,title:theme.title,description:crossDescription(theme),createdAt:"",languageId:"cross",discipline:theme.discipline,catalogId:theme.id})} onQuestion={theme=>{document.getElementById("research-ai-panel")?.scrollIntoView({block:"start"});}}/>
+  <CommunityCatalog busy={busy} onQuestion={item=>openQuestions(item.title)} onTopic={prepare} onNote={item=>createNote({id:"catalog-"+item.id,title:item.title,description:catalogDescription(item),createdAt:"",languageId:item.languageId,discipline:item.discipline,catalogId:item.id})}/>
+  <CrossThemes busy={busy} onTopic={prepareCross} onNote={theme=>createNote({id:"catalog-"+theme.id,title:theme.title,description:crossDescription(theme),createdAt:"",languageId:"cross",discipline:theme.discipline,catalogId:theme.id})} onQuestion={theme=>openQuestions(theme.title)}/>
+  <div id="grounded-questions"><GroundedQuestions key={questionTopic+":"+(topic?.id||"all")} initialTopic={questionTopic||topic?.title||""} topicId={topic?.id}/></div>
   <div id="research-ai-panel"><ResearchAssistant key={(topic?.id||'all')+':'+publications.map(n=>n.id+':'+n.revision).join(',')} topicId={topic?.id}/></div>
   <CommunityManagement onChange={()=>{if(topic)void openTopic(topic.id,noteOffset);else void browse(topicOffset);}}/>
   {error&&<p role="alert" className="form-error">{error}</p>}{notice&&<p role="status">{notice}</p>}
@@ -85,7 +89,7 @@ export function Community({entries,createNote,refreshNotes}:{entries:Entry[];cre
    <div className="community-controls"><button className="text-button" disabled={busy||topicOffset===0} onClick={()=>void browse(Math.max(0,topicOffset-20))}>上一页</button><button className="text-button" disabled={busy||topicNext===null} onClick={()=>topicNext!==null&&void browse(topicNext)}>下一页</button></div>
   </>:<>
    <button type="button" className="text-button" disabled={busy} onClick={()=>void browse(topicOffset)}>← 返回议题列表</button>
-   <div className="community-panel"><small>{languageLabel(topic.languageId)} · {disciplineLabel(topic.discipline)}</small><h3 dir="auto">{topic.title}</h3>{crossTheme(topic.catalogId)&&<p className="muted">跨语言专题：{crossTheme(topic.catalogId)?.title} · 六语种关联目录</p>}{catalogItem(topic.catalogId)&&<p className="muted">关联研习目录：{catalogItem(topic.catalogId)?.title} · {catalogItem(topic.catalogId)?.version}</p>}<p dir="auto" className="community-body">{topic.description}</p>{!topic.mine&&<SafetyActions target={{targetKind:"topic",targetId:topic.id,revision:0}} onChange={()=>void browse(topicOffset)}/>}<div className="community-controls"><button type="button" className="primary" disabled={busy} onClick={()=>createNote(topic)}>撰写自己的独立笔记</button><button type="button" className="text-button" disabled={busy} onClick={()=>void openTopic(topic.id,noteOffset)}>刷新议题</button></div><p className="muted">独立笔记先在私人笔记库保存，然后在这里主动发布。同一篇笔记可发布到多个议题。</p></div>
+   <div className="community-panel"><small>{languageLabel(topic.languageId)} · {disciplineLabel(topic.discipline)}</small><h3 dir="auto">{topic.title}</h3>{crossTheme(topic.catalogId)&&<p className="muted">跨语言专题：{crossTheme(topic.catalogId)?.title} · 六语种关联目录</p>}{catalogItem(topic.catalogId)&&<p className="muted">关联研习目录：{catalogItem(topic.catalogId)?.title} · {catalogItem(topic.catalogId)?.version}</p>}<p dir="auto" className="community-body">{topic.description}</p>{!topic.mine&&<SafetyActions target={{targetKind:"topic",targetId:topic.id,revision:0}} onChange={()=>void browse(topicOffset)}/>}<div className="community-controls"><button type="button" className="primary" disabled={busy} onClick={()=>createNote(topic)}>撰写自己的独立笔记</button><button type="button" className="text-button" disabled={busy} onClick={()=>openQuestions(topic.title)}>依据议题资料出题</button><button type="button" className="text-button" disabled={busy} onClick={()=>void openTopic(topic.id,noteOffset)}>刷新议题</button></div><p className="muted">独立笔记先在私人笔记库保存，然后在这里主动发布。同一篇笔记可发布到多个议题。</p></div>
    <div className="community-panel"><h3>发布或更新已保存的笔记</h3><label>选择我的私人笔记<select value={entryId} disabled={busy} onChange={e=>setEntryId(e.target.value)}><option value="">请选择已保存的笔记</option>{eligible.map(n=><option key={n.id} value={n.id}>{n.title} · {n.language||"未分类"}</option>)}</select></label>
    <button type="button" className="text-button" disabled={busy} onClick={()=>{setConfirmed(false);void refreshNotes();}}>刷新我的笔记</button>
    {selected&&<div className="community-preview"><h4>公开内容预览</h4><strong dir="auto">{selected.title}</strong><p className="muted">{meta(selected)}</p><p className="community-body" dir="auto">{selected.content}</p><label className="community-consent"><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>我确认将以上完整内容向获邀的研究社区成员公开；私人复习日期、作品编号和其他笔记不会公开。</label></div>}
