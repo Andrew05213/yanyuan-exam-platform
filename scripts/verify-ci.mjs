@@ -26,6 +26,7 @@ const suites=[
  'verify_deep_research.mjs',
  'verify_research_results.mjs',
  'verify_exam_imports.mjs',
+ 'verify_exam_import_formats.mjs',
  'verify_today_workspace.mjs',
  'verify_study_planning_core.mjs',
  'verify_study_plans_api.mjs',
