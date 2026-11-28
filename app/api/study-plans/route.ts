@@ -136,6 +136,9 @@ export async function POST(request:Request){
     if(b.evidenceId===null){next.tasks=next.tasks.map(t=>{if(t.id!==b.taskId)return t;const {evidence,...rest}=t;return rest;});}else if(b.evidenceId!==undefined){if(!safeId(b.evidenceId))throw bad();const record=await db.prepare("SELECT id,kind FROM archive_records WHERE id=? AND owner_id=? AND kind IN ('written-attempt','oral-attempt','review-attempt','essay')").bind(b.evidenceId,id).first<{id:string;kind:string}>();if(!record)throw new AccessError("学习档案不存在或不可访问。",404);next.tasks=next.tasks.map(t=>t.id===b.taskId?{...t,evidence:record}:t);}
     break;
    }
+   case "set-budget":
+    if(!Number.isInteger(b.budgetMinutes)||b.budgetMinutes<0||b.budgetMinutes>180)throw bad();
+    next={...plan,budgetMinutes:b.budgetMinutes};break;
    case "extra":next=extra(plan,b);break;
    case "reflection":next=reflection(plan,b);break;
    case "remove-extra":if(!row||!safeId(b.id)||!plan.extra.some(t=>t.id===b.id))throw bad();next={...plan,extra:plan.extra.filter(t=>t.id!==b.id)};break;

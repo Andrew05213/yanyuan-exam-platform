@@ -47,6 +47,13 @@ try{
  assert.equal(second.body.plan.budgetMinutes,25);
  assert.deepEqual(second.body.plan.tasks[0],recorded.body.plan.tasks[0]);
  assert.equal(second.body.plan.tasks[1].breakBefore,5);
+ const reduced=await call('A',{action:'set-budget',version:second.body.version,budgetMinutes:0});
+ assert.equal(reduced.status,200,JSON.stringify(reduced.body));
+ assert.equal(reduced.body.plan.budgetMinutes,0);
+ assert.deepEqual(reduced.body.plan.tasks,second.body.plan.tasks);
+ assert.equal((await call('A',{action:'set-budget',version:second.body.version,budgetMinutes:50})).status,409);
+ assert.equal((await call('A',{action:'set-budget',version:reduced.body.version,budgetMinutes:-5})).status,400);
+ assert.equal((await call('A')).body.plan.budgetMinutes,0);
  assert.equal((await call('B')).body.plan.tasks.length,0);
  console.log('PASS: private study planner, real source, preview, budget/rest, revision race, review schedule, weekly stats, extra records, reflection and deletion.');
 }finally{await mf.dispose();}

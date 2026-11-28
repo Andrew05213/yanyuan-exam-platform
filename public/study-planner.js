@@ -33,17 +33,21 @@ const StudyPlanner={
   root.querySelectorAll('[data-sp-tab]').forEach(b=>b.onclick=()=>{this.tab=b.dataset.spTab;this.render();});
   const body=root.querySelector('[data-sp-body]');
   if(this.tab==='tasks'){
-   body.innerHTML=this.quickAddMarkup()+'<div class="sp-form"><details><summary>高级排程</summary><div class="sp-form"><div class="sp-inline"><label>当天可用时间（含休息，分钟）<input type="number" data-sp-budget min="0" max="180" value="'+p.budgetMinutes+'"></label><small>可设 0 分钟为休息日</small></div><details><summary>选择来自择校、笔记、错题和研究的任务</summary><div class="sp-sources">'+(d.candidates.length?d.candidates.map(s=>'<label><input type="checkbox" data-sp-source="'+e(s.id)+'" '+(this.selected.has(s.id)?'checked':'')+'><span>'+e(s.title)+'<br><small>'+e(s.sourceLabel)+' · '+e(s.track)+' · '+s.minutes+' 分'+(s.due?' · '+e(s.due):'')+'</small></span></label>').join(''):'<p>没有可安排的关联任务，可添加自定义任务。</p>')+'</div>'+(d.truncated?'<p class="sp-note">候选范围有截断，其他任务请从原模块查看。</p>':'')+'</details><details><summary>自定义任务（添加、编辑、删除）</summary><div data-sp-manual></div><button class="btn secondary" type="button" data-sp-add>添加任务</button></details><div class="sp-inline"><button class="btn primary" type="button" data-sp-preview>预览计划</button><button class="btn secondary" type="button" data-sp-save disabled>确认保存</button></div><div data-sp-preview-box></div></div></details><div class="sp-filters"><select data-sp-subject aria-label="筛选科目"><option value="">全部科目</option>'+this.subjectOptions('')+'</select><select data-sp-track aria-label="筛选主线"><option value="">全部主线</option>'+this.option(tracks,'')+'</select><select data-sp-status aria-label="筛选状态"><option value="">全部状态</option><option value="planned">未开始</option><option value="partial">部分完成</option><option value="done">已完成</option><option value="skipped">已跳过</option></select></div><div class="sp-list" data-sp-tasks></div>'+(d.version?'<button type="button" class="btn secondary" data-sp-delete>删除本日计划与复盘</button>':'')+'</div>';
+   body.innerHTML=this.budgetMarkup()+this.quickAddMarkup()+'<div class="sp-form"><details><summary>高级排程</summary><div class="sp-form"><details><summary>选择来自择校、笔记、错题和研究的任务</summary><div class="sp-sources">'+(d.candidates.length?d.candidates.map(s=>'<label><input type="checkbox" data-sp-source="'+e(s.id)+'" '+(this.selected.has(s.id)?'checked':'')+'><span>'+e(s.title)+'<br><small>'+e(s.sourceLabel)+' · '+e(s.track)+' · '+s.minutes+' 分'+(s.due?' · '+e(s.due):'')+'</small></span></label>').join(''):'<p>没有可安排的关联任务，可添加自定义任务。</p>')+'</div>'+(d.truncated?'<p class="sp-note">候选范围有截断，其他任务请从原模块查看。</p>':'')+'</details><details><summary>自定义任务（添加、编辑、删除）</summary><div data-sp-manual></div><button class="btn secondary" type="button" data-sp-add>添加任务</button></details><div class="sp-inline"><button class="btn primary" type="button" data-sp-preview>预览计划</button><button class="btn secondary" type="button" data-sp-save disabled>确认保存</button></div><div data-sp-preview-box></div></div></details><div class="sp-filters"><select data-sp-subject aria-label="筛选科目"><option value="">全部科目</option>'+this.subjectOptions('')+'</select><select data-sp-track aria-label="筛选主线"><option value="">全部主线</option>'+this.option(tracks,'')+'</select><select data-sp-status aria-label="筛选状态"><option value="">全部状态</option><option value="planned">未开始</option><option value="partial">部分完成</option><option value="done">已完成</option><option value="skipped">已跳过</option></select></div><div class="sp-list" data-sp-tasks></div>'+(d.version?'<button type="button" class="btn secondary" data-sp-delete>删除本日计划与复盘</button>':'')+'</div>';
    this.bindQuickAdd(body);this.manualRender();this.tasksRender();
    const invalidate=()=>{this.preview=null;body.querySelector('[data-sp-save]').disabled=true;body.querySelector('[data-sp-preview-box]').innerHTML='';};
-   body.querySelector('[data-sp-budget]').oninput=invalidate;
+   body.querySelector('[data-sp-budget-form]').onsubmit=ev=>{
+    ev.preventDefault();
+    const budgetMinutes=ev.target.elements.budgetMinutes.valueAsNumber;
+    if(budgetMinutes!==p.budgetMinutes)void this.mutate('set-budget',{budgetMinutes});
+   };
    body.querySelectorAll('[data-sp-source]').forEach(b=>b.onchange=()=>{b.checked?this.selected.add(b.dataset.spSource):this.selected.delete(b.dataset.spSource);invalidate();});
    body.querySelector('[data-sp-add]').onclick=()=>{this.collectManual();if(this.manual.length>=40)return;this.manual.push({id:'manual-'+crypto.randomUUID(),title:'',subject:'其他',track:'通用训练',minutes:15,priority:1});this.manualRender();body.querySelectorAll('[data-sp-manual] [name=title]').item(this.manual.length-1)?.focus();invalidate();};
    body.querySelector('[data-sp-manual]').addEventListener('input',invalidate);
    body.querySelector('[data-sp-manual]').addEventListener('change',invalidate);
    body.querySelector('[data-sp-manual]').addEventListener('click',ev=>{if(ev.target.closest('[data-sp-remove]'))invalidate();});
    for(const k of ['subject','track','status'])body.querySelector('[data-sp-'+k+']').onchange=()=>this.tasksRender();
-   body.querySelector('[data-sp-preview]').onclick=()=>{this.collectManual();void this.mutate('preview',{budgetMinutes:Number(body.querySelector('[data-sp-budget]').value),selected:[...this.selected],manual:this.manual});};
+   body.querySelector('[data-sp-preview]').onclick=()=>{this.collectManual();void this.mutate('preview',{budgetMinutes:p.budgetMinutes,selected:[...this.selected],manual:this.manual});};
    body.querySelector('[data-sp-save]').onclick=()=>{if(this.preview)void this.mutate('save',this.preview.input);};
    body.querySelector('[data-sp-delete]')?.addEventListener('click',()=>{if(confirm('删除本日计划、复习反馈及复盘？原始笔记和学习档案不会被删除。'))void this.mutate('delete',{confirm:true});});
   }else if(this.tab==='settings'){
@@ -61,6 +65,16 @@ const StudyPlanner={
    body.querySelector('[data-sp-reflection]')?.addEventListener('submit',ev=>{ev.preventDefault();void this.mutate('reflection',Object.fromEntries(new FormData(ev.target)));});
    body.querySelectorAll('[data-sp-extra-remove]').forEach(b=>b.onclick=()=>{if(confirm('删除这条额外练习记录？'))void this.mutate('remove-extra',{id:b.dataset.spExtraRemove});});
   }
+ },
+ budgetMarkup(){
+  const plan=this.data.plan;
+  const used=plan.tasks.reduce((total,t)=>total+t.minutes+t.breakBefore,0);
+  const over=used-plan.budgetMinutes;
+  return `<form class="sp-budget" data-sp-budget-form>
+   <label>当天可用时间（分钟）<input type="number" name="budgetMinutes" data-sp-budget min="0" max="180" required value="${plan.budgetMinutes}"></label>
+   <button class="btn secondary">保存预算</button>
+   ${over>0?`<p class="sp-note">已安排 ${used} 分钟，超出预算 ${over} 分钟。已有任务保留。</p>`:''}
+  </form>`;
  },
  quickAddMarkup(){
   return `<form class="sp-quick-add" data-sp-quick>
@@ -119,7 +133,7 @@ const StudyPlanner={
   try{const result=await this.request({action,date:this.data.date,version:this.data.version,...input},null,this.controller.signal);
    if(run!==this.serial||!root.isConnected)return;
    if(action==='preview'){this.preview={input:{...input,token:result.token},plan:result.plan};const p=result.plan,e=s=>this.e(s);body.querySelector('[data-sp-preview-box]').innerHTML='<div class="sp-preview"><strong>预览 · '+p.tasks.length+' 项</strong><p>安排 '+p.tasks.reduce((n,t)=>n+t.minutes,0)+' 分 + 休息 '+p.tasks.reduce((n,t)=>n+t.breakBefore,0)+' 分；暂缓 '+p.deferred.length+' 项</p>'+p.tasks.map(t=>'<p>'+e(t.title)+' · '+t.minutes+' 分</p>').join('')+'</div>';msg.textContent='预览未写入，确认保存后生效。';}
-   else{const date=this.data.date;await this.load(date);if(this.data?.date===date&&this.serial===run+1){this.root?.querySelector('[data-sp-message]')?.replaceChildren(action==='add-task'?'已添加任务。':'已保存。');if(action==='add-task')this.root?.querySelector('[data-sp-quick] [name=title]')?.focus();}}
+   else{const date=this.data.date;await this.load(date);if(this.data?.date===date&&this.serial===run+1){this.root?.querySelector('[data-sp-message]')?.replaceChildren(action==='add-task'?'已添加任务。':action==='set-budget'?'已保存当天预算。':'已保存。');if(action==='add-task')this.root?.querySelector('[data-sp-quick] [name=title]')?.focus();}}
   }catch(err){if(run===this.serial&&root.isConnected){msg.textContent=err.message||'操作失败';msg.className='sp-error';}}
   finally{if(run===this.serial){this.busy=false;buttons.forEach((b,i)=>b.disabled=states[i]);const save=body.querySelector('[data-sp-save]');if(save)save.disabled=!this.preview;}}
  }
