@@ -62,7 +62,7 @@ try{
  const pv=await api('A',{action:'preview',id,version});assert.equal(pv.status,200,JSON.stringify(pv.data));assert.equal(requests,1);assert.match(pv.data.sources[0].text,/PRIVATE_A/);
  const analyze={action:'analyze',id,version,nonce:pv.data.nonce,fingerprint:pv.data.fingerprint,confirm:true};
  assert.equal((await api('A',{...analyze,confirm:false})).status,409);assert.equal((await api('A',{...analyze,fingerprint:'bad'})).status,409);
- stub({...answer,findings:[{statement:'bad',evidence:[{source:'S1',quote:'invented'}]}]});assert.equal((await api('A',analyze)).status,502);
+ stub({...answer,findings:[{statement:'bad',evidence:[{source:'S1',quote:'invented'}]}]});assert.equal((await api('A',analyze)).status,502);assert.equal((await api('A',analyze)).status,409);
  const fresh=await api('A',{action:'preview',id,version});const confirmed={...analyze,nonce:fresh.data.nonce,fingerprint:fresh.data.fingerprint};
  stub(answer,body=>{assert.ok(body.includes('PRIVATE_A'));assert.ok(!body.includes('PRIVATE_B'));assert.ok(!body.includes('PRIVATE_UNSELECTED'));assert.ok(!body.includes('@qa.invalid'));});
  const analyzed=await api('A',confirmed);assert.equal(analyzed.status,200,JSON.stringify(analyzed.data));version=analyzed.data.version;assert.equal((await api('A',confirmed)).status,409);assert.equal(requests,3);
