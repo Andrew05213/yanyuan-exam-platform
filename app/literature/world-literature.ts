@@ -13,7 +13,7 @@ export function metadataFor(work:LiteratureMaterial,base?:LiteratureMaterial):Li
  return {languageId:work.languageId??base?.languageId??"unknown",originalTitle:work.originalTitle??base?.originalTitle??original[0]??"",originalAuthor:work.originalAuthor??base?.originalAuthor??original[1]??"",period:work.period??base?.period??"",genre:work.genre??base?.genre??"未分类",category:work.category??base?.category??"文学"};
 }
 export function languageName(id:string){return literatureLanguages.find(l=>l.id===id)?.label??"未分类";}
-export function normalizeSearch(s:string){return s.normalize("NFKD").replace(/\p{M}/gu,"").toLocaleLowerCase().trim();}
+export function normalizeSearch(s:string){return s.normalize("NFKD").replace(/\p{M}/gu,"").replace(/[‘’ʼ]/g,"\x27").toLowerCase().trim();}
 export function searchLiterature(items:LiteratureMaterial[],filters:{language?:string;category?:string;era?:string;genre?:string;query?:string}={}){
  const tokens=normalizeSearch(filters.query||"").split(/\s+/).filter(Boolean);
  return items.filter(w=>{
