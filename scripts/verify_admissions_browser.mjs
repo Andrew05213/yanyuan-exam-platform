@@ -4,7 +4,8 @@ import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {createServer} from 'node:http';
 import {createRequire} from 'node:module';
-import {readdirSync,readFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {readdirSync,readFileSync,mkdtempSync} from 'node:fs';
+import {rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 const require=createRequire(import.meta.url);
@@ -13,7 +14,31 @@ const server=path.resolve('dist/server');
 const modules=['index.js',...readdirSync(server,{recursive:true}).filter(f=>/\.m?js$/.test(f)&&f!=='index.js')];
 const mf=new Miniflare({modules:modules.map(f=>({type:'ESModule',path:path.join(server,f)})),modulesRoot:server,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],d1Databases:['DB'],r2Buckets:['BUCKET']});
 const userdir=mkdtempSync(path.join(tmpdir(),'admissions-chrome-'));
-let chrome,socket;
+let chrome,socket,browserWs;
+const ownProcessGroup=process.platform!=='win32';
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const running=()=>chrome?.pid&&chrome.exitCode===null&&chrome.signalCode===null;
+async function waitForExit(ms){
+ const end=Date.now()+ms;while(running()&&Date.now()<end)await sleep(100);return !running();
+}
+function signalBrowser(signal){
+ if(!chrome?.pid)return;
+ try{if(ownProcessGroup)process.kill(-chrome.pid,signal);else if(running())chrome.kill(signal);}catch(e){if(e.code!=='ESRCH')throw e;}
+}
+async function closeBrowser(){
+ // Request a clean shutdown of the browser, not merely the page target.
+ if(running()&&browserWs){
+  const control=new WebSocket(browserWs);
+  control.addEventListener('open',()=>control.send(JSON.stringify({id:1,method:'Browser.close'})),{once:true});
+  control.addEventListener('error',()=>{}, {once:true});
+  try{await waitForExit(5000);}finally{control.close();}
+ }
+ // Chromium renderers and helpers can outlive the parent. Signal only the
+ // isolated group we created, never unrelated browser processes.
+ signalBrowser('SIGTERM');await waitForExit(3000);await sleep(300);
+ signalBrowser('SIGKILL');if(!await waitForExit(3000))throw Error('Chromium did not exit after shutdown');
+}
+
 const app=createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://'+req.headers.host);
@@ -35,11 +60,12 @@ try{
   for(const sql of readFileSync('drizzle/'+f,'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(sql).run();
  app.listen(0,'127.0.0.1');await once(app,'listening');
  const base='http://127.0.0.1:'+app.address().port;
- chrome=spawn(process.env.CHROME_BIN||'chromium',['--headless','--no-sandbox','--disable-dev-shm-usage','--remote-debugging-port=0','--user-data-dir='+userdir,'about:blank'],{stdio:['ignore','ignore','pipe']});
+ chrome=spawn(process.env.CHROME_BIN||'chromium',['--headless','--no-sandbox','--disable-dev-shm-usage','--disable-breakpad','--disable-crash-reporter','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+userdir,'about:blank'],{stdio:['ignore','ignore','pipe'],detached:ownProcessGroup});
  const ws=await new Promise((resolve,reject)=>{
   let log='';chrome.on('error',reject);chrome.on('exit',()=>reject(Error('Chromium exited: '+log.slice(-4000))));
   chrome.stderr.on('data',buf=>{log+=buf;const match=log.match(/DevTools listening on (ws:\/\/[^\s]+)/);if(match)resolve(match[1]);});
  });
+ browserWs=ws;
  const [page]=await (await fetch('http://'+new URL(ws).host+'/json/list')).json();
  socket=new WebSocket(page.webSocketDebuggerUrl);await once(socket,'open');
  let serial=0;const pending=new Map();
@@ -97,6 +123,13 @@ try{
  }
  console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete, long-term preferences, weekly preview/save and navigation.');
 }finally{
- socket?.close();if(chrome?.pid&&chrome.exitCode===null&&chrome.signalCode===null){const closed=once(chrome,'exit');chrome.kill();await closed;}
- app.closeAllConnections();app.close();await mf.dispose();rmSync(userdir,{recursive:true,force:true,maxRetries:10,retryDelay:200});
+ try{socket?.close();await closeBrowser();}finally{
+  app.closeAllConnections();app.close();
+  try{await mf.dispose();}finally{
+   // Asynchronous bounded cleanup allows pending OS filesystem activity to drain.
+   // Do not suppress a final cleanup failure or any functional assertion.
+   await rm(userdir,{recursive:true,force:true,maxRetries:20,retryDelay:250});
+  }
+ }
+ console.log('PASS: Chromium shutdown and isolated profile cleanup.');
 }
