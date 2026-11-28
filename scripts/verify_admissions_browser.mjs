@@ -242,7 +242,7 @@ try{
    dt.items.add(new File([Uint8Array.from(atob('${fixture}'),c=>c.charCodeAt(0))],'mixed.pdf',{type:'application/pdf'}));
    f.elements.file.files=dt.files;f.elements.source.value='Synthetic PDF';f.elements.confirm.checked=true;f.requestSubmit();})()`);
   await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已自动保存待审核')",1200);
-  await send('Page.reload');
+  await js("window.__pdfReload=true");await send('Page.reload');await until("!window.__pdfReload");
   await until("!!document.querySelector('[data-ei-file]')");
   await js("document.querySelector('[data-ei-file]').click()");
   await until("ExamImports.record?.groups?.[0]?.questions?.length===2");
@@ -251,6 +251,7 @@ try{
   await js("document.querySelector('[data-ei-confirm]').checked=true;document.querySelector('[data-ei-approve]').click()");
   await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已确认入私人题库')");
   assert.equal(await js("ExamImports.record.groups[0].questions[1].sourcePage"),2);
+  socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
   await js("document.querySelector('[data-ei-delete]').click()");
   await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已删除') && !document.querySelector('[data-ei-file]')");
   console.log('PASS: mixed PDF text and real scan OCR, persisted pages, review and removal at width '+width);
