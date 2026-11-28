@@ -73,6 +73,14 @@ try{
  assert.equal((await get(b,'?topic='+de.data.id)).data.topic.catalogId,'de-literature');
  assert.equal((await get(b,'?topic='+t)).data.topic.languageId,null);
  assert.equal((await get(uninvited,'?languageId=de')).status,403);
+ const cross=await post(a,{action:'createTopic',title:'Cross language fixture',languageId:'cross',discipline:'history',catalogId:'cross-modernity'});assert.equal(cross.status,201,JSON.stringify(cross.data));
+ assert.equal((await get(b,'?languageId=cross')).data.topics[0].catalogId,'cross-modernity');
+ assert.equal((await get(b,'?languageId=de&discipline=history')).data.topics[0].id,cross.data.id);
+ assert.equal((await get(b,'?languageId=ko&discipline=history')).data.topics.length,0);
+ assert.equal((await post(a,{action:'createTopic',title:'Bad',languageId:'cross',discipline:'history',catalogId:'cross-literature'})).status,400);
+ const {crossThemes,crossItems,crossLanguageIds}=await import('../app/literature/research-catalog.ts');
+ assert.equal(crossThemes.length,6);for(const t of crossThemes){assert.equal(crossItems(t).length,6);assert.equal(crossLanguageIds(t).length,6);}
+ console.log('PASS: cross-language theme links and classification before pagination.');
  const {communityCatalog,researchLanguages,filterCatalog}=await import('../app/literature/research-catalog.ts');
  assert.equal(communityCatalog.length,42);assert.equal(new Set(communityCatalog.map(x=>x.id)).size,42);
  for(const lang of researchLanguages){const items=filterCatalog(lang.id);assert.equal(items.length,lang.tier==='core'?6:1);for(const item of items){assert.ok(item.summary&&item.question&&item.version);assert.ok(item.sources.every(s=>s.kind==='discovery'&&new URL(s.url).protocol==='https:'));}}
