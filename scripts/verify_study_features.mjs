@@ -39,6 +39,8 @@ async function setProvider(protocol,baseUrl) {
 }
 
 try {
+  const manifest=JSON.parse(readFileSync(path.join(root,'dist/client/release.json'),'utf8'));
+  const release=await mf.dispatchFetch('https://study.test/api/release');assert.equal(release.status,200);assert.equal(release.headers.get('cache-control'),'no-store');assert.deepEqual(await release.json(),{schema:1,revision:manifest.revision});
   const db=await mf.getD1Database('DB');
   for(const file of readdirSync(path.join(root,'drizzle')).filter(name=>name.endsWith('.sql')).sort()) {
     if(file.startsWith('0012_')){

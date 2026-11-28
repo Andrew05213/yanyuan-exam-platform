@@ -31,7 +31,7 @@ const certDir=process.env.YANYUAN_TLS_DIR||dir;
 const options={key:readFileSync(join(certDir,'server.key')),cert:readFileSync(join(certDir,'server.crt'))};
 const lanPrefix=process.env.YANYUAN_LAN_PREFIX||'192.168.100.';
 if(!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.$/.test(lanPrefix))throw Error('Invalid LAN prefix.');
-const publicRoot=realpathSync(join(process.cwd(),'public'));
+const publicRoot=realpathSync(join(process.cwd(),process.env.YANYUAN_SERVE_BUILT==='1'?'dist/client':'public'));
 const servePublicAsset=createPublicAssetHandler(publicRoot);
 const literaturePages=new Set(['/literature','/literature/','/reading-notes','/reading-notes/']);
 const apiPaths=new Set(['/api/literature/entries','/api/literature/community','/api/literature/governance','/api/literature/interactions','/api/literature/network','/api/literature/research-ai','/api/literature/materials','/api/literature/feedback','/api/ai-questions','/api/question-bank','/api/session','/api/release','/api/archive','/api/attachments','/api/essays/review','/api/materials','/api/material-files','/api/study-state','/api/oral-audio','/api/oral-analysis','/api/feedback','/api/learning-report','/api/today','/api/study-plans','/api/knowledge-graph','/api/references','/api/deep-research','/api/exam-imports','/api/admissions','/api/admissions/followup','/api/research-projects','/api/ai-grading','/api/admin/session','/api/admin/providers','/api/admin/usage','/api/admin/models','/api/admin/oral-audio']);
@@ -114,6 +114,9 @@ const server=https.createServer(options,async(req,res)=>{try{
    'content-security-policy':"default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
   });
   return res.end(req.method==='HEAD'?undefined:page);
+ }
+ if(path==='/index.html'&&(req.method==='GET'||req.method==='HEAD')){
+  const page=readFileSync(join(publicRoot,'index.html'));res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'});return res.end(req.method==='HEAD'?undefined:page);
  }
  if(servePublicAsset(req,res,url))return;
  const user=session(req),headers={...req.headers};for(const key of Object.keys(headers))if(key.startsWith('oai-authenticated-user-')||key.startsWith('x-forwarded-')||['forwarded','x-real-ip','cf-connecting-ip','x-yanyuan-lan'].includes(key))delete headers[key];headers['x-yanyuan-lan']='1';
