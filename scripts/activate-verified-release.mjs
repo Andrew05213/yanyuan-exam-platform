@@ -21,7 +21,8 @@ export async function activate({current,candidate,revision,restart,healthUrl},{r
  // Identical migrations are mandatory for automatic code rollback.
  const migrations=spawnSync('git',['diff','--quiet',oldManifest.revision,revision,'--','drizzle','db/schema.ts','db/literature-schema.ts'],{cwd:next});
  const head=spawnSync('git',['rev-parse','HEAD'],{cwd:next,encoding:'utf8'});
- if(head.status!==0||head.stdout.trim()!==revision||migrations.status!==0)throw Error('Commit mismatch or migration changes; manual backed-up deployment required.');
+ const dirty=spawnSync('git',['status','--porcelain','--untracked-files=no'],{cwd:next,encoding:'utf8'});
+ if(head.status!==0||head.stdout.trim()!==revision||dirty.status!==0||dirty.stdout.trim()||migrations.status!==0)throw Error('Commit mismatch, dirty checkout or migration changes; manual backed-up deployment required.');
  const lock=link+'.deploy-lock';mkdirSync(lock,{mode:0o700});
  const swap=target=>{const temp=resolve(lock,'next');symlinkSync(target,temp,'dir');try{renameSync(temp,link);}catch(e){unlinkSync(temp);throw e;}};
  const restartService=()=>runRestart?runRestart():command(restart,[],root);

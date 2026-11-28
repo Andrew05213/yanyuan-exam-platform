@@ -26,6 +26,7 @@ try{
   symlinkSync(prev,current,'dir');let restarts=0;
   const args={current,candidate:next,revision:v2,healthUrl:url};
   const health=async(_url,v)=>{assert.equal(readlinkSync(current),v===v1?prev:next);return {revision:v};};
+  writeFileSync(join(next,'file'),'dirty');await assert.rejects(activate(args,{runRestart:async()=>{restarts++;},health}),/dirty checkout/);assert.equal(restarts,0);git(next,'checkout','--','file');
   // A failed restart must restore old code and prove old release health.
   await assert.rejects(activate(args,{runRestart:async()=>{if(++restarts===1)throw Error('synthetic restart failure');},health}),/restored and checked/);
   assert.equal(readlinkSync(current),prev);assert.equal(restarts,2);

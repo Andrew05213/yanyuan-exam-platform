@@ -9,7 +9,8 @@ if (!["dev", "build"].includes(command)) throw new Error("Expected dev or build.
 await import("./prepare-ocr.mjs");
 const managedLinux = readExecutionProfile() === "managed-linux";
 const revisionResult=spawnSync("git",["rev-parse","HEAD"],{encoding:"utf8"});
-const revision=revisionResult.status===0&&/^[a-f0-9]{40}$/.test(revisionResult.stdout.trim())?revisionResult.stdout.trim():"unknown";
+const trackedStatus=spawnSync("git",["status","--porcelain","--untracked-files=no"],{encoding:"utf8"});
+const revision=revisionResult.status===0&&trackedStatus.status===0&&!trackedStatus.stdout.trim()&&/^[a-f0-9]{40}$/.test(revisionResult.stdout.trim())?revisionResult.stdout.trim():"unknown";
 process.env.VITE_YANYUAN_RELEASE=revision;
 function finalizeRelease(){createRelease(fileURLToPath(new URL("../dist/client",import.meta.url)),revision);verifyRelease(fileURLToPath(new URL("../dist/client",import.meta.url)),revision);console.log("Verified release assets for "+revision);}
 if (command === "build" || process.env.YANYUAN_LAN_AUTH === "1") {
