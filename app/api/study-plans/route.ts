@@ -1,7 +1,7 @@
 import {storage} from "../../../db/store";
 import {AccessError,principal,privateHeaders,readLimitedText,sameOrigin,fail} from "../../../lib/user-access";
 import {admissionPlan,assessAdmissions} from "../../../lib/admissions/plan";
-import {bad,stale,today,day,shift,weekStart,safeId,empty,draft,feedback,extra,reflection,stats,type Source,type DayPlan} from "../../../lib/study-planning/workspace";
+import {bad,stale,today,day,shift,weekStart,safeId,empty,draft,appendManualTask,feedback,extra,reflection,stats,type Source,type DayPlan} from "../../../lib/study-planning/workspace";
 import {preferences,defaults,weekPlans} from "../../../lib/study-planning/preferences";
 export const dynamic="force-dynamic";
 const reply=(data:unknown)=>Response.json(data,{headers:privateHeaders});
@@ -120,6 +120,14 @@ export async function POST(request:Request){
    if(b.action==="preview")return reply({plan:next,version:row?.version??null,token});
    if(b.token!==undefined&&b.token!==token)throw stale();return await persist(db,id,next,b.version);
   }
+  if(b.action==="add-task"){
+   if(!row){
+    const setting=await prefRow(db,id);
+    const pref=setting?preferences(JSON.parse(setting.payload)):defaults();
+    plan.budgetMinutes=pref.budgets[(new Date(date+"T00:00:00Z").getUTCDay()+6)%7];
+   }
+   return await persist(db,id,appendManualTask(plan,b),b.version);
+  }
   let next:DayPlan;
   switch(b.action){
    case "feedback":{
@@ -128,6 +136,9 @@ export async function POST(request:Request){
     if(b.evidenceId===null){next.tasks=next.tasks.map(t=>{if(t.id!==b.taskId)return t;const {evidence,...rest}=t;return rest;});}else if(b.evidenceId!==undefined){if(!safeId(b.evidenceId))throw bad();const record=await db.prepare("SELECT id,kind FROM archive_records WHERE id=? AND owner_id=? AND kind IN ('written-attempt','oral-attempt','review-attempt','essay')").bind(b.evidenceId,id).first<{id:string;kind:string}>();if(!record)throw new AccessError("学习档案不存在或不可访问。",404);next.tasks=next.tasks.map(t=>t.id===b.taskId?{...t,evidence:record}:t);}
     break;
    }
+   case "set-budget":
+    if(!Number.isInteger(b.budgetMinutes)||b.budgetMinutes<0||b.budgetMinutes>180)throw bad();
+    next={...plan,budgetMinutes:b.budgetMinutes};break;
    case "extra":next=extra(plan,b);break;
    case "reflection":next=reflection(plan,b);break;
    case "remove-extra":if(!row||!safeId(b.id)||!plan.extra.some(t=>t.id===b.id))throw bad();next={...plan,extra:plan.extra.filter(t=>t.id!==b.id)};break;

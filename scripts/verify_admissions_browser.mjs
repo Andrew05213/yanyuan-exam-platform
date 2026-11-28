@@ -96,13 +96,26 @@ try{
   await until("location.hash.startsWith('#task/') && !!document.querySelector('#screen h1') && !document.querySelector('.admissions-workspace')");
   await send('Page.navigate',{url:base+'/index.html#today'});
   await until("!!document.querySelector('[data-sp-add]')");
-  await js("document.querySelector('[data-sp-budget]').value='60';document.querySelector('[data-sp-add]').click();document.querySelector('[data-sp-manual] [name=title]').value='Browser study';document.querySelector('[data-sp-preview]').click()");
+  await js("document.querySelector('[data-sp-budget]').value='65';document.querySelector('[data-sp-budget-form]').requestSubmit()");
+  await until("document.querySelector('[data-sp-message]')?.innerText.includes('已保存当天预算')");
+  await js("document.querySelector('[data-sp-add]').closest('details').open=true;document.querySelector('[data-sp-preview]').closest('details').open=true;document.querySelector('[data-sp-add]').click();document.querySelector('[data-sp-manual] [name=title]').value='Browser study';document.querySelector('[data-sp-preview]').click()");
   await until("!document.querySelector('[data-sp-save]').disabled");
   await js("document.querySelector('[data-sp-save]').click()");
   await until("!!document.querySelector('[data-sp-task]') && document.querySelector('[data-sp-message]').innerText.includes('已保存')");
   await js("window.__previousPage=true");await send('Page.reload');await until("!window.__previousPage");await until("document.querySelector('[data-sp-tasks]')?.innerText.includes('Browser study')");
   await js("document.querySelector('[data-sp-done]').click()");
   await until("document.querySelector('[data-sp-done]')?.checked && document.querySelector('[data-sp-message]')?.innerText.includes('已保存')");
+  await js("(()=>{const form=document.querySelector('[data-sp-quick]');form.elements.title.value='Quick reading';form.elements.minutes.value='5';form.elements.minutes.dispatchEvent(new Event('change'));form.requestSubmit();})()");
+  await until("document.querySelector('[data-sp-tasks]')?.innerText.includes('Quick reading') && document.querySelector('[data-sp-message]')?.innerText.includes('已添加任务')");
+  assert.equal(await js("document.querySelector('[data-sp-done]')?.checked"),true);
+  await js("document.querySelector('[data-sp-budget]').value='0';document.querySelector('[data-sp-budget-form]').requestSubmit()");
+  await until("document.querySelector('[data-sp-quick] [name=expandBudget]')?.required");
+  await js("(()=>{const form=document.querySelector('[data-sp-quick]');form.elements.title.value='Extra reading';form.elements.expandBudget.checked=true;form.requestSubmit();})()");
+  await until("document.querySelector('[data-sp-tasks]')?.innerText.includes('Extra reading') && document.querySelector('[data-sp-message]')?.innerText.includes('已添加任务')");
+  await js("document.querySelector('[data-sp-budget]').value='5';document.querySelector('[data-sp-budget-form]').requestSubmit()");
+  await until("document.querySelector('[data-sp-budget-form]').innerText.includes('超出预算') && document.querySelector('[data-sp-message]')?.innerText.includes('已保存当天预算')");
+  assert.equal(await js("document.querySelector('[data-sp-done]')?.checked"),true);
+  assert.equal(await js("document.querySelector('[data-sp-tasks]').innerText.includes('Extra reading')"),true);
   await js("document.querySelector('[data-sp-tab=week]').click()");
   await until("document.querySelector('[data-sp-body]').innerText.includes('备考主线投入')");
 

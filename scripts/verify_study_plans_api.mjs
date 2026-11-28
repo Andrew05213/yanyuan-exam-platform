@@ -34,5 +34,26 @@ try{
  assert.equal((await call('A',{action:'delete',version,confirm:true})).status,200);
  assert.equal((await call('A')).body.version,null);assert.equal((await db.prepare("SELECT count(*) AS n FROM entries").first()).n,2);
  const rest=await call('A',{action:'save',version:null,budgetMinutes:0,selected:[id],manual:[]});assert.equal(rest.status,200);assert.equal(rest.body.plan.tasks.length,0);
+ const task={action:'add-task',id:'manual-quick',title:'  阅读一篇  ',minutes:15};
+ assert.equal((await call('A',{...task,version:rest.body.version})).status,400);
+ const added=await call('A',{...task,version:rest.body.version,expandBudget:true});
+ assert.equal(added.status,200,JSON.stringify(added.body));
+ assert.equal(added.body.plan.tasks[0].title,'阅读一篇');
+ assert.equal(added.body.plan.budgetMinutes,15);
+ assert.equal((await call('A',{...task,version:rest.body.version,expandBudget:true})).status,409);
+ const recorded=await call('A',{action:'feedback',version:added.body.version,taskId:task.id,status:'done',actualMinutes:12,note:'已复习'});
+ const second=await call('A',{...task,id:'manual-quick-2',title:'听力练习',minutes:5,version:recorded.body.version,expandBudget:true});
+ assert.equal(second.status,200,JSON.stringify(second.body));
+ assert.equal(second.body.plan.budgetMinutes,25);
+ assert.deepEqual(second.body.plan.tasks[0],recorded.body.plan.tasks[0]);
+ assert.equal(second.body.plan.tasks[1].breakBefore,5);
+ const reduced=await call('A',{action:'set-budget',version:second.body.version,budgetMinutes:0});
+ assert.equal(reduced.status,200,JSON.stringify(reduced.body));
+ assert.equal(reduced.body.plan.budgetMinutes,0);
+ assert.deepEqual(reduced.body.plan.tasks,second.body.plan.tasks);
+ assert.equal((await call('A',{action:'set-budget',version:second.body.version,budgetMinutes:50})).status,409);
+ assert.equal((await call('A',{action:'set-budget',version:reduced.body.version,budgetMinutes:-5})).status,400);
+ assert.equal((await call('A')).body.plan.budgetMinutes,0);
+ assert.equal((await call('B')).body.plan.tasks.length,0);
  console.log('PASS: private study planner, real source, preview, budget/rest, revision race, review schedule, weekly stats, extra records, reflection and deletion.');
 }finally{await mf.dispose();}
