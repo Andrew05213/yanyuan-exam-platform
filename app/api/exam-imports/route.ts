@@ -32,7 +32,7 @@ export async function POST(req:Request){try{const {id}=principal(req);sameOrigin
  if(body.action!=="save")throw new AccessError("操作无效。",400);
  const src=checked(()=>origin(body)),approved=body.approved===true;
  // Drafts may retain unclassified text/questions (bounded) but never enter the catalog.
- const gs=approved?checked(()=>groups(body.groups,src)):body.groups;if(!Array.isArray(gs)||gs.length>10||gs.some((g:any)=>!g||!Array.isArray(g.questions)||g.questions.length>50))throw new AccessError("题组格式无效。",400);
+ const gs=approved?checked(()=>groups(body.groups,src)):body.groups;if(!Array.isArray(gs)||gs.length>10||gs.some((g:any)=>!g||typeof g!=="object"||Array.isArray(g)||!Array.isArray(g.questions)||g.questions.length>50||g.questions.some((q:any)=>!q||typeof q!=="object"||Array.isArray(q))))throw new AccessError("题组格式无效。",400);
  if(approved&&(!gs.length||body.reviewConfirmed!==true))throw new AccessError("请逐题核对原卷、答案、位置及难度后确认。",400);
  const payload=JSON.stringify({approved,groups:gs});if(new TextEncoder().encode(payload).length>600000)throw new AccessError("题组内容超过600KB。",413);
  const q=await db.prepare("UPDATE private_exam_imports SET source=?,source_url=?,rights=?,payload=?,revision=revision+1,updated_at=? WHERE id=? AND owner_id=? AND revision=?").bind(src.source,src.sourceUrl,src.rights,payload,new Date().toISOString(),r.id,id,r.revision).run();if(!q.meta.changes)throw new AccessError("试卷版本已变化。",409);return reply({ok:true,id:r.id,revision:r.revision+1});

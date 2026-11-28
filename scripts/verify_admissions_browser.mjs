@@ -221,6 +221,19 @@ try{
   socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
   await js("document.querySelector('[data-dr-delete]').click()");
   await until("document.querySelector('[data-dr-message]')?.innerText.includes('已保存') && !document.querySelector('[data-dr-task]')");
+  await send('Page.navigate',{url:base+'/index.html#exam-imports'});
+  await until("!!document.querySelector('[data-ei-upload]')");
+  await js("(()=>{const f=document.querySelector('[data-ei-upload]');const dt=new DataTransfer();dt.items.add(new File(['1. Synthetic question?\\nA. One B. Two C. Three D. Four\\n答案：B'],'browser.txt',{type:'text/plain'}));f.querySelector('[name=file]').files=dt.files;f.querySelector('[name=source]').value='Synthetic source 2026';f.querySelector('[name=confirm]').checked=true;f.querySelector('button').click()})()");
+  await until("document.querySelector('[data-ei-text]')?.value.includes('Synthetic question')");
+  await js("document.querySelector('[data-ei-parse]').click();document.querySelector('[data-ei-group-form] [name=locator]').value='page 1';document.querySelector('[data-ei-group-form] [name=locator]').dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[data-ei-confirm]').checked=true;document.querySelector('[data-ei-approve]').click()");
+  await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已确认入私人题库')");
+  assert.equal(await js("TierStudio.data.items.some(x=>x.importId&&x.source.includes('Synthetic source 2026')&&x.questions[0].answer==='B')"),true);
+  await js("window.__eiReload=true");await send('Page.reload');await until("!window.__eiReload");await until("!!document.querySelector('[data-ei-file]')");
+  await js("document.querySelector('[data-ei-file]').click()");
+  await until("document.querySelector('[data-ei-edit]').innerText.includes('Synthetic source 2026') || document.querySelector('[data-ei-meta] [name=source]')?.value==='Synthetic source 2026'");
+  socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
+  await js("document.querySelector('[data-ei-delete]').click()");
+  await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已删除') && !document.querySelector('[data-ei-file]')");
   await db.prepare("DELETE FROM private_reference_libraries WHERE user_id=?").bind('browser-fixture').run();
   await db.prepare("DELETE FROM private_knowledge_graphs WHERE user_id=?").bind('browser-fixture').run();
   // Reset the isolated fixture's week so the second viewport exercises creation rather than reuse.
@@ -231,6 +244,7 @@ try{
  mock.assertNoPendingInterceptors();assert.equal(researchCalls,4);
  console.log('PASS: Chromium deep research preview, mock analysis, citation, review, expansion and reload.');
  console.log('PASS: Chromium desktop/mobile private report preview, DOCX bytes, real print-to-PDF and return navigation.');
+ console.log('PASS: Chromium desktop/mobile exam text upload, parse, provenance, reviewed catalog, reload and deletion.');
  console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete, long-term preferences, weekly preview/save, private graph and references create, search, link, export, edit, delete, reload and navigation.');
 }finally{
  try{socket?.close();await closeBrowser();}finally{
