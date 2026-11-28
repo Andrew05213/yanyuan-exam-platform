@@ -233,7 +233,7 @@ try{
   assert.equal(await js("ExamImportParser.parse('1. Question?\\nA. One B. Two C. Three D. Four\\n答案：B\\n参考答案：1.C').questions[0].answer"),'');
   await js("window.__eiReload=true");await send('Page.reload');await until("!window.__eiReload");await until("!!document.querySelector('[data-ei-file]')");
   await js("document.querySelector('[data-ei-file]').click()");
-  await until("document.querySelector('[data-ei-edit]').innerText.includes('Synthetic source 2026') || document.querySelector('[data-ei-meta] [name=source]')?.value==='Synthetic source 2026'");
+  await until("document.querySelector('[data-ei-meta] [name=source]')?.value==='Synthetic source 2026' && document.querySelector('[data-ei-group-form] [name=locator]')?.value==='page 1' && document.querySelector('[data-ei-questions] [data-q=answer]')?.value==='B'");
   socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
   await js("document.querySelector('[data-ei-delete]').click()");
   await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已删除') && !document.querySelector('[data-ei-file]')");
