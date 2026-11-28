@@ -2,6 +2,7 @@ import {requireCommunity} from "../../../../lib/community-access";
 import { getChatGPTUser } from "../../../chatgpt-auth";
 import { storage } from "../../../../db/store";
 import { visible, viewer, publicationVisible, publicationViewer } from "../../../../lib/research-community";
+import {researchLanguages,researchDisciplines,catalogItem} from "../../../literature/research-catalog";
 import { AccessError, fail, privateHeaders, readLimitedText, sameOrigin } from "../../../../lib/user-access";
 
 const pageSize=20;
@@ -17,6 +18,11 @@ const field=(value:unknown,max:number,required=true)=>{
   return value.trim();
 };
 const notFound=()=>new AccessError("该内容不存在或已撤回。",404);
+function classification(value:unknown,options:readonly {id:string}[],label:string){
+ if(value===undefined||value===null||value==="")return null;
+ if(typeof value!=="string"||!options.some(x=>x.id===value))throw new AccessError("未知"+label+"分类。",400);
+ return value;
+}
 function pageOffset(value:string|null){
   if(value===null)return 0;
   if(!/^\d{1,5}$/.test(value)||Number(value)>10000)throw new AccessError("分页参数无效。",400);
@@ -46,14 +52,15 @@ export async function GET(request:Request){
     const offset=pageOffset(params.get("offset"));
     if(topic!==null){
       const id=requireId(topic);
-      const found=await db.prepare("SELECT id,title,description,created_at AS createdAt,owner_id AS ownerId FROM research_topics WHERE id=? AND "+visible("research_topics","topic")).bind(id,...viewer(user.userId)).first();
+      const found=await db.prepare("SELECT id,title,description,language_id AS languageId,discipline,catalog_id AS catalogId,created_at AS createdAt,owner_id AS ownerId FROM research_topics WHERE id=? AND "+visible("research_topics","topic")).bind(id,...viewer(user.userId)).first();
       if(!found)throw notFound();
       const {ownerId,...topicView}=found as {ownerId:string;id:string;title:string;description:string;createdAt:string};
       const rows=await db.prepare("SELECT "+baseColumns+",substr(content,1,240) AS excerpt FROM research_publications WHERE topic_id=? AND "+publicationVisible("research_publications")+" ORDER BY updated_at DESC,id DESC LIMIT ? OFFSET ?").bind(id,...publicationViewer(user.userId),pageSize+1,offset).all<PublicationRow>();
       return json({topic:{...topicView,mine:ownerId===user.userId},publications:rows.results.slice(0,pageSize).map(row=>view(row,user.userId)),nextOffset:rows.results.length>pageSize&&offset+pageSize<=10000?offset+pageSize:null});
     }
     const q=field(params.get("q")??"",100,false);
-    const rows=await db.prepare("SELECT t.id,t.title,t.description,t.created_at AS createdAt,(SELECT count(*) FROM research_publications p WHERE p.topic_id=t.id AND "+visible("p","publication")+") AS noteCount FROM research_topics t WHERE instr(lower(t.title||' '||t.description),lower(?))>0 AND "+visible("t","topic")+" ORDER BY t.created_at DESC,t.id DESC LIMIT ? OFFSET ?").bind(...viewer(user.userId),q,...viewer(user.userId),pageSize+1,offset).all();
+    const languageId=classification(params.get("languageId"),researchLanguages,"语言"),discipline=classification(params.get("discipline"),researchDisciplines,"学科");
+    const rows=await db.prepare("SELECT t.id,t.title,t.description,t.language_id AS languageId,t.discipline,t.catalog_id AS catalogId,t.created_at AS createdAt,(SELECT count(*) FROM research_publications p WHERE p.topic_id=t.id AND "+visible("p","publication")+") AS noteCount FROM research_topics t WHERE instr(lower(t.title||' '||t.description),lower(?))>0 AND (? IS NULL OR t.language_id=?) AND (? IS NULL OR t.discipline=?) AND "+visible("t","topic")+" ORDER BY t.created_at DESC,t.id DESC LIMIT ? OFFSET ?").bind(...viewer(user.userId),q,languageId,languageId,discipline,discipline,...viewer(user.userId),pageSize+1,offset).all();
     return json({topics:rows.results.slice(0,pageSize),nextOffset:rows.results.length>pageSize&&offset+pageSize<=10000?offset+pageSize:null});
   }catch(error){return fail(error,"研究社区暂时不可用。");}
 }
@@ -70,9 +77,12 @@ export async function POST(request:Request){
     if(body.action!=="withdraw")await requireCommunity(request,user.userId,"write");
     if(body.action==="createTopic"){
       const title=field(body.title,160),description=field(body.description??"",2000,false),id=crypto.randomUUID();
-      const result=await db.prepare("INSERT INTO research_topics(id,owner_id,title,description,created_at) SELECT ?,?,?,?,? WHERE (SELECT count(*) FROM research_topics WHERE owner_id=?)<30").bind(id,user.userId,title,description,now,user.userId).run();
+      const languageId=classification(body.languageId,researchLanguages,"语言"),discipline=classification(body.discipline,researchDisciplines,"学科");
+      const catalogId=body.catalogId===undefined||body.catalogId===null||body.catalogId===""?null:field(body.catalogId,100);
+      if(catalogId){const item=catalogItem(catalogId);if(!item||item.languageId!==languageId||item.discipline!==discipline)throw new AccessError("关联研究目录与分类不一致。",400);}
+      const result=await db.prepare("INSERT INTO research_topics(id,owner_id,title,description,created_at,language_id,discipline,catalog_id) SELECT ?,?,?,?,?,?,?,? WHERE (SELECT count(*) FROM research_topics WHERE owner_id=?)<30").bind(id,user.userId,title,description,now,languageId,discipline,catalogId,user.userId).run();
       if(!result.meta.changes)throw new AccessError("每个账号最多创建30个议题。",429);
-      return json({id,title,description,createdAt:now,noteCount:0,mine:true},201);
+      return json({id,title,description,languageId,discipline,catalogId,createdAt:now,noteCount:0,mine:true},201);
     }
     if(body.action==="publish"){
       const topicId=requireId(body.topicId),entryId=requireId(body.entryId,entryPattern),version=field(body.sourceUpdatedAt,64);

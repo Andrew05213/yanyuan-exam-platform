@@ -13,7 +13,7 @@ const message=(e:unknown)=>e instanceof Error?e.message:"请求失败。";
 const key=(x:ResearchSource)=>x.kind+":"+x.id;
 const label=(k:string)=>k==="private"?"私人笔记":k==="publication"?"公开笔记":"共享书目";
 export function ResearchAssistant({topicId,allowShared=true}:{topicId?:string;allowShared?:boolean}){
- const [scope,setScope]=useState<ResearchScope>(allowShared?"public":"private"),[inTopic,setInTopic]=useState(true),[query,setQuery]=useState(""),[languages,setLanguages]=useState("中文、英语、日语、德语、法语"),[keywords,setKeywords]=useState<string[]>([]),[expanded,setExpanded]=useState(false);
+ const [scope,setScope]=useState<ResearchScope>(allowShared?"public":"private"),[inTopic,setInTopic]=useState(true),[query,setQuery]=useState(""),[languages,setLanguages]=useState("中文、英语、日语、德语、法语、西班牙语、俄语"),[keywords,setKeywords]=useState<string[]>([]),[expanded,setExpanded]=useState(false);
  const [hits,setHits]=useState<Hit[]>([]),[selected,setSelected]=useState<string[]>([]),[searched,setSearched]=useState(false),[task,setTask]=useState<ResearchTask>("synthesis"),[question,setQuestion]=useState(""),[language,setLanguage]=useState("中文"),[preview,setPreview]=useState<Preview|null>(null),[confirmed,setConfirmed]=useState(false),[result,setResult]=useState<Result|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
  const lock=useRef(false),serial=useRef(0);
  const chosen=hits.filter(h=>selected.includes(key(h)));

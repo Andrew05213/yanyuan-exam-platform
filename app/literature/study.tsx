@@ -18,6 +18,7 @@ import {draftKey,readDrafts} from "./drafts";
 import {Notebook} from "./notebook";
 import {AcademicEditor} from "./academic-editor";
 import {Community} from "./community";
+import {languageLabel,disciplineLabel} from "./research-catalog";
 import {GovernanceGate} from "./governance";
 import {ReviewDesk} from "./review-desk";
 import {readingPaths} from "./paths";
@@ -204,18 +205,18 @@ export default function Study({notebook=false}:{notebook?:boolean}){
   <a className="brand" href="/"><img src="/assets/mark.svg" width={36} height={36} alt=""/><strong>和知 AI</strong></a>
   <nav className="module-links" aria-label="模块导航">
    <a href="/literature" aria-current={notebook?undefined:"page"}>文学研习</a>
-   <a href="/reading-notes" aria-current={notebook?"page":undefined}>日本读书笔记</a>
+   <a href="/reading-notes" aria-current={notebook?"page":undefined}>研究与读书笔记</a>
    <a href="/#oral">口试训练</a>
   </nav>
  </header>
  <main className="shell">
   {notebook?<header className="notebook-intro">
    <img src="/assets/sansui-study.webp" width={1440} height={960} alt=""/>
-   <h1>日本读书笔记</h1>
+   <h1>研究与读书笔记</h1>
    <p>记录读过的作品、摘录与面试复练。</p>
    <span className="private"><Lock size={15}/> 仅本人可见</span>
   </header>:<header className="intro">
-   <div><h1>日本文学研习</h1><p className="sub">按作品、时代与主题阅读日本文学。</p></div>
+   <div><h1>文学与多语言研究</h1><p className="sub">原有日本作品资料与六语种研究社区并行。</p></div>
    <div className="reading-summary"><BookOpen size={22}/><strong>{completed}<span> / {materials.length}</span></strong><span>已读条目</span><Progress value={materials.length?completed/materials.length*100:0} aria-label="已读比例"/></div>
   </header>}
  {login&&<div className="notice">登录后可保存笔记和阅读进度。<a href={"/signin-with-chatgpt?return_to="+encodeURIComponent(returnTo)} target="_top">登录学习账号</a></div>}{error&&<div className="notice" role="alert">{error}<button onClick={()=>void load()}>重新读取</button></div>}
@@ -223,8 +224,7 @@ export default function Study({notebook=false}:{notebook?:boolean}){
  {notebook?<Notebook entries={entries} materials={materials} loading={loading} writable={writable} workId={linkedWork} create={()=>recover(newEntry())} open={recover} reload={()=>load(true)} move={moveEntry}/>:<Tabs value={tab} onValueChange={value=>{setTab(value);history.replaceState(null,"","#"+value);}}><TabsList className="navigation" variant="line"><TabsTrigger value="library"><Library/>研究资料</TabsTrigger><TabsTrigger value="history"><BookOpen/>文学脉络</TabsTrigger><TabsTrigger value="interview"><Mic/>面试练习</TabsTrigger><TabsTrigger value="review">复习与进度</TabsTrigger>{writable&&<TabsTrigger value="community">研究社区</TabsTrigger>}</TabsList>
  <TabsContent value="library"><section className="section-heading"><div><h2>作品与研究专题</h2><p>书单作品、中文论文和面试研读题。知网全文权限由来源平台提供。</p></div><div className="library-actions"><span className="muted">{found.length} 个条目</span><button className="primary" disabled={!writable} onClick={()=>{setMaterialError("");setMaterialDraft(newMaterial());}}><Plus size={17}/>新增资料</button></div></section><div className="filters"><label className="search"><Search size={18}/><input aria-label="搜索文学资料" placeholder="搜索作品、作家或主题" value={query} onChange={e=>setQuery(e.target.value)}/></label><Filter value={category} onChange={setCategory} items={["全部","文学","传统文化","近现代社会"]} label="筛选资料类别"/><Filter value={era} onChange={setEra} items={["全部",...eras.map(e=>e.title)]} label="筛选文学时代"/><Filter value={status} onChange={setStatus} items={["全部","未开始","在读","已读"]} label="筛选阅读状态"/></div><div className="grid">{found.map(w=><article className="material-card" key={w.id}><button className="work-card" onClick={()=>open(w)}><div className="card-top"><span>{researchById.get(w.id)?.group||w.era} / {w.author}</span><span className="status">{state(w)}</span></div><h3>{w.title}</h3><p>{w.brief}</p><div className="card-foot"><span>{w.theme}</span><BookOpen size={18}/></div></button><div className="material-actions"><button disabled={!writable} onClick={()=>editMaterial(w)} aria-label={"编辑"+w.title}><PenLine size={16}/>编辑</button><button className="danger-link" disabled={!writable} onClick={()=>{setMaterialError("");setDeleteTarget(w);}} aria-label={"删除"+w.title}><Trash2 size={16}/>删除</button></div></article>)}</div>{!found.length&&<div className="empty">没有符合条件的条目。试试其他关键词或筛选条件。</div>}</TabsContent>
  <TabsContent value="community">{writable?<GovernanceGate><Community entries={entries} refreshNotes={()=>load(true)}
-   createNote={(topic,source)=>recover({...newEntry(),title:source?"回应："+source.title:topic.title,
-    content:"研究问题："+topic.title+"\n\n文本或文献依据：\n\n尚待研究：\n"})}/></GovernanceGate>
+   createNote={(topic,source)=>recover({...newEntry(),title:source?"回应："+source.title:topic.title,language:"中文",sourceLanguage:source?.sourceLanguage||(topic.languageId?languageLabel(topic.languageId):""),discipline:source?.discipline||(topic.discipline?disciplineLabel(topic.discipline):""),content:"研究问题："+topic.title+"\n\n"+(topic.description?"研究范围与检索线索：\n"+topic.description+"\n\n":"")+"文本或文献依据（待核对）：\n\n尚待研究：\n"})}/></GovernanceGate>
    :<p role="status">{login?"登录后查看研究社区。":error?"暂时无法检查社区访问权限。":!writable?"正在读取社区…":"正在读取社区…"}</p>}</TabsContent>
  <TabsContent value="review">{writable?<ReviewDesk entries={entries.filter(entry=>entry.folder==="active")} materials={materials} edit={recover} open={open}/>:<p>登录并加载个人档案后可查看学习进度。</p>}</TabsContent>
  <TabsContent value="history">

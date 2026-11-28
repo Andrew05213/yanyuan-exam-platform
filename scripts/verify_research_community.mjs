@@ -64,6 +64,20 @@ try{
  assert.equal((await get(b,'?q=Shared')).data.topics.length,1);
  assert.equal((await get(b,'?q=nonexistent')).data.topics.length,0);
  assert.equal((await get(b,'?offset=-1')).status,400);
+ const de=await post(a,{action:'createTopic',title:'German research fixture',languageId:'de',discipline:'literature',catalogId:'de-literature'});assert.equal(de.status,201,JSON.stringify(de.data));
+ assert.equal((await post(a,{action:'createTopic',title:'Bad',languageId:'invalid'})).status,400);
+ assert.equal((await post(a,{action:'createTopic',title:'Mismatch',languageId:'ja',discipline:'literature',catalogId:'de-literature'})).status,400);
+ assert.equal((await get(b,'?languageId=de&discipline=literature')).data.topics.length,1);
+ assert.equal((await get(b,'?languageId=de&discipline=history')).data.topics.length,0);
+ assert.equal((await get(b,'?languageId=invalid')).status,400);
+ assert.equal((await get(b,'?topic='+de.data.id)).data.topic.catalogId,'de-literature');
+ assert.equal((await get(b,'?topic='+t)).data.topic.languageId,null);
+ assert.equal((await get(uninvited,'?languageId=de')).status,403);
+ const {communityCatalog,researchLanguages,filterCatalog}=await import('../app/literature/research-catalog.ts');
+ assert.equal(communityCatalog.length,42);assert.equal(new Set(communityCatalog.map(x=>x.id)).size,42);
+ for(const lang of researchLanguages){const items=filterCatalog(lang.id);assert.equal(items.length,lang.tier==='core'?6:1);for(const item of items){assert.ok(item.summary&&item.question&&item.version);assert.ok(item.sources.every(s=>s.kind==='discovery'&&new URL(s.url).protocol==='https:'));}}
+ assert.equal(filterCatalog('de','literature','歌德').length,1);
+ console.log('PASS: 42 multilingual study guides, six core and six basic languages, catalog linkage, server-side topic classification and access control.');
  assert.equal((await post(a,{action:'withdraw',id:aid})).status,200);
  assert.equal((await get(b,'?publication='+aid)).status,404);
  assert.equal((await get(b,topicQuery)).data.publications.length,1);
