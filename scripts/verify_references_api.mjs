@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {readFileSync,readdirSync} from 'node:fs';import path from 'node:path';
+const require=createRequire(import.meta.url),{Miniflare}=require(createRequire(require.resolve('wrangler')).resolve('miniflare')),root=path.resolve('dist/server'),modules=['index.js',...readdirSync(root,{recursive:true}).filter(f=>/\.m?js$/.test(f)&&f!=='index.js')];
+const mf=new Miniflare({modules:modules.map(f=>({type:'ESModule',path:path.join(root,f)})),modulesRoot:root,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],d1Databases:['DB'],r2Buckets:['BUCKET']});
+const stamp=new Date().toISOString();async function call(user,q={},body,extra={},endpoint='references'){const r=await mf.dispatchFetch('https://study.test/api/'+endpoint+'?'+new URLSearchParams(q),{method:body?'POST':'GET',headers:{...(user?{'oai-authenticated-user-id':user,'oai-authenticated-user-email':user+'@qa.invalid'}:{}),...(body?{'Content-Type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined});return {status:r.status,body:await r.json(),cache:r.headers.get('cache-control')};}
+try{const db=await mf.getD1Database('DB');for(const f of readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())for(const sql of readFileSync('drizzle/'+f,'utf8').split('--> statement-breakpoint').map(s=>s.trim()).filter(Boolean))await db.prepare(sql).run();
+ for(const [uid,id] of [['A','own-note'],['B','other-note']])await db.prepare("INSERT INTO entries(user_id,id,title,content,status,updated_at) VALUES(?,?,?,?,?,?)").bind(uid,id,id,'PRIVATE_'+uid,'在读',stamp).run();
+ assert.equal((await call(null)).status,401);const a=await call('A');assert.equal(a.status,200,JSON.stringify(a.body));assert.match(a.cache,/no-store/);assert.equal(a.body.total,0);assert.deepEqual(a.body.notes.map(n=>n.id),['own-note']);
+ const b={version:null,action:'create',kind:'article',title:'Real fixture paper',authors:['Author'],year:'2024',venue:'Journal',doi:'10.1234/fixture',status:'reading',tags:['topic'],noteIds:['own-note'],projectIds:[]};
+ assert.equal((await call('A',{},b,{Origin:'https://other.invalid'})).status,403);
+ assert.equal((await call('A',{}, {...b,noteIds:['other-note']})).status,404);
+ const race=await Promise.all([call('A',{},b),call('A',{},b)]);assert.deepEqual(race.map(r=>r.status).sort(),[200,409],JSON.stringify(race));let version=race.find(r=>r.status===200).body.version;
+ const list=await call('A',{q:'fixture'});assert.equal(list.body.total,1);const item=list.body.items[0];assert.equal((await call('B',{id:item.id})).status,404);assert.equal((await call('B')).body.total,0);
+ assert.equal((await call('A',{}, {...b,version})).status,409);
+ assert.match((await call('A',{id:item.id,format:'bibtex'})).body.text,/10.1234\/fixture/);
+ const graph=await call('A',{kind:'reference'},undefined,{},'knowledge-graph');assert.equal(graph.status,200,JSON.stringify(graph.body));assert.equal(graph.body.total,1);const focus=await call('A',{focus:graph.body.nodes[0].id},undefined,{},'knowledge-graph');assert.ok(focus.body.focus.edges.some(e=>e.relation==='reference_note'));assert.equal((await call('B',{kind:'reference'},undefined,{},'knowledge-graph')).body.total,0);
+ const cat=await call('A',{mode:'catalog'});assert.ok(cat.body.total>0);const collect=await call('A',{}, {action:'collect',catalogId:cat.body.items[0].id,version});assert.equal(collect.status,200,JSON.stringify(collect.body));version=collect.body.version;
+ const ex=await call('A',{format:'ris'});assert.equal(ex.body.included,1);assert.equal(ex.body.skipped,1);
+ await db.prepare("UPDATE entries SET folder='archived' WHERE user_id='A' AND id='own-note'").run();const archived=await call('A',{id:item.id});assert.equal(archived.body.item.missingLinks,1);assert.deepEqual(archived.body.item.noteIds,[]);
+ const edit=await call('A',{}, {...b,version,action:'update',id:item.id,noteIds:[],title:'Edited paper',status:'read'});assert.equal(edit.status,200,JSON.stringify(edit.body));version=edit.body.version;
+ assert.equal((await call('A',{}, {version,action:'delete',id:item.id})).status,200);assert.equal((await call('A',{id:item.id})).status,404);assert.equal((await db.prepare("SELECT count(*) AS n FROM entries").first()).n,2);
+ console.log('PASS: private references, owner isolation, atomic revision, catalog, citation export, graph integration, source archival, edit and delete.');
+}finally{await mf.dispose();}

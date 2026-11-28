@@ -143,3 +143,7 @@ export const studyReviewReschedules=sqliteTable("study_review_reschedules",{
 export const privateKnowledgeGraphs=sqliteTable("private_knowledge_graphs",{
  userId:text("user_id").primaryKey().notNull(),version:text("version").notNull(),payload:text("payload").notNull(),updatedAt:text("updated_at").notNull(),
 });
+
+export const privateReferenceLibraries=sqliteTable("private_reference_libraries",{
+ userId:text("user_id").primaryKey().notNull(),version:text("version").notNull(),payload:text("payload").notNull(),updatedAt:text("updated_at").notNull(),
+});
