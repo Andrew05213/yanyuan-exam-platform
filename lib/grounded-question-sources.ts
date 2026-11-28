@@ -30,8 +30,11 @@ export async function loadGroundSources(request:Request,uid:string,selection:{sc
 }
 export const modelGroundSources=(sources:GroundSource[])=>sources.map(({id,kind,...safe})=>safe);
 export async function verifySavedGroundEvidence(request:Request,uid:string,evidence:QuestionEvidence[]){
+ const cached=new Map<string,GroundSource>();
  for(const e of evidence){
-  const source=(await loadGroundSources(request,uid,{scope:e.kind==="private"?"private":"public",sources:[{kind:e.kind,id:e.id,version:e.version}]}))[0];
+  const key=e.kind+":"+e.id+":"+e.version;
+  let source=cached.get(key);
+  if(!source){source=(await loadGroundSources(request,uid,{scope:e.kind==="private"?"private":"public",sources:[{kind:e.kind,id:e.id,version:e.version}]}))[0];cached.set(key,source);}
   if(!source.paragraphs.find(p=>p.number===e.paragraph)?.text.includes(e.quote))throw new AccessError("材料依据已变化，请重新生成。",409);
  }
 }

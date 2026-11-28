@@ -442,6 +442,7 @@ const AIStudio = {
 
   oralPacket(items, minutes) {
     const school = Hub.schoolById(Hub.school);
+    const grounded=items.some(x=>x.sourceJobId),label=grounded?'多语言资料研习':'日语';
     const list = items.slice(0, 20).map((item) => {
       const question = item.questions[0] || {};
       return {
@@ -459,7 +460,7 @@ const AIStudio = {
         answerSeconds: Math.max(60, Math.min(300, Math.floor((minutes * 60) / Math.max(1, items.length)))),
         terms: [],
         version: '2.0',
-        countryLanguageId: 'ja',
+        countryLanguageId: grounded?null:'ja',
         schoolSpecific: false,
       };
     });
@@ -467,9 +468,9 @@ const AIStudio = {
       schema: 1,
       kind: 'oral',
       schoolId: Hub.school,
-      languageId: 'ja',
-      languageLabel: '日语',
-      schoolName: (school?.name || '') + ' · 日语',
+      languageId: grounded?'research':'ja',
+      languageLabel: label,
+      schoolName: (school?.name || '') + ' · '+label,
       items: list,
       count: list.length,
       createdAt: new Date().toISOString(),

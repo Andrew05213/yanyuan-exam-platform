@@ -109,7 +109,7 @@ try{
  const grounded={subject:'语文',type:'cn-subjective',count:1,difficulty:'进阶',topic:'物哀',ground:{scope:'private',sources:[{kind:'private',id:'note_shared',version}]}};
  const previewQ=await call(qp,'A',{...grounded,action:'preview',requestId:crypto.randomUUID()});assert.equal(previewQ.status,200,JSON.stringify(previewQ.data));
  assert.equal(previewQ.data.sources[0].paragraphs[0].text,'物哀 mono no aware もののあはれ');
- assert.ok([404,409].includes((await call(qp,'B',{...grounded,action:'preview',requestId:crypto.randomUUID()})).status));
+ assert.equal((await call(qp,'B',{...grounded,ground:{scope:'private',sources:[{kind:'private',id:'note_hidden',version}]},action:'preview',requestId:crypto.randomUUID()})).status,404);
  assert.equal((await call(qp,'A',{...grounded,requestId:crypto.randomUUID(),fingerprint:previewQ.data.fingerprint})).status,409);
  const generated={items:[{title:'材料理解',text:'',questions:[{stem:'解释物哀这一概念。',analysis:'依据所选片段进行解释。',tag:'文学',options:[],answer:'',reference:'结合所给概念与语境回答。',evidence:[{source:'S1',paragraph:1,quote:'物哀'}]}]}]};
  stub(generated,body=>{assert.ok(body.includes('物哀 mono no aware'));assert.ok(!body.includes('PRIVATE_A'));});
