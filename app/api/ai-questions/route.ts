@@ -2,6 +2,8 @@ import { principal, sameOrigin, fail, AccessError, privateHeaders, readLimitedTe
 import { adminDb } from "../../../lib/admin-access";
 import { runStudyAI, studyAIProvider } from "../../../lib/study-ai";
 import { textHash } from "../../../lib/study-contracts";
+import {groundSelection,loadGroundSources,modelGroundSources,groundFingerprint} from "../../../lib/grounded-question-sources";
+import {groundedPrompt,parseGroundedGeneration} from "../../../lib/grounded-question-generation";
 import { AI_DIFFICULTIES, AI_SUBJECTS, BankContractError } from "../../../lib/question-bank-contracts";
 import {
   AI_COUNTS,
@@ -63,7 +65,7 @@ function replay(row: any, requestHash: string) {
         elapsedMs: row.elapsed_ms,
         generatedAt: row.created_at,
         reviewStatus: "pending",
-        promptVersion: "ai-topic-v1",
+        promptVersion: JSON.parse(row.result).some((item:any)=>item.sourceJobId)?"grounded-v1":"ai-topic-v1",
       };
     } catch {
       return reply({ error: "历史生成结果无法读取，请重新提交。", retryable: true }, 503);
@@ -134,7 +136,15 @@ export async function POST(request: Request) {
       type: body.type,
       count: body.count, focus: body.focus, words: body.words,
     });
-    const requestHash = await textHash(JSON.stringify(plan));
+    const selection=body.ground!==undefined?groundSelection(body.ground):null;
+    if(body.action==="preview"&&!selection)return reply({error:"请选择材料。"},400);
+    const sources=selection?await loadGroundSources(request,user.id,selection):null;
+    const groundTarget=selection?await studyAIProvider():null;
+    const destination=groundTarget?{host:new URL(groundTarget.url).hostname,model:groundTarget.provider.model}:null;
+    const fingerprint=groundTarget&&sources?await groundFingerprint({user:user.id,plan,selection,sources,provider:groundTarget.provider.id,revision:groundTarget.provider.revision,destination}):null;
+    if(body.action==="preview")return reply({sources,plan,destination,fingerprint});
+    if(selection&&(body.confirm!==true||body.fingerprint!==fingerprint))return reply({error:"材料、题型或模型配置已变化，请重新预览并确认。"},409);
+    const requestHash = await textHash(JSON.stringify(selection?{plan,fingerprint}:plan));
     id = await jobId(user.id, body.requestId);
     const db = adminDb();
     const prior = await db.prepare("SELECT * FROM ai_question_jobs WHERE id=? AND owner_id=?").bind(id, user.id).first<any>();
@@ -158,7 +168,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const target = await studyAIProvider();
+    const target = groundTarget||await studyAIProvider();
     const {provider} = target;
     const stamp = new Date(now).toISOString();
     try {
@@ -183,12 +193,13 @@ export async function POST(request: Request) {
     inserted = true;
 
     const items = await runStudyAI(target,user,id,"question-generation",[
-      {role:"system",content:promptFor(plan)},
-      {role:"user",content:JSON.stringify({subject:plan.subject,type:plan.type.id,topic:plan.topic,difficulty:plan.difficulty,count:plan.count})},
-    ],text => parseGeneration(text,plan),{
+      {role:"system",content:sources?groundedPrompt(promptFor(plan)):promptFor(plan)},
+      {role:"user",content:JSON.stringify({subject:plan.subject,type:plan.type.id,topic:plan.topic,difficulty:plan.difficulty,count:plan.count,...(sources?{sources:modelGroundSources(sources)}:{})})},
+    ],text => sources?parseGroundedGeneration(text,plan,sources,id):parseGeneration(text,plan),{
       since:new Date(now-AI_GENERATION_LIMITS.dailySeconds*1000).toISOString(),
       limit:AI_GENERATION_LIMITS.maxPerDay,
     });
+    if(selection&&sources){const current=await loadGroundSources(request,user.id,selection);if(await groundFingerprint(current)!==await groundFingerprint(sources))throw new AccessError("生成期间材料已变化，请重新预览。",409);}
     const elapsedMs = Date.now() - started;
     const generatedAt = new Date().toISOString();
     await finish(id, user.id, "succeeded", { result: JSON.stringify(items), elapsedMs, model: provider.model });
@@ -199,7 +210,7 @@ export async function POST(request: Request) {
       generatedAt,
       elapsedMs,
       reviewStatus: "pending",
-      promptVersion: "ai-topic-v1",
+      promptVersion: sources?"grounded-v1":"ai-topic-v1",
       requestId: body.requestId,
       deduplicated: false,
       quota: quotaPayload(quota),
