@@ -81,7 +81,7 @@ try{
   await until("!document.querySelector('[data-sp-task]') && document.querySelector('[data-sp-message]')?.innerText.includes('已保存')");
   await js("document.querySelector('[data-sp-tab=settings]').click()");
   await until("!!document.querySelector('[data-long-form]')");
-  await js("document.querySelector('[data-long-budget=0]').value='45';document.querySelector('[data-long-form] button.btn.primary').click()");
+  await js("document.querySelector('[data-long-budget=\"0\"]').value='45';document.querySelector('[data-long-form] button.btn.primary').click()");
   await until("document.querySelector('[data-sp-message]')?.innerText.includes('长期设置已保存')");
   await js("document.querySelector('[data-long-preview]').click()");
   await until("!document.querySelector('[data-long-save]')?.disabled && !!document.querySelector('[data-long-result]')");
@@ -89,7 +89,7 @@ try{
   await until("document.querySelector('[data-sp-message]')?.innerText.includes('整周计划已创建')");
   await js("window.__weekReload=true");await send('Page.reload');await until("!window.__weekReload");await until("!!document.querySelector('[data-sp-tab=settings]')");
   await js("document.querySelector('[data-sp-tab=settings]').click()");
-  await until("document.querySelector('[data-long-budget=0]')?.value==='45'");
+  await until("document.querySelector('[data-long-budget=\"0\"]')?.value==='45'");
   // Reset the isolated fixture's week so the second viewport exercises creation rather than reuse.
   await db.prepare("DELETE FROM study_day_plans WHERE user_id=?").bind('browser-fixture').run();
 
