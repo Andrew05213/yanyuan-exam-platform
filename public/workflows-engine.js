@@ -92,7 +92,7 @@
     const answer=String(answers[q.id]||'');if(answer.trim())answered++;
     if(q.kind==='writing'||q.kind==='translation'){const block=p.blocks.find(b=>b.questions.includes(q)),g=ai[q.id];if(g&&g.answer===answer&&g.questionIdentity===JSON.stringify({question:q,material:block.text||''})&&Number.isInteger(g.assessment?.score)&&g.assessment.score>=0&&g.assessment.score<=100){const score=Math.round(g.assessment.score*q.points)/100;subjectiveMax+=q.points;subjectiveScore+=score;details.push({id:q.id,status:'AI 已批改',score});continue;}}
     if(q.kind==='writing'||q.kind==='translation'){subjectiveMax+=q.points;const value=manual[q.id];if(value===''||value==null){pending++;details.push({id:q.id,status:'待批改'});}else{if(!Number.isFinite(Number(value))||Number(value)<0||Number(value)>q.points)throw Error('主观题得分超出本题范围。');subjectiveScore+=Number(value);details.push({id:q.id,status:'已人工评分',score:Number(value)});}continue;}
-    objectiveMax+=q.points;const good=q.kind==='mc'?answer===q.answer:q.accepted.some(a=>normalize(a)===normalize(answer));if(good){objectiveScore+=q.points;correct++;}details.push({id:q.id,status:good?'正确':answer?'待订正':'未答',score:good?q.points:0});
+    objectiveMax+=q.points;const good=q.kind==='mc'?answer===q.answer:q.accepted.some(a=>p.subject==='数学'?String(a).trim()===answer.trim():normalize(a)===normalize(answer));if(good){objectiveScore+=q.points;correct++;}details.push({id:q.id,status:good?'正确':answer?'待订正':'未答',score:good?q.points:0});
   }
   return {objectiveScore,objectiveMax,subjectiveScore,subjectiveMax,pendingSubjective:pending,total:pending?null:objectiveScore+subjectiveScore,answered,correct,count:p.count,details};
  }

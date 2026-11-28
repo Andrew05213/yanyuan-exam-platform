@@ -11,6 +11,7 @@ const englishAITypes = [
   ['literary','英语文学与文化常识',[1,3,5]], ['writing','作文',[1,2]], ['correction','改错',[1,3,5]],
   ['zh-en','中翻英',[1,2]], ['en-zh','英翻中',[1,2]], ['mc','词汇语法',[3,5,10]],
 ].map(([id,label,counts])=>({id,label,counts}));
+const newAITypes = {"语文":[{"id":"cn-modern","label":"现代文阅读（简答）","counts":[2,3,4]},{"id":"cn-classical","label":"文言文阅读（理解与翻译）","counts":[2,3,4]},{"id":"cn-poem","label":"古诗词鉴赏（简答）","counts":[1,2,3]},{"id":"cn-language","label":"语言文字运用（单选）","counts":[3,5,10]},{"id":"cn-literary","label":"文学文化常识（单选）","counts":[3,5,10]},{"id":"cn-writing","label":"语文作文","counts":[1,2]}],"数学":[{"id":"math-mc","label":"数学单项选择","counts":[3,5,10]},{"id":"math-fill","label":"数学填空","counts":[3,5,10]},{"id":"math-solution","label":"数学解答与证明","counts":[1,2,3,5]}]};
 const AIStudio = {
   data: null,
   state: {
@@ -86,6 +87,8 @@ const AIStudio = {
           <label>训练预设<select id="ai-preset"><option>自定义</option><option>北大日语方向 · 国别口试模拟</option><option>日本文学比较</option><option>专八难度英语阅读</option></select></label>
           <label>科目<select id="ai-subject" name="subject">
             <option value="英语">英语</option>
+            <option value="语文">语文</option>
+            <option value="数学">数学</option>
             <option value="日本国别">日本国别</option>
             <option value="文学口试">文学口试</option>
           </select></label>
@@ -146,6 +149,7 @@ const AIStudio = {
     if (!subjectEl || !typeEl) return;
     const subjects = this.state.status?.subjects || [
       { id: '英语', types: englishAITypes },
+      ...Object.entries(newAITypes).map(([id,types])=>({id,types})),
       { id: '日本国别', types: [{ id: 'mc', label: '日本国别：单项选择', counts: [3, 5, 10] }] },
       { id: '文学口试', types: [{ id: 'oral', label: '文学口试：问答与追问', counts: [1, 2, 3] }] },
     ];
@@ -163,7 +167,7 @@ const AIStudio = {
     const subjectEl = document.getElementById('ai-subject');
     const subject = (this.state.status?.subjects || []).find((item) => item.id === subjectEl.value);
     const type = subject?.types.find((item) => item.id === typeEl.value);
-    const options = type?.counts || (subjectEl.value==='英语'?englishAITypes.find(t=>t.id===typeEl.value)?.counts:undefined) || (typeEl.value === 'reading' ? [3, 4, 5] : typeEl.value === 'oral' ? [1, 2, 3] : [3, 5, 10]);
+    const options = type?.counts || (subjectEl.value==='英语'?englishAITypes:newAITypes[subjectEl.value])?.find(t=>t.id===typeEl.value)?.counts || (typeEl.value === 'reading' ? [3, 4, 5] : typeEl.value === 'oral' ? [1, 2, 3] : [3, 5, 10]);
     countEl.innerHTML = options.map((n) => `<option value="${n}">${n} ${typeEl.value==='gap-seven'?'篇':'题'}</option>`).join('');
   },
 
@@ -420,8 +424,10 @@ const AIStudio = {
     switch(item.section){
       case 'gap-seven':
         return {...base,kind:'order',paragraphs:Object.fromEntries(question.options.map((option,i)=>['ABCDEFG'[i],option])),accepted:[question.answer]};
-      case 'correction':
+      case 'math-fill': case 'correction':
         return {...base,kind:'fill',accepted:question.accepted};
+      case 'cn-modern': case 'cn-classical': case 'cn-poem': case 'cn-writing': case 'math-solution':
+        return {...base,kind:'writing',reference:question.reference};
       case 'writing':
         return {...base,kind:'writing',reference:question.reference};
       case 'zh-en': case 'en-zh':
@@ -516,7 +522,7 @@ const AIStudio = {
 
   previewItem(item) {
     const checked = this.state.selected.has(item.id) ? 'checked' : '';
-    const heading = item.subject==='英语' ? englishAITypes.find(type=>type.id===item.section)?.label : item.subject;
+    const heading = (item.subject==='英语'?englishAITypes:newAITypes[item.subject])?.find(type=>type.id===item.section)?.label || item.subject;
     return `<article class="ai-preview-item">
       <header><label class="hub-check"><input type="checkbox" data-ai-select="${this.escape(item.id)}" ${checked}>选择</label>
         <span class="hub-record-kind">AI 生成 · 待审核</span><span class="version-pill">${this.escape(heading)} · ${this.escape(item.difficulty)}</span></header>
@@ -551,7 +557,7 @@ const AIStudio = {
     }
     const counts = {};
     for (const record of this.state.bank) counts[record.item.subject] = (counts[record.item.subject] || 0) + 1;
-    box.innerHTML = `<div class="ai-bank-head"><p class="hub-form-note">共 ${this.state.bank.length} 组：${Object.entries(counts).map(([subject, n]) => `${this.escape(subject)} ${n}`).join(' · ')}。英语题由个人题库单独组卷。</p>
+    box.innerHTML = `<div class="ai-bank-head"><p class="hub-form-note">共 ${this.state.bank.length} 组：${Object.entries(counts).map(([subject, n]) => `${this.escape(subject)} ${n}`).join(' · ')}。按当前所选科目和难度从个人题库组卷。</p>
       <div class="studio-actions"><label>题库难度<select id="ai-bank-difficulty"><option value="">全部难度</option>${["基础","进阶","挑战"].map(value=>`<option ${this.state.bankTier===value?"selected":""}>${value}</option>`).join("")}</select></label><button class="btn primary" type="button" data-ai-action="compose-bank">用我的题库组卷</button><button class="btn secondary" type="button" data-ai-action="compose-mixed">我的题库 + 本次 AI 新题混合组卷</button><button class="btn secondary" type="button" data-ai-action="reload-bank">刷新</button></div></div>
       <div class="ai-bank-list">${this.state.bank.filter(record=>!this.state.bankTier||record.item.difficulty===this.state.bankTier).map(record=>this.bankRow(record)).join('')||'<p>当前档位暂无题目。</p>'}</div>`;
   },

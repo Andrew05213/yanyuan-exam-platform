@@ -131,7 +131,7 @@ ok("oral plan selects oral section", () => {
   assert.equal(generationPlan({ subject: "文学口试", type: "oral", difficulty: "挑战", topic: "物哀", count: 2 }).section, "oral-country");
 });
 
-rejects("unknown subject rejected", () => generationPlan({ subject: "数学", type: "mc", difficulty: "进阶", topic: "x", count: 3 }), /科目/);
+rejects("unknown subject rejected", () => generationPlan({ subject: "物理", type: "mc", difficulty: "进阶", topic: "x", count: 3 }), /科目/);
 rejects("subject/type mismatch rejected", () => generationPlan({ subject: "日本国别", type: "reading", difficulty: "进阶", topic: "x", count: 3 }), /题型/);
 rejects("too many reading questions rejected", () => generationPlan({ subject: "英语", type: "reading", difficulty: "进阶", topic: "x", count: 99 }), /题量/);
 rejects("topic injection rejected", () => generationPlan({ subject: "英语", type: "mc", difficulty: "进阶", topic: "<script>", count: 3 }), /主题/);
@@ -218,7 +218,7 @@ rejects("tampered question id rejected", () => {
 }, /编号不连续/);
 
 ok("subject matrix covers the three priority areas", () => {
-  assert.deepEqual(Object.keys(AI_TYPES), ["英语", "日本国别", "文学口试"]);
+  assert.deepEqual(Object.keys(AI_TYPES), ["英语", "语文", "数学", "日本国别", "文学口试"]);
   assert.equal(AI_COUNTS.reading.options.at(-1), 5);
 });
 
@@ -359,5 +359,30 @@ rejects("seven options require five distinct answers",()=>{
  fixture.questions[0].answer="AAAAB";
  return parseGeneration(JSON.stringify({items:[fixture]}),generationPlan({subject:"英语",type:"gap-seven",difficulty:"进阶",count:1,topic:"衔接"}));
 },/不重复/);
+
+
+const newSpecs=[["语文","cn-modern","现代文阅读（简答）",[2,3,4]],["语文","cn-classical","文言文阅读（理解与翻译）",[2,3,4]],["语文","cn-poem","古诗词鉴赏（简答）",[1,2,3]],["语文","cn-language","语言文字运用（单选）",[3,5,10]],["语文","cn-literary","文学文化常识（单选）",[3,5,10]],["语文","cn-writing","语文作文",[1,2]],["数学","math-mc","数学单项选择",[3,5,10]],["数学","math-fill","数学填空",[3,5,10]],["数学","math-solution","数学解答与证明",[1,2,3,5]]];
+for(const [subject,type,label,counts] of newSpecs){
+ const count=counts[0],plan=generationPlan({subject,type,difficulty:"进阶",topic:"专题训练",count});
+ const reading=["cn-modern","cn-classical","cn-poem"].includes(type),mc=["cn-language","cn-literary","math-mc"].includes(type),fill=type==="math-fill";
+ const material=reading?"清晨的校园里，树影与微风交织，作者细察身边的景物并探讨人与自然的关系。".repeat(12):"";
+ const question=i=>({stem:"请分析第"+(i+1)+"题的依据与结论",analysis:"列出关键依据并验证结论。",tag:"考点",options:mc?["甲","乙","丙","丁"]:[],answer:mc?"B":"",...(fill?{accepted:["1/2","0.5"]}:!mc?{reference:"首先梳理条件，其次推导结论，最后进行检验。"}:{})});
+ const raw={items:reading?[{title:label,text:material,questions:Array.from({length:count},(_,i)=>question(i))}]:Array.from({length:count},(_,i)=>({title:label,text:"",questions:[question(i)]}))};
+ const items=parseGeneration(JSON.stringify(raw),plan);
+ ok(label+" generates and round-trips through bank and written packet",()=>{
+  assert.equal(items.length,reading?1:count);
+  assert.equal(items[0].subject,subject);
+  assert.deepEqual(validateBankItem(items[0]),items[0]);
+  const packet=writingStudio.writtenPacket(items,subject,60);
+  assert.equal(packet.subject,subject);
+  assert.equal(packet.count,count);
+  assert.equal(packet.blocks[0].questions[0].kind,mc?"mc":fill?"fill":"writing");
+  assert.match(promptFor(plan),/原创/);
+ });
+ if(reading)rejects(label+" rejects absent reading material",()=>parseGeneration(JSON.stringify({items:[{...raw.items[0],text:""}]}),plan),/材料/);
+ if(fill){const packet=writingStudio.writtenPacket(items,subject,60);ok("math fill accepts explicit equivalents, not punctuation-stripped variants",()=>{assert.equal(vmContext.WorkflowEngine.grade(packet,{1:"0.5"}).correct,1);assert.equal(vmContext.WorkflowEngine.grade(packet,{1:"0.5."}).correct,0);});}
+ if(!mc&&!fill){const broken=JSON.parse(JSON.stringify(raw));delete broken.items[0].questions[0].reference;rejects(label+" rejects missing reference",()=>parseGeneration(JSON.stringify(broken),plan),/参考答案/);}
+}
+rejects("Chinese subject cannot use English cloze",()=>generationPlan({subject:"语文",type:"cloze",difficulty:"进阶",topic:"阅读",count:5}),/题型/);
 
 console.log(`\n${passed} checks passed${process.exitCode ? ", with failures" : ""}.`);

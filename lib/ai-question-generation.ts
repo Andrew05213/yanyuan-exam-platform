@@ -23,11 +23,33 @@ export const AI_TYPES: Record<AiSubject, { id: string; label: string; section: s
     { id: "en-zh", label: "英翻中", section: "en-zh" },
     { id: "mc", label: "词汇语法：单项选择", section: "mc" },
   ],
+  语文: [
+    { id: "cn-modern", label: "现代文阅读（简答）", section: "cn-modern" },
+    { id: "cn-classical", label: "文言文阅读（理解与翻译）", section: "cn-classical" },
+    { id: "cn-poem", label: "古诗词鉴赏（简答）", section: "cn-poem" },
+    { id: "cn-language", label: "语言文字运用（单选）", section: "cn-language" },
+    { id: "cn-literary", label: "文学文化常识（单选）", section: "cn-literary" },
+    { id: "cn-writing", label: "语文作文", section: "cn-writing" },
+  ],
+  数学: [
+    { id: "math-mc", label: "数学单项选择", section: "math-mc" },
+    { id: "math-fill", label: "数学填空", section: "math-fill" },
+    { id: "math-solution", label: "数学解答与证明", section: "math-solution" },
+  ],
   日本国别: [{ id: "mc", label: "日本国别：单项选择", section: "country" }],
   文学口试: [{ id: "oral", label: "文学口试：问答与追问", section: "oral-country" }],
 };
 
 export const AI_COUNTS: Record<string, { min: number; max: number; options: number[] }> = {
+  "cn-modern": { min: 2, max: 4, options: [2,3,4] },
+  "cn-classical": { min: 2, max: 4, options: [2,3,4] },
+  "cn-poem": { min: 1, max: 3, options: [1,2,3] },
+  "cn-language": { min: 3, max: 10, options: [3,5,10] },
+  "cn-literary": { min: 3, max: 10, options: [3,5,10] },
+  "cn-writing": { min: 1, max: 2, options: [1,2] },
+  "math-mc": { min: 3, max: 10, options: [3,5,10] },
+  "math-fill": { min: 3, max: 10, options: [3,5,10] },
+  "math-solution": { min: 1, max: 5, options: [1,2,3,5] },
   reading: { min: 3, max: 6, options: [3, 4, 5] },
   cloze: { min: 5, max: 10, options: [5, 8, 10] },
   "gap-seven": { min: 1, max: 1, options: [1] },
@@ -92,6 +114,41 @@ export function promptFor(plan: GenerationPlan): string {
     "zh-en":"每组一题，stem 要求译成英文。text 放一段原创中文短文，reference 放自然准确的英文参考译文，analysis 用中文讲解表达与难点。options 为空数组，answer 为空字符串。",
     "en-zh":"每组一题，stem 要求译成中文。text 放一段原创英文短文，reference 放自然准确的中文参考译文，analysis 用中文讲解表达与难点。options 为空数组，answer 为空字符串。",
   };
+  if(plan.subject==="语文"||plan.subject==="数学"){
+    const common="题干、解析、考点均用中文。题目原创，禁止冒充官方真题或虚构作者、引文、出处。数学式采用清晰的纯文本或 Unicode（x²、√、≤、≥、≠，分数用括号），不得使用 ASCII 尖括号或 HTML。写全作答所需条件，答案独立复核。";
+    const subjectRules=plan.subject==="数学"?{
+      基础:"高考中档：基本概念和常见变形。",
+      进阶:"高考压轴或保送校考：多条件综合、参数分类、严谨讨论定义域。",
+      挑战:"强基或竞赛入门：构造、证明、非套路迁移，不以繁琐计算冒充难度。"
+    }:{
+      基础:"高考基础：直接文本依据、常规语用与文史知识。",
+      进阶:"高考较难或保送校考：比较文本、论证结构、语言效果、跨句推断。",
+      挑战:"高难度保送训练：深层语义、文史辨析、批判性论证及竞争性解释。"
+    };
+    const rules:Record<string,string>={
+      "cn-modern":"原创完整中文现代文约 500–900 字，text 存全文。每小题有独立采分点，涵盖主旨、结构、语言或论证；参考答案引用文本证据。",
+      "cn-classical":"原创文言风格训练短文约 180–350 字，注明原创模拟材料而非古籍引文；考文意、实词、句式和句子翻译，解析含语境及关键字。",
+      "cn-poem":"原创古诗词风格模拟材料（不得署真实作者名），考意象、手法、情感或结构，参考答案引用具体词句。",
+      "cn-language":"语言文字运用单选，考词语、病句、衔接、修辞或语义；短材料放 stem，四项仅一项符合题意。",
+      "cn-literary":"文学文化常识单选，事实稳定可核查，避免争议性年代和虚构出处。",
+      "cn-writing":"中文作文题含材料、任务和明确字数；reference 给原创范文或完整示范提纲，analysis 给立意与采分点。",
+      "math-mc":"四个不同选项，唯一正确答案；独立复算或代入检查全部选项，解析列出关键推导。",
+      "math-fill":"单空填空，accepted 列出核对过的等价文本（如 1/2 与 0.5），不得混淆精确值和近似值。analysis 含推导、定义域及检验。",
+      "math-solution":"解答或证明，reference 给完整逐步解答，analysis 给采分点；检查定义域、边界、必要与充分性，独立复算，证明不得循环。"
+    };
+    const reading=["cn-modern","cn-classical","cn-poem"].includes(section);
+    const fill=section==="math-fill",mc=["cn-language","cn-literary","math-mc"].includes(section);
+    const shape=mc?"options 正好四项，answer 为 A/B/C/D。":fill?"options 为 []、answer 为空串、accepted 为非空字符串数组。":"options 为 []、answer 为空串、reference 为非空中文参考解答（含证据或推导）。";
+    return [
+      "你是外语保送备考的语文与数学原创命题助手。只输出 JSON 对象，不要 Markdown。",
+      `科目：${plan.subject}；题型：${plan.type.label}；主题：${plan.topic}；难度：${plan.difficulty}。`,
+      common,subjectRules[plan.difficulty],rules[section],shape,
+      reading?`只输出一个题组，text 为完整材料，questions 恰好 ${plan.count} 道简答题。`:`输出 ${plan.count} 个题组，每组恰好一题，text 与 paragraphs 为空。`,
+      'JSON 结构：{"items":[{"title":"题组标题","text":"","paragraphs":[],"sourceNote":"AI 生成；非官方真题，未经人工审核。","questions":[{"stem":"题干","options":[],"answer":"","analysis":"解析与采分点","tag":"考点","reference":"参考解答","accepted":[]}]}]}',
+      "选择题不需要 reference/accepted；简答、作文、证明题不需要 accepted；填空题不需要 reference。不要重复题干；给出答案后自行复核。",
+      ...(plan.focus?["重点考查："+plan.focus]:[])
+    ].join("\n");
+  }
   if (instructions[section]) {
     constraints.push(`围绕“${plan.topic}”准备 ${plan.count} ${section==="gap-seven"?"篇":"题"}练习。`,instructions[section]);
   } else if (section === "reading") {
