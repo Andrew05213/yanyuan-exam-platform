@@ -83,7 +83,7 @@ try{
   try{const r=await response;if(r.error)throw Error(r.error.message);return r.result;}finally{pending.delete(id);}
  }
  async function js(expression){const r=await send('Runtime.evaluate',{expression,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description);return r.result.value;}
- async function until(expr){for(let i=0;i<120;i++){try{if(await js(expr))return;}catch(e){if(!/Inspected target navigated or closed|Execution context was destroyed|Cannot find context with specified id/.test(String(e.message)))throw e;}await new Promise(r=>setTimeout(r,100));}throw Error('Timed out: '+expr+' '+await js('document.body.innerText.slice(-900)'));}
+ async function until(expr,attempts=120){for(let i=0;i<attempts;i++){try{if(await js(expr))return;}catch(e){if(!/Inspected target navigated or closed|Execution context was destroyed|Cannot find context with specified id/.test(String(e.message)))throw e;}await new Promise(r=>setTimeout(r,100));}throw Error('Timed out: '+expr+' '+await js('document.body.innerText.slice(-900)'));}
  for(const width of [1280,390]){
   await send('Emulation.setDeviceMetricsOverride',{width,height:850,deviceScaleFactor:1,mobile:width===390});
   await send('Page.navigate',{url:base+'/index.html#admissions'});
@@ -237,6 +237,23 @@ try{
   socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
   await js("document.querySelector('[data-ei-delete]').click()");
   await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已删除') && !document.querySelector('[data-ei-file]')");
+  const fixture=readFileSync('scripts/fixtures/exam-mixed.pdf.b64','utf8').trim();
+  await js(`(()=>{const f=document.querySelector('[data-ei-upload]'),dt=new DataTransfer();
+   dt.items.add(new File([Uint8Array.from(atob('${fixture}'),c=>c.charCodeAt(0))],'mixed.pdf',{type:'application/pdf'}));
+   f.elements.file.files=dt.files;f.elements.source.value='Synthetic PDF';f.elements.confirm.checked=true;f.requestSubmit();})()`);
+  await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已自动保存待审核')",1200);
+  await send('Page.reload');
+  await until("!!document.querySelector('[data-ei-file]')");
+  await js("document.querySelector('[data-ei-file]').click()");
+  await until("ExamImports.record?.groups?.[0]?.questions?.length===2");
+  assert.deepEqual(await js("ExamImports.record.groups[0].questions.map(q=>[q.sourceNumber,q.sourcePage,q.answer])"),[[1,1,'A'],[2,2,'B']]);
+  assert.equal(await js("ExamImports.record.approved"),false);
+  await js("document.querySelector('[data-ei-confirm]').checked=true;document.querySelector('[data-ei-approve]').click()");
+  await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已确认入私人题库')");
+  assert.equal(await js("ExamImports.record.groups[0].questions[1].sourcePage"),2);
+  await js("document.querySelector('[data-ei-delete]').click()");
+  await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已删除') && !document.querySelector('[data-ei-file]')");
+  console.log('PASS: mixed PDF text and real scan OCR, persisted pages, review and removal at width '+width);
   await db.prepare("DELETE FROM private_reference_libraries WHERE user_id=?").bind('browser-fixture').run();
   await db.prepare("DELETE FROM private_knowledge_graphs WHERE user_id=?").bind('browser-fixture').run();
   // Reset the isolated fixture's week so the second viewport exercises creation rather than reuse.

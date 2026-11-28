@@ -1,7 +1,7 @@
 (function(root){
 "use strict";
 // Deliberately conservative: identify only numbered, four-option MCQs and explicit answers.
-function parse(raw){
+function parse(raw,limit=50){
  const text=String(raw??"").replace(/\r\n?/g,"\n").normalize("NFKC").trim();
  if(text.length>60000)throw Error("一次识别最多60000字，请分段处理。");
  const blocks=[],warnings=[];let current=null;
@@ -36,8 +36,9 @@ function parse(raw){
   questions.push({sourceNumber:b.number,kind:"mc",stem,options,answer,analysis:analysis?.[1]?.trim()||"",tag:""});
  }
  if(!blocks.length)warnings.push("未找到编号题；请检查OCR、题目格式或手工整理。");
- if(questions.length>50)warnings.push("超过50题，请分组。");
- return {questions:questions.slice(0,50),warnings:[...new Set(warnings)].slice(0,100)};
+ if(limit===100 && questions.length>100)throw Error("每份最多100题，请拆分试卷。");
+ if(questions.length>limit)warnings.push("超过50题，请分组。");
+ return {questions:questions.slice(0,limit),warnings:[...new Set(warnings)].slice(0,100)};
 }
 root.ExamImportParser={parse};
 })(typeof window!=="undefined"?window:globalThis);
