@@ -67,7 +67,7 @@ function safeRelativeReturnPath(value: string): string {
   } catch {
     return "/";
   }
-  if (url.origin !== "https://app.local") return "/";
+  if (url.origin !== "https://app.local" || url.pathname.startsWith("//")) return "/";
   if (isReservedAuthPath(url.pathname)) return "/";
 
   return `${url.pathname}${url.search}${url.hash}`;
