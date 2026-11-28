@@ -5,7 +5,7 @@ import type {GroundSource} from "../../lib/grounded-question-contract";
 type Hit={kind:"private"|"publication"|"reference";id:string;version:string;title:string;excerpt:string;language:string|null};
 type Status={ready:boolean;subjects:{id:string;types:{id:string;label:string;counts:number[]}[]}[];message:string};
 type Preview={fingerprint:string;sources:GroundSource[];destination:{host:string;model:string}};
-async function api<T>(url:string,body?:unknown):Promise<T>{const r=await fetch(url,{cache:"no-store",...(body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{})});const data=await r.json();if(!r.ok)throw Error(data.error||"请求失败。");return data as T;}
+async function api<T>(url:string,body?:unknown):Promise<T>{const r=await fetch(url,{cache:"no-store",...(body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{})});const data:unknown=await r.json();if(!r.ok){const error=data&&typeof data==="object"&&"error" in data?data.error:undefined;throw Error(typeof error==="string"&&error?error:"请求失败。");}return data as T;}
 const key=(h:Hit)=>h.kind+":"+h.id;
 export function GroundedQuestions({initialTopic,topicId}:{initialTopic:string;topicId?:string}){
  const [scope,setScope]=useState<"private"|"public">("public"),[inTopic,setInTopic]=useState(!!topicId),[query,setQuery]=useState(initialTopic),[hits,setHits]=useState<Hit[]>([]),[selected,setSelected]=useState<string[]>([]);
