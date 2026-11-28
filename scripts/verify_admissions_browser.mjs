@@ -135,6 +135,18 @@ try{
   await until("!!document.querySelector('[data-kg-edit-link]')");
   assert.equal(await js("document.querySelector('[data-kg-detail]').innerText.includes('Browser relation')"),true);
   assert.equal(await js("document.querySelector('.kg-workspace').scrollWidth<=document.querySelector('.kg-workspace').clientWidth+2"),true);
+  await js("document.querySelector('[data-kg-zoom-in]').click();document.querySelector('[data-kg-zoom-reset]').click();document.querySelector('[data-kg-list-toggle]').click()");
+  assert.equal(await js("document.querySelector('[data-kg-svg]').hidden"),true);
+  await js("document.querySelector('[data-kg-list-toggle]').click()");
+  await js("document.querySelector('[data-kg-edit-link] [name=note]').value='Updated relation';document.querySelector('[data-kg-edit-link] button').click()");
+  await until("document.querySelector('[data-kg-message]')?.innerText.includes('已保存') && document.querySelector('[data-kg-detail]').innerText.includes('Updated relation')");
+  socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
+  await js("document.querySelector('[data-kg-delete-link]').click()");
+  await until("document.querySelector('[data-kg-message]')?.innerText.includes('已保存') && !document.querySelector('[data-kg-edit-link]')");
+  socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
+  await js("document.querySelector('[data-kg-delete-concept]').click()");
+  await until("document.querySelector('[data-kg-message]')?.innerText.includes('已保存') && document.querySelectorAll('[data-kg-node]').length===1");
+
   await db.prepare("DELETE FROM private_knowledge_graphs WHERE user_id=?").bind('browser-fixture').run();
   // Reset the isolated fixture's week so the second viewport exercises creation rather than reuse.
   await db.prepare("DELETE FROM study_day_plans WHERE user_id=?").bind('browser-fixture').run();

@@ -13,6 +13,15 @@ try{
  assert.equal((await call(null)).status,401);
  const a=await call('A',{kind:'note'});assert.equal(a.status,200,JSON.stringify(a.body));assert.match(a.cache,/no-store/);assert.deepEqual(a.body.nodes.map(n=>n.title).sort(),['Own A','Own A second']);assert.ok(!JSON.stringify(a.body).includes('PRIVATE_BODY'));assert.ok(!JSON.stringify(a.body).includes('Private B'));
  const other=await call('B',{kind:'note'});assert.equal(other.body.nodes.length,1);
+ const catalog=await call('A',{kind:'resource'});assert.ok(catalog.body.nodes.length>0);const resource=catalog.body.nodes[0],rid=JSON.parse(resource.id.slice(resource.id.indexOf(':')+1))[0];
+ await db.prepare("INSERT INTO materials(user_id,id,data,deleted,updated_at) VALUES(?,?,?,?,?)").bind('A',rid,'{}',1,stamp).run();
+ assert.equal((await call('A',{focus:resource.id})).status,404);assert.equal((await call('B',{focus:resource.id})).status,200);
+ const project={id:'own-project',title:'Own project fixture',links:[{ownerId:'A',noteId:'same'},{ownerId:'B',noteId:'same'}]};
+ await db.prepare("INSERT INTO research_projects(id,owner_id,payload,status,revision,updated_at) VALUES(?,?,?,?,?,?)").bind('own-project','A',JSON.stringify(project),'active',1,stamp).run();
+ const projects=await call('A',{kind:'project'});assert.equal(projects.body.total,1);assert.equal((await call('B',{kind:'project'})).body.total,0);const pf=(await call('A',{focus:projects.body.nodes[0].id})).body.focus;assert.equal(pf.edges.filter(e=>e.relation==='project_note').length,1);
+ const error={packet:{subject:'国别'},entries:[{question:{id:'test-question',stem:'test',answer:'A',tag:'actual-error-fixture'},selected:'B',correct:'A'}]};
+ await db.prepare("INSERT INTO archive_records(id,owner_id,kind,school_id,title,payload,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)").bind('graph-error','A','error-set','pku','Actual error',JSON.stringify(error),stamp,stamp).run();
+ const wrong=await call('A',{kind:'weakness'});assert.equal(wrong.body.total,1);assert.match(wrong.body.nodes[0].title,/actual-error-fixture/);assert.equal((await call('B',{kind:'weakness'})).body.total,0);
  const s=a.body.suggestions.find(x=>x.reason.includes('fixture_unique_tag'));assert.ok(s);const v=a.body.version;
  assert.equal((await call('A',{}, {version:v,action:'concept-create',title:'x'},{Origin:'https://other.invalid'})).status,403);
  const cr=await call('A',{}, {version:v,action:'concept-create',title:'<script>Concept</script>',description:'fixture'});assert.equal(cr.status,200,JSON.stringify(cr.body));let version=cr.body.version;
