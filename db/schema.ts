@@ -147,3 +147,7 @@ export const privateKnowledgeGraphs=sqliteTable("private_knowledge_graphs",{
 export const privateReferenceLibraries=sqliteTable("private_reference_libraries",{
  userId:text("user_id").primaryKey().notNull(),version:text("version").notNull(),payload:text("payload").notNull(),updatedAt:text("updated_at").notNull(),
 });
+
+export const privateResearchRuns=sqliteTable("private_research_runs",{
+ userId:text("user_id").notNull(),id:text("id").notNull(),version:text("version").notNull(),payload:text("payload").notNull(),updatedAt:text("updated_at").notNull(),
+},t=>[primaryKey({columns:[t.userId,t.id]})]);
