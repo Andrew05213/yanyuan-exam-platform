@@ -220,7 +220,7 @@ function safeReturn(value: string | null): string {
 
   try {
     const url = new URL(value, "http://localhost");
-    if (url.origin !== "http://localhost" || authPaths.has(url.pathname)) {
+    if (url.origin !== "http://localhost" || url.pathname.startsWith("//") || authPaths.has(url.pathname)) {
       return "/";
     }
     return `${url.pathname}${url.search}${url.hash}`;
