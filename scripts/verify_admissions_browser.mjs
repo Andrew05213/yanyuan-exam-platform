@@ -202,6 +202,22 @@ try{
   await until("document.querySelector('[data-dr-search] [name=terms]')?.value.includes('mono no aware')");
   assert.equal(researchCalls,beforeResearch+2);
   assert.equal(await js("document.querySelector('.dr-workspace').scrollWidth<=document.querySelector('.dr-workspace').clientWidth+2"),true);
+  await send('Page.navigate',{url:base+'/index.html#research-results'});
+  await until("!!document.querySelector('[data-rr-form]')");
+  await js("document.querySelector('[data-rr-form] button').click()");
+  await until("!!document.querySelector('[data-rr-docx]') && document.querySelector('.rr-paper').innerText.includes('Browser checked')");
+  assert.equal(await js("document.querySelector('.rr-workspace').scrollWidth<=document.querySelector('.rr-workspace').clientWidth+2"),true);
+  await js("window.__rrWord=null;fetch(document.querySelector('[data-rr-docx]').href).then(r=>r.arrayBuffer()).then(b=>window.__rrWord=new DataView(b).getUint32(0,true))");
+  await until("window.__rrWord===0x04034b50");
+  const printUrl=await js("document.querySelector('[data-rr-print]').href");
+  await send('Page.navigate',{url:printUrl});
+  await until("!!document.querySelector('main.paper') && document.body.innerText.includes('Browser checked')");
+  const pdf=await send('Page.printToPDF',{printBackground:true,preferCSSPageSize:true});
+  assert.equal(Buffer.from(pdf.data,'base64').subarray(0,5).toString(),'%PDF-');
+  await send('Page.navigate',{url:base+'/index.html#deep-research'});
+  await until("!!document.querySelector('[data-dr-task]')");
+  await js("document.querySelector('[data-dr-task]').click()");
+  await until("document.querySelector('[data-dr-finding] [name=note]')?.value==='Browser checked'");
   socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
   await js("document.querySelector('[data-dr-delete]').click()");
   await until("document.querySelector('[data-dr-message]')?.innerText.includes('已保存') && !document.querySelector('[data-dr-task]')");
@@ -214,6 +230,7 @@ try{
  }
  mock.assertNoPendingInterceptors();assert.equal(researchCalls,4);
  console.log('PASS: Chromium deep research preview, mock analysis, citation, review, expansion and reload.');
+ console.log('PASS: Chromium desktop/mobile private report preview, DOCX bytes, real print-to-PDF and return navigation.');
  console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete, long-term preferences, weekly preview/save, private graph and references create, search, link, export, edit, delete, reload and navigation.');
 }finally{
  try{socket?.close();await closeBrowser();}finally{
