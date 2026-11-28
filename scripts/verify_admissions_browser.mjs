@@ -79,9 +79,23 @@ try{
   await send('Page.enable');let dialog;socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
   await js("document.querySelector('[data-sp-delete]').click()");
   await until("!document.querySelector('[data-sp-task]') && document.querySelector('[data-sp-message]')?.innerText.includes('已保存')");
+  await js("document.querySelector('[data-sp-tab=settings]').click()");
+  await until("!!document.querySelector('[data-long-form]')");
+  await js("document.querySelector('[data-long-budget=0]').value='45';document.querySelector('[data-long-form] button.btn.primary').click()");
+  await until("document.querySelector('[data-sp-message]')?.innerText.includes('长期设置已保存')");
+  await js("document.querySelector('[data-long-preview]').click()");
+  await until("!document.querySelector('[data-long-save]')?.disabled && !!document.querySelector('[data-long-result]')");
+  await js("document.querySelector('[data-long-save]').click()");
+  await until("document.querySelector('[data-sp-message]')?.innerText.includes('整周计划已创建')");
+  await js("window.__weekReload=true");await send('Page.reload');await until("!window.__weekReload");await until("!!document.querySelector('[data-sp-tab=settings]')");
+  await js("document.querySelector('[data-sp-tab=settings]').click()");
+  await until("document.querySelector('[data-long-budget=0]')?.value==='45'");
+  // Reset the isolated fixture's week so the second viewport exercises creation rather than reuse.
+  await db.prepare("DELETE FROM study_day_plans WHERE user_id=?").bind('browser-fixture').run();
+
 
  }
- console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete and navigation.');
+ console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete, long-term preferences, weekly preview/save and navigation.');
 }finally{
  socket?.close();if(chrome?.pid&&chrome.exitCode===null&&chrome.signalCode===null){const closed=once(chrome,'exit');chrome.kill();await closed;}
  app.closeAllConnections();app.close();await mf.dispose();rmSync(userdir,{recursive:true,force:true,maxRetries:10,retryDelay:200});

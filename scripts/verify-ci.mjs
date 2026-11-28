@@ -22,6 +22,8 @@ const suites=[
  'verify_today_workspace.mjs',
  'verify_study_planning_core.mjs',
  'verify_study_plans_api.mjs',
+ 'verify_study_week.mjs',
+ 'verify_study_week_api.mjs',
  'verify_admissions_core.mjs',
  'verify_admissions_api.mjs',
  'verify_research_projects_core.mjs',

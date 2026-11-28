@@ -155,6 +155,13 @@
       "when": 1795790000000,
       "tag": "0021_study_day_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1795852800000,
+      "tag": "0022_study_planning_completion",
+      "breakpoints": true
     }
   ]
 }
