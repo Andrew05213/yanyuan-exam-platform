@@ -100,7 +100,7 @@
  function parseErrors(text,packet){
   const qs=new Map(packet.blocks.flatMap(b=>b.questions).map(q=>[q.id,q]));let remaining=String(text||'');const selected=new Map();
   remaining=remaining.replace(/(?:第\s*)?(\d{1,3})\s*(?:题\s*)?[:：.\-]?\s*([A-Da-d]{1,4})/g,(match,n,a)=>{n=Number(n);a=choiceSet(a.toUpperCase());if(!a)throw Error('选择项不能重复。');if(selected.has(n)&&selected.get(n)!==a)throw Error(`第 ${n} 题出现了不同选项，请保留一个。`);selected.set(n,a);return ' ';});
-  if(remaining.replace(/[\s,，、;；。]+/g,'').length)throw Error('请使用“3B、8D、12A”格式；不支持的片段：'+remaining.trim());
+  if(remaining.replace(/[\s,，、;；。]+/g,'').length)throw Error('请使用“3B、8D、12AC”格式；不支持的片段：'+remaining.trim());
   if(!selected.size)throw Error('请先输入至少一题，如3B。');
   const entries=[],consistent=[];
   for(const [id,a] of [...selected].sort((a,b)=>a[0]-b[0])){const question=qs.get(id);if(!question)throw Error(`试卷中没有第 ${id} 题。`);if(question.kind&&!['mc','multiple','indefinite'].includes(question.kind))throw Error(`第 ${id} 题是${{fill:'填空',order:'排序',writing:'作文',translation:'翻译'}[question.kind]||'其他'}题，请在试卷页录入作答或进入主观题档案。`);if((!question.kind||question.kind==='mc')&&a.length!==1)throw Error(`第 ${id} 题是单选，只能填写一项。`);if(a===choiceSet(question.answer)){consistent.push(id);continue;}const block=packet.blocks.find(b=>b.questions.some(q=>q.id===id));entries.push({qid:id,sourceId:question.sourceId||packet.id+':'+id,question:clone(question),selected:a,correct:question.answer,context:block?.text?{title:block.title,text:block.text,source:block.source,sourceUrl:block.sourceUrl,paragraphs:block.paragraphs}:null});}

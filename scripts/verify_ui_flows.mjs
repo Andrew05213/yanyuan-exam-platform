@@ -140,4 +140,21 @@ for(const fail of [false,true]){
  f.TierStudio.updateStocks=()=>{};f.TierStudio.loadPresets=()=>{};
  for(const school of schools.schools)for(const subject of school.subjects){f.Hub.school=school.id;f.TierStudio.reset(subject,school.id);f.TierStudio.render();check(f.screen.innerHTML.includes('id="tier-form"'),true);check(f.screen.innerHTML.includes('data-tier-field="count"'),true);check((f.screen.innerHTML.match(/<details\b/g)||[]).length,(f.screen.innerHTML.match(/<\/details>/g)||[]).length);}
 }
+
+{
+ const f=setup(),q={id:1,kind:'multiple',points:50,stem:'判断各项',tag:'集合',options:['甲','乙','丙','丁'],answer:'AC',analysis:'逐项验证',sourceId:'ai-fixture'};
+ f.Hub.packet.subject='数学';f.Hub.packet.blocks[0].questions[0]=q;
+ const html=f.StudyFlow.questionHTML(q,false,'math-multiple');
+ check((html.match(/type="checkbox"/g)||[]).length,4);check(html.includes('不计部分分'),true);
+ const el={value:'C',dataset:{flowMulti:'1'},hasAttribute:n=>n==='data-flow-multi',closest:()=>({querySelectorAll:()=>[{value:'C'},{value:'A'}]})};
+ f.StudyFlow.answerInput(el);check(f.Hub.answers[1],'AC');check(f.WorkflowEngine.grade(f.Hub.packet,f.Hub.answers).objectiveScore,50);
+ const subjectHTML=f.StudyFlow.questionHTML({id:2,kind:'writing',points:50,stem:'证明',reference:'完整解答',analysis:'采分点'},true,'math-solution');
+ check(subjectHTML.includes('data-flow-manual'),true);check(subjectHTML.includes('data-ai-grade'),false);
+ const p={entries:[{qid:1,question:q,correct:'AC',selected:'AD'}]};
+ check((f.MistakeUI.redoHTML(p).match(/type="checkbox"/g)||[]).length,4);
+ const checkbox={type:'checkbox',dataset:{redoAnswer:'1'},hasAttribute:n=>n==='data-redo-answer',closest:()=>({querySelectorAll:()=>[{value:'C'},{value:'A'}]})};
+ f.MistakeUI.change({target:checkbox});check(f.MistakeUI.redoAnswers[1],'AC');
+ checkbox.closest=()=>({querySelectorAll:()=>[]});f.MistakeUI.change({target:checkbox});check(Object.hasOwn(f.MistakeUI.redoAnswers,1),false);
+}
+
 console.log('PASS: '+checks+' frontend grading, save failure, delayed request, essay edit, backup and template checks.');
