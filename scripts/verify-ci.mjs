@@ -47,6 +47,8 @@ const suites=[
  'verify_registration_policy.mjs',
  'verify_public_assets.mjs',
  'verify_startup.mjs',
+ 'verify_release_assets.mjs',
+ 'verify_release_health.mjs',
  'verify_oral_audio_ui.mjs',
  'verify_admin.mjs',
  'verify_multiuser.mjs',

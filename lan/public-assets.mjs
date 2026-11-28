@@ -37,7 +37,7 @@ export function createPublicAssetHandler(directory){
   }
   const format=encoding(req.headers['accept-encoding']);if(!format){res.writeHead(406,{'cache-control':'no-store'});res.end();return true;}
   const etag='"'+entry.hash+'-'+format+'"',version=url.searchParams.get('v');
-  const headers={'content-type':type,'cache-control':version&&/^[\w.-]{1,64}$/.test(version)?'public, max-age=31536000, immutable':'public, max-age=0, must-revalidate',etag,vary:'Accept-Encoding','x-content-type-options':'nosniff'};
+  const headers={'content-type':type,'cache-control':url.pathname==='/release.json'?'no-store':version===entry.hash.slice(0,12)?'public, max-age=31536000, immutable':'public, max-age=0, must-revalidate',etag,vary:'Accept-Encoding','x-content-type-options':'nosniff'};
   if(format!=='identity')headers['content-encoding']=format;
   if(String(req.headers['if-none-match']||'').split(',').some(value=>value.trim()==='*'||value.trim().replace(/^W\//,'')===etag)){res.writeHead(304,headers);res.end();return true;}
   let body=entry.source;
