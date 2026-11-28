@@ -43,6 +43,7 @@ const PublicApp={
   document.querySelector('#screen').addEventListener('submit',event=>{if(event.target.id==='community-form'){event.preventDefault();this.publish(event.target);}});
   window.addEventListener('hashchange',()=>this.account());
   this.baseItems=TierStudio.data.items.slice();
+  await this.refreshPrivateImports().catch(()=>{});
   await this.refresh().catch(()=>{this.loadError='共享资料暂时无法读取，可稍后刷新。';});
  },
  account(){
@@ -61,7 +62,13 @@ const PublicApp={
   const readAll=async(base)=>{const materials=[],items=[];let next=null,pages=0,restricted=false;do{if(++pages>100)throw Error('共享资料过多，暂不能完整读取。');const r=await StudyFlow.request(base+(next?'&beforeTime='+encodeURIComponent(next.time)+'&beforeId='+encodeURIComponent(next.id):''));materials.push(...r.materials);if(r.items)items.push(...r.items);restricted=restricted||!!r.restricted;next=r.next;}while(next);return {materials,items,restricted};};
   const r=await readAll('/api/materials?catalog=1');
   this.restricted=r.restricted;this.materials=r.materials;TierStudio.data.items=[...this.baseItems,...r.items];this.loadError='';
+  await this.refreshPrivateImports().catch(()=>{this.importError='私人试卷库存暂不可用；组卷时将重新核对。';});
   if(this.session.authenticated){const m=await readAll('/api/materials?mine=1');this.ownMaterials=m.materials;this.mine=new Set(m.materials.map(x=>x.id));}
+ },
+ async refreshPrivateImports(){
+  const owner=this.session.userId;TierStudio.data.items=TierStudio.data.items.filter(x=>!x.importId);if(!this.session.authenticated)return;
+  const r=await StudyFlow.request('/api/exam-imports?mode=catalog');if(!this.session.authenticated||this.session.userId!==owner)return;
+  TierStudio.data.items=[...TierStudio.data.items.filter(x=>!x.importId),...r.items];this.importError='';
  },
  labels(m){const d=TierStudio.data;return this.e(m.subject)+' / '+this.e(d.sections[m.subject]?.find(x=>x.id===m.section)?.label||m.section)+' / '+this.e(DifficultyEngine.label(d,m.subject,m.tier));},
  async render(){

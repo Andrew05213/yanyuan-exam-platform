@@ -202,9 +202,41 @@ try{
   await until("document.querySelector('[data-dr-search] [name=terms]')?.value.includes('mono no aware')");
   assert.equal(researchCalls,beforeResearch+2);
   assert.equal(await js("document.querySelector('.dr-workspace').scrollWidth<=document.querySelector('.dr-workspace').clientWidth+2"),true);
+  await send('Page.navigate',{url:base+'/index.html#research-results'});
+  await until("!!document.querySelector('[data-rr-form]')");
+  await js("document.querySelector('[data-rr-form] button').click()");
+  await until("!!document.querySelector('[data-rr-docx]') && document.querySelector('.rr-paper').innerText.includes('Browser checked')");
+  assert.equal(await js("document.querySelector('.rr-workspace').scrollWidth<=document.querySelector('.rr-workspace').clientWidth+2"),true);
+  await js("window.__rrWord=null;fetch(document.querySelector('[data-rr-docx]').href).then(r=>r.arrayBuffer()).then(b=>window.__rrWord=new DataView(b).getUint32(0,true))");
+  await until("window.__rrWord===0x04034b50");
+  const printUrl=await js("document.querySelector('[data-rr-print]').href");
+  await send('Page.navigate',{url:printUrl});
+  await until("!!document.querySelector('main.paper') && document.body.innerText.includes('Browser checked')");
+  const pdf=await send('Page.printToPDF',{printBackground:true,preferCSSPageSize:true});
+  assert.equal(Buffer.from(pdf.data,'base64').subarray(0,5).toString(),'%PDF-');
+  await send('Page.navigate',{url:base+'/index.html#deep-research'});
+  await until("!!document.querySelector('[data-dr-task]')");
+  await js("document.querySelector('[data-dr-task]').click()");
+  await until("document.querySelector('[data-dr-finding] [name=note]')?.value==='Browser checked'");
   socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
   await js("document.querySelector('[data-dr-delete]').click()");
   await until("document.querySelector('[data-dr-message]')?.innerText.includes('已保存') && !document.querySelector('[data-dr-task]')");
+  await send('Page.navigate',{url:base+'/index.html#exam-imports'});
+  await until("!!document.querySelector('[data-ei-upload]')");
+  await js("(()=>{const f=document.querySelector('[data-ei-upload]');const dt=new DataTransfer();dt.items.add(new File(['1. Synthetic question?\\nA. One B. Two C. Three D. Four\\n答案：B'],'browser.txt',{type:'text/plain'}));f.querySelector('[name=file]').files=dt.files;f.querySelector('[name=source]').value='Synthetic source 2026';f.querySelector('[name=confirm]').checked=true;f.querySelector('button').click()})()");
+  await until("document.querySelector('[data-ei-text]')?.value.includes('Synthetic question')");
+  await js("document.querySelector('[data-ei-parse]').click();document.querySelector('[data-ei-group-form] [name=locator]').value='page 1';document.querySelector('[data-ei-group-form] [name=locator]').dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[data-ei-confirm]').checked=true;document.querySelector('[data-ei-approve]').click()");
+  await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已确认入私人题库')");
+  assert.equal(await js("TierStudio.data.items.some(x=>x.importId&&x.source.includes('Synthetic source 2026')&&x.questions[0].answer==='B')"),true);
+  const trace=await js("(()=>{const u=TierStudio.data.items.find(x=>x.importId);const c={schema:'tiers-v1',schoolId:'pku',subject:'英语',minutes:20,name:'Import provenance fixture',topics:[],fullReadingSets:false,excludeAttempted:false,excludeGenerated:false,excludeMaterials:false,rows:[{section:'mc',tier:u.tier,count:1}]};const p=DifficultyEngine.makePacket({...TierStudio.data,items:[u]},c,Hub.data,{},()=>0.5);const b=p.blocks[0],h=StudyFlow.blockHTML(b,1,false),md=StudyFlow.packetMarkdown(p);return {q:b.questions[0].originalNumber,html:h.includes('Synthetic source 2026')&&h.includes('原题1')&&h.includes('data-import-source'),markdown:md.includes('Synthetic source 2026')&&md.includes('原题1')}})()");
+  assert.deepEqual(trace,{q:1,html:true,markdown:true});
+  assert.equal(await js("ExamImportParser.parse('1. Question?\\nA. One B. Two C. Three D. Four\\n答案：B\\n参考答案：1.C').questions[0].answer"),'');
+  await js("window.__eiReload=true");await send('Page.reload');await until("!window.__eiReload");await until("!!document.querySelector('[data-ei-file]')");
+  await js("document.querySelector('[data-ei-file]').click()");
+  await until("document.querySelector('[data-ei-meta] [name=source]')?.value==='Synthetic source 2026' && document.querySelector('[data-ei-group-form] [name=locator]')?.value==='page 1' && document.querySelector('[data-ei-questions] [data-q=answer]')?.value==='B'");
+  socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
+  await js("document.querySelector('[data-ei-delete]').click()");
+  await until("document.querySelector('[data-ei-msg]')?.innerText.includes('已删除') && !document.querySelector('[data-ei-file]')");
   await db.prepare("DELETE FROM private_reference_libraries WHERE user_id=?").bind('browser-fixture').run();
   await db.prepare("DELETE FROM private_knowledge_graphs WHERE user_id=?").bind('browser-fixture').run();
   // Reset the isolated fixture's week so the second viewport exercises creation rather than reuse.
@@ -214,6 +246,8 @@ try{
  }
  mock.assertNoPendingInterceptors();assert.equal(researchCalls,4);
  console.log('PASS: Chromium deep research preview, mock analysis, citation, review, expansion and reload.');
+ console.log('PASS: Chromium desktop/mobile private report preview, DOCX bytes, real print-to-PDF and return navigation.');
+ console.log('PASS: Chromium desktop/mobile exam text upload, parse, provenance, reviewed catalog, reload and deletion.');
  console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete, long-term preferences, weekly preview/save, private graph and references create, search, link, export, edit, delete, reload and navigation.');
 }finally{
  try{socket?.close();await closeBrowser();}finally{

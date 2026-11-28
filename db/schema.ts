@@ -151,3 +151,7 @@ export const privateReferenceLibraries=sqliteTable("private_reference_libraries"
 export const privateResearchRuns=sqliteTable("private_research_runs",{
  userId:text("user_id").notNull(),id:text("id").notNull(),version:text("version").notNull(),payload:text("payload").notNull(),updatedAt:text("updated_at").notNull(),
 },t=>[primaryKey({columns:[t.userId,t.id]})]);
+
+export const privateExamImports=sqliteTable("private_exam_imports",{
+ id:text("id").primaryKey(),ownerId:text("owner_id").notNull(),sha256:text("sha256").notNull(),filename:text("filename").notNull(),mime:text("mime").notNull(),size:integer("size").notNull(),objectKey:text("object_key").notNull(),source:text("source").notNull(),sourceUrl:text("source_url").notNull(),rights:text("rights").notNull(),payload:text("payload").notNull(),revision:integer("revision").notNull().default(1),createdAt:text("created_at").notNull(),updatedAt:text("updated_at").notNull(),
+},t=>[uniqueIndex("private_exam_imports_owner_hash").on(t.ownerId,t.sha256)]);

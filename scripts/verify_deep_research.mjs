@@ -67,12 +67,25 @@ try{
  stub(answer,body=>{assert.ok(body.includes('PRIVATE_A'));assert.ok(!body.includes('PRIVATE_B'));assert.ok(!body.includes('PRIVATE_UNSELECTED'));assert.ok(!body.includes('@qa.invalid'));});
  const analyzed=await api('A',confirmed);assert.equal(analyzed.status,200,JSON.stringify(analyzed.data));version=analyzed.data.version;assert.equal((await api('A',confirmed)).status,409);assert.equal(requests,3);
  const detail=await api('A',null,'?id='+id);assert.equal(detail.data.detail.run.analysis.result.findings.length,1);
+ const previewURL='/api/deep-research?mode=report&id='+id;
+ assert.equal((await call(previewURL,'B')).status,404);
+ assert.equal((await call(previewURL,'A')).status,409);
+ const draftReport=await call(previewURL+'&style=draft','A');assert.equal(draftReport.status,200,JSON.stringify(draftReport.data));assert.match(JSON.stringify(draftReport.data),/待复核/);
  const reviewed=await api('A',{action:'review',id,version,reviews:[{index:0,status:'accepted',note:'Checked'}]});assert.equal(reviewed.status,200,JSON.stringify(reviewed.data));version=reviewed.data.version;
  assert.equal((await api('A',null,'?id='+id)).data.detail.run.analysis.reviews[0].status,'accepted');
- await db.prepare("UPDATE entries SET folder='archived' WHERE user_id='A' AND id='note'").run();const gone=await api('A',null,'?id='+id);assert.equal(gone.data.detail.stale,true);assert.equal(gone.data.detail.run.analysis,null);
+ const exported=await call(previewURL,'A');assert.equal(exported.status,200,JSON.stringify(exported.data));assert.match(JSON.stringify(exported.data),/Checked/);assert.ok(!JSON.stringify(exported.data).includes('PRIVATE_UNSELECTED'));assert.ok(!JSON.stringify(exported.data).includes('PRIVATE_A'));assert.match(exported.cache,/no-store/);
+ const exportURL=previewURL+'&version='+version;
+ assert.equal((await call(previewURL+'&format=docx','A')).status,409);
+ const word=await mf.dispatchFetch('https://study.test'+exportURL+'&format=docx',{headers:{'oai-authenticated-user-id':'A'}});
+ assert.equal(word.status,200);assert.match(word.headers.get('content-type'),/wordprocessingml/);assert.match(word.headers.get('content-disposition'),/attachment/);assert.equal(Buffer.from(await word.arrayBuffer()).readUInt32LE(0),0x04034b50);
+ const print=await mf.dispatchFetch('https://study.test'+exportURL+'&format=print',{headers:{'oai-authenticated-user-id':'A'}});assert.equal(print.status,200);assert.match(print.headers.get('content-security-policy'),/default-src 'none'/);assert.match(await print.text(),/本人认可/);
+ const md=await mf.dispatchFetch('https://study.test'+exportURL+'&format=markdown',{headers:{'oai-authenticated-user-id':'A'}});assert.equal(md.status,200);assert.match(await md.text(),/Checked/);
+ assert.equal((await call(exportURL+'&format=docx','B')).status,404);
+ await db.prepare("UPDATE entries SET folder='archived' WHERE user_id='A' AND id='note'").run();assert.equal((await call(exportURL+'&format=docx','A')).status,409);const gone=await api('A',null,'?id='+id);assert.equal(gone.data.detail.stale,true);assert.equal(gone.data.detail.run.analysis,null);
  assert.equal((await api('A',{action:'preview',id,version})).status,404);
  assert.equal((await api('A',{action:'delete',id,version})).status,200);assert.equal((await api('A',null,'?id='+id)).status,404);
  assert.equal((await db.prepare("SELECT count(*) AS n FROM ai_usage_events WHERE task='research-assistant' AND user_id='A'").first()).n,3);
  assert.deepEqual((await Promise.all(inspections)).filter(Boolean),[]);mock.assertNoPendingInterceptors();
  console.log('PASS: private deep research, source selection, explicit preview, fake provider, exact citations, usage, review and stale source isolation.');
+ console.log('PASS: owner-only report preview, Word/Markdown/print export, version and stale source gates.');
 }finally{await mf.dispose();await mock.close();}

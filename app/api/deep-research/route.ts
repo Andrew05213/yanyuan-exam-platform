@@ -1,4 +1,5 @@
 import {storage} from "../../../db/store";
+import {report,markdown,printHtml,docx} from "../../../lib/research-results/core.mjs";
 import {AccessError,fail,principal,privateHeaders,readLimitedText,sameOrigin} from "../../../lib/user-access";
 import {readLibrary} from "../../../lib/references/store";
 import {studyAIProvider,runStudyAI} from "../../../lib/study-ai";
@@ -65,6 +66,24 @@ async function prepared(db:Db,uid:string,r:Row,run:Run,nonce:string){
 export async function GET(request:Request){try{
  const {id}=principal(request),db=storage(),p=new URL(request.url).searchParams,mode=p.get("mode")??"list";
  if(mode==="search")return reply(await search(db,id,checked(()=>keywords(p.getAll("term"))),p.get("projectId")??""));
+ if(mode==="report"){
+  const r=await row(db,id,p.get("id")),run=read(r),format=p.get("format")??"preview",style=p.get("style")??"reviewed",includePlan=p.get("plan")==="1";
+  if(!["preview","docx","markdown","print"].includes(format)||!(style==="reviewed"||style==="draft"))throw new AccessError("导出格式无效。",400);
+  if(format!=="preview"&&p.get("version")!==r.version)throw conflict();
+  const current=await present(db,id,r);if(current.stale||!run.analysis)throw new AccessError("研究结果不可用或材料已经变化，请返回研究任务重新选材。",409);
+  const ev=await evidence(db,id,run.selection);
+  if(await digest(ev)!==run.analysis.sourceDigest)throw conflict();
+  const project=run.projectId?await db.prepare("SELECT json_extract(payload,'$.title') AS title FROM research_projects WHERE owner_id=? AND id=? AND status='active'").bind(id,run.projectId).first<{title:string}>():null;
+  if(run.projectId&&!project)throw missing();
+  let result;try{result=report(run,ev,{mode:style,includePlan,projectTitle:project?.title??""});}catch(e){throw new AccessError(e instanceof Error&&e.message==="no_accepted"?"尚无本人认可的观点。请先人工审核，或选择带明确审核标记的草稿。":"报告证据不可用。",409);}
+  if((await row(db,id,r.id)).version!==r.version||await digest(await evidence(db,id,run.selection))!==run.analysis.sourceDigest)throw conflict();
+  await checkProject(db,id,run.projectId);
+  if(format==="preview")return reply({report:result,version:r.version});
+  const headers={...privateHeaders,"Referrer-Policy":"no-referrer"};
+  if(format==="print")return new Response(printHtml(result),{headers:{...headers,"Content-Type":"text/html; charset=utf-8","Content-Security-Policy":"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"}});
+  if(format==="markdown")return new Response(markdown(result),{headers:{...headers,"Content-Type":"text/markdown; charset=utf-8","Content-Disposition":"attachment; filename=hezhi-research.md"}});
+  const bytes=docx(result);return new Response(bytes.buffer as ArrayBuffer,{headers:{...headers,"Content-Type":"application/vnd.openxmlformats-officedocument.wordprocessingml.document","Content-Disposition":"attachment; filename=hezhi-research.docx"}});
+ }
  if(mode!=="list"&&mode!=="detail")throw new AccessError("操作无效。",400);
  const rows=await db.prepare("SELECT id,version,json_extract(payload,'$.title') AS title,updated_at AS updatedAt FROM private_research_runs WHERE user_id=? ORDER BY updated_at DESC,id LIMIT 20").bind(id).all<{id:string;version:string;title:string;updatedAt:string}>();
  const pr=await projects(db,id),detail=p.get("id")?await present(db,id,await row(db,id,p.get("id"))):null;
