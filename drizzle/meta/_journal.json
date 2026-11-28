@@ -162,6 +162,13 @@
       "when": 1795852800000,
       "tag": "0022_study_planning_completion",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1795860000000,
+      "tag": "0023_private_knowledge_graphs",
+      "breakpoints": true
     }
   ]
 }

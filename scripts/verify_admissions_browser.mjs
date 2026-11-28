@@ -116,12 +116,44 @@ try{
   await js("window.__weekReload=true");await send('Page.reload');await until("!window.__weekReload");await until("!!document.querySelector('[data-sp-tab=settings]')");
   await js("document.querySelector('[data-sp-tab=settings]').click()");
   await until("document.querySelector('[data-long-budget=\"0\"]')?.value==='45'");
+  await send('Page.navigate',{url:base+'/index.html#knowledge-graph'});
+  await until("!!document.querySelector('[data-kg-concept]')");
+  await js("document.querySelector('[data-kg-concept] [name=title]').value='Browser concept A';document.querySelector('[data-kg-concept] button').click()");
+  await until("document.querySelector('[data-kg-message]')?.innerText.includes('已保存')");
+  await js("document.querySelector('[data-kg-concept] [name=title]').value='Browser concept B';document.querySelector('[data-kg-concept] button').click()");
+  await until("document.querySelector('[data-kg-message]')?.innerText.includes('已保存')");
+  await js("document.querySelector('[data-kg-search] [name=kind]').value='concept';document.querySelector('[data-kg-search] button.btn.primary').click()");
+  await until("document.querySelectorAll('[data-kg-node]').length===2");
+  await js("document.querySelector('[data-kg-node]').click()");
+  await until("!!document.querySelector('[data-kg-link]')");
+  await js("document.querySelector('[data-kg-link] [name=note]').value='Browser relation';document.querySelector('[data-kg-link] button').click()");
+  await until("document.querySelector('[data-kg-message]')?.innerText.includes('已保存') && !!document.querySelector('[data-kg-edit-link]')");
+  await js("window.__kgReload=true");await send('Page.reload');await until("!window.__kgReload");await until("!!document.querySelector('[data-kg-search]')");
+  await js("document.querySelector('[data-kg-search] [name=kind]').value='concept';document.querySelector('[data-kg-search] button.btn.primary').click()");
+  await until("document.querySelectorAll('[data-kg-node]').length===2");
+  await js("document.querySelector('[data-kg-node]').click()");
+  await until("!!document.querySelector('[data-kg-edit-link]')");
+  assert.equal(await js("document.querySelector('[data-kg-detail]').innerText.includes('Browser relation')"),true);
+  assert.equal(await js("document.querySelector('.kg-workspace').scrollWidth<=document.querySelector('.kg-workspace').clientWidth+2"),true);
+  await js("document.querySelector('[data-kg-zoom-in]').click();document.querySelector('[data-kg-zoom-reset]').click();document.querySelector('[data-kg-list-toggle]').click()");
+  assert.equal(await js("document.querySelector('[data-kg-svg]').hidden"),true);
+  await js("document.querySelector('[data-kg-list-toggle]').click()");
+  await js("document.querySelector('[data-kg-edit-link] [name=note]').value='Updated relation';document.querySelector('[data-kg-edit-link] button').click()");
+  await until("document.querySelector('[data-kg-message]')?.innerText.includes('已保存') && document.querySelector('[data-kg-detail]').innerText.includes('Updated relation')");
+  socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
+  await js("document.querySelector('[data-kg-delete-link]').click()");
+  await until("document.querySelector('[data-kg-message]')?.innerText.includes('已保存') && !document.querySelector('[data-kg-edit-link]')");
+  socket.addEventListener('message',function handler({data}){const msg=JSON.parse(data);if(msg.method==='Page.javascriptDialogOpening'){socket.removeEventListener('message',handler);void send('Page.handleJavaScriptDialog',{accept:true});}});
+  await js("document.querySelector('[data-kg-delete-concept]').click()");
+  await until("document.querySelector('[data-kg-message]')?.innerText.includes('已保存') && document.querySelectorAll('[data-kg-node]').length===1");
+
+  await db.prepare("DELETE FROM private_knowledge_graphs WHERE user_id=?").bind('browser-fixture').run();
   // Reset the isolated fixture's week so the second viewport exercises creation rather than reuse.
   await db.prepare("DELETE FROM study_day_plans WHERE user_id=?").bind('browser-fixture').run();
 
 
  }
- console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete, long-term preferences, weekly preview/save and navigation.');
+ console.log('PASS: Chromium desktop/mobile admissions and study planner save, reload, reflection, delete, long-term preferences, weekly preview/save, private graph creation, search, linking, reload and navigation.');
 }finally{
  try{socket?.close();await closeBrowser();}finally{
   app.closeAllConnections();app.close();
